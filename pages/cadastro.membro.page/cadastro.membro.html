@@ -96,201 +96,136 @@
 </header>
 
 <section class="conteudo">
-  <h1 class="title-page">Cadastrar Novo Membro</h1>
+  <h1 class="title-page">Cadastro de Membro</h1>
   <form class="form-cadastro" id="form-cadastro-membro">
-    
-    <div class="form-group">
-      <label>Foto do Membro</label>
-      <div class="foto-preview-container">
-        <img id="foto-preview" src="#" alt="Pré-visualização" style="display:none;" />
-        <div id="foto-placeholder" class="foto-placeholder">
-          <i class='bx bxs-user-circle'></i><span>Nenhuma foto<br>selecionada</span>
+    <!-- Barra de Progresso -->
+    <div class="progress-bar">
+      <div class="progress-step active" data-step="1"><div class="step-icon">1</div><span class="step-text">Pessoais</span></div>
+      <div class="progress-step" data-step="2"><div class="step-icon">2</div><span class="step-text">Contato</span></div>
+      <div class="progress-step" data-step="3"><div class="step-icon">3</div><span class="step-text">Família</span></div>
+      <div class="progress-step" data-step="4"><div class="step-icon">4</div><span class="step-text">Ministerial</span></div>
+      <div class="progress-step" data-step="5"><div class="step-icon">5</div><span class="step-text">Outros</span></div>
+    </div>
+
+    <!-- Etapa 1: Dados Pessoais -->
+    <div class="form-step active">
+      <div class="form-grid">
+        <div class="form-group full-width foto-upload-area">
+          <div class="foto-preview-container">
+            <img id="foto-preview" src="#" alt="Pré-visualização" style="display:none;" />
+            <div id="foto-placeholder" class="foto-placeholder">
+              <i class='bx bxs-user-circle'></i><span>Foto</span>
+            </div>
+          </div>
+          <div class="foto-botoes-container">
+            <button type="button" id="btn-escolher-arquivo" class="btn-secundario">Escolher Arquivo</button>
+            <input type="file" id="foto-upload" accept="image/*" style="display:none;">
+            <button type="button" id="btn-abrir-camera" class="btn-secundario">Tirar Foto</button>
+          </div>
+        </div>
+        <div class="form-group full-width"><label for="nome">Nome Completo</label><input type="text" id="nome" name="nome" required /></div>
+        <div class="form-group"><label for="cpf">CPF</label><input type="text" id="cpf" name="cpf"></div>
+        <div class="form-group"><label for="rg">RG</label><input type="text" id="rg" name="rg"></div>
+        <div class="form-group"><label for="dataNascimento">Data de Nascimento</label><input type="date" id="dataNascimento" name="dataNascimento"></div>
+        <div class="form-group"><label for="genero">Gênero</label><select id="genero" name="genero" required><option value="">Selecione</option><option value="masculino">Masculino</option><option value="feminino">Feminino</option></select></div>
+        <div class="form-group"><label for="naturalidade">Naturalidade</label><input type="text" id="naturalidade" name="naturalidade" placeholder="Ex: Fortaleza - CE"></div>
+        <div class="form-group"><label for="filiacao">Filiação (Nome da Mãe / Nome do Pai)</label><input type="text" id="filiacao" name="filiacao"></div>
+      </div>
+    </div>
+
+    <!-- Etapa 2: Contato e Endereço -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="telefone">Telefone</label><input type="tel" id="telefone" name="telefone"></div>
+        <div class="form-group"><label for="email">E-mail</label><input type="email" id="email" name="email"></div>
+        <div class="form-group"><label for="cep">CEP (preenche o endereço)</label><input type="text" id="cep" name="cep" placeholder="00000-000"></div>
+        <div class="form-group"><label for="endereco">Endereço</label><input type="text" id="endereco" name="endereco"></div>
+        <div class="form-group"><label for="bairro">Bairro</label><input type="text" id="bairro" name="bairro"></div>
+        <div class="form-group"><label for="cidade">Cidade</label><input type="text" id="cidade" name="cidade"></div>
+        <div class="form-group"><label for="estado">Estado</label><input type="text" id="estado" name="estado"></div>
+      </div>
+    </div>
+
+    <!-- Etapa 3: Família -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="estadoCivil">Estado Civil</label><select id="estadoCivil" name="estadoCivil"><option value="">Selecione</option><option value="solteiro">Solteiro(a)</option><option value="casado">Casado(a)</option><option value="divorciado">Divorciado(a)</option><option value="viuvo">Viúvo(a)</option></select></div>
+        <div class="form-group hidden" id="containerDataCasamento"><label for="dataCasamento">Data de Casamento</label><input type="date" id="dataCasamento" name="dataCasamento"></div>
+        <div class="form-group hidden" id="containerDataDivorcio"><label for="dataDivorcio">Data de Divórcio</label><input type="date" id="dataDivorcio" name="dataDivorcio"></div>
+        <div class="form-group hidden" id="containerDataViuvez"><label for="dataViuvez">Data de viuvez</label><input type="date" id="dataViuvez" name="dataViuvez"></div>
+        <div class="form-group"><label for="nomeConjuge">Nome do Cônjuge (se aplicável)</label><input type="text" id="nomeConjuge" name="nomeConjuge"></div>
+        <div class="form-group" id="containerConjugeMembro"><label for="conjugeMembro">O cônjuge é membro?</label><select id="conjugeMembro" name="conjugeMembro"><option value="">Selecione</option><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerBuscaConjuge"><label for="buscaConjuge">Buscar Cônjuge (Nome, CPF)</label><input type="text" id="buscaConjuge" name="buscaConjuge" placeholder="Funcionalidade em desenvolvimento..." disabled><div id="resultadosBuscaConjuge"></div><input type="hidden" id="conjugeId" name="conjugeId"></div>
+        <div class="form-group hidden" id="containerConjugeOutro"><label for="conjugeOutro">Nome do Cônjuge (se não for membro)</label><input type="text" id="conjugeOutro" name="conjugeOutro"></div>
+        <div class="form-group full-width"><label>Filhos</label><div id="listaFilhos"></div><button type="button" id="btn-add-filho" class="btn-secundario-pequeno">Adicionar Filho</button></div>
+      </div>
+    </div>
+
+    <!-- Etapa 4: Vida Ministerial -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="dataConversao">Data da Conversão</label><input type="date" id="dataConversao" name="dataConversao"></div>
+        <div class="form-group"><label for="batismoAguas">Batismo nas Águas?</label><select id="batismoAguas" name="batismoAguas"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerDataBatismoAguas"><label for="dataBatismo">Data</label><input type="date" id="dataBatismo" name="dataBatismo"></div>
+        <div class="form-group"><label for="batismoEspiritoSanto">Batismo com Espírito Santo?</label><select id="batismoEspiritoSanto" name="batismoEspiritoSanto"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerDataBatismoEspiritoSanto"><label for="dataBatismoEspiritoSanto">Data</label><input type="date" id="dataBatismoEspiritoSanto" name="dataBatismoEspiritoSanto"></div>
+        <div class="form-group"><label for="veioDeOutraIgreja">Veio de outra igreja?</label><select id="veioDeOutraIgreja" name="veioDeOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerNomeOutraIgreja"><label for="nomeOutraIgreja">Qual?</label><input type="text" id="nomeOutraIgreja" name="nomeOutraIgreja"></div>
+        <div class="form-group"><label for="liderancaOutraIgreja">Exerceu liderança em outra igreja?</label><select id="liderancaOutraIgreja" name="liderancaOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerQualLideranca"><label for="qualLideranca">Qual função?</label><input type="text" id="qualLideranca" name="qualLideranca"></div>
+        <div id="cargosEclesiasticos" class="form-group hidden"><label for="cargoEclesiastico">Cargo Eclesiástico</label><select id="cargoEclesiastico" name="cargoEclesiastico"></select></div>
+        <div class="form-group"><label for="grupoPequeno">Pequeno Grupo</label><select id="grupoPequeno" name="grupoPequeno"><option value="">Carregando...</option></select></div>
+        <div class="form-group hidden" id="outroGrupoContainer"><label for="outroGrupo">Especifique o Grupo</label><input type="text" id="outroGrupo" name="outroGrupo"></div>
+        <div class="form-group"><label for="temMinisterio">Faz parte de algum ministério?</label><select id="temMinisterio" name="temMinisterio"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div id="ministerioArea" class="hidden full-width form-grid">
+          <div class="form-group"><label for="ministerio">Qual ministério?</label><select id="ministerio" name="ministerio"><option value="">Selecione</option><option value="familia">Ministério da Família</option><option value="jovens">Ministério de Jovens</option><option value="mulheres">Ministério de Mulheres</option><option value="infantil">Ministério Infantil</option><option value="ebd">EBD</option><option value="missoes">Missões</option><option value="outro">Outro</option></select></div>
+          <div id="outroMinisterioContainer" class="form-group hidden"><label for="nomeOutroMinisterio">Especifique o ministério:</label><input type="text" id="nomeOutroMinisterio" name="nomeOutroMinisterio"></div>
+          <div class="form-group"><label for="cargoMinisterio">Função no ministério:</label><select id="cargoMinisterio" name="cargoMinisterio"><option value="">Selecione</option><option value="lider">Líder</option><option value="vice-lider">Vice-líder</option><option value="membro">Membro da Equipe</option></select></div>
+        </div>
+        <div class="form-group full-width">
+          <label>Dons, talentos ou áreas de interesse para servir?</label>
+          <div class="checkbox-grid">
+            <div class="checkbox-item"><input type="checkbox" id="domLouvor" name="dons" value="louvor"><label for="domLouvor">Louvor</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domMidia" name="dons" value="midia"><label for="domMidia">Mídias</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domEnsino" name="dons" value="ensino"><label for="domEnsino">Ensino</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domAcaoSocial" name="dons" value="acao_social"><label for="domAcaoSocial">Ação Social</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domRecepcao" name="dons" value="recepcao"><label for="domRecepcao">Recepção</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domAdmin" name="dons" value="admin"><label for="domAdmin">Administração</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domCozinha" name="dons" value="cozinha"><label for="domCozinha">Cozinha</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domVisitacao" name="dons" value="visitacao"><label for="domVisitacao">Visitação</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domOracao" name="dons" value="oracao"><label for="domOracao">Oração</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domOutro" name="dons" value="outro"><label for="domOutro">Outro</label></div>
+          </div>
+          <div class="form-group hidden" id="containerLouvor"><input type="text" id="especificarLouvor" name="especificarLouvor" placeholder="Canta, toca qual instrumento?"></div>
+          <div class="form-group hidden" id="containerOutroDom"><input type="text" id="especificarOutroDom" name="especificarOutroDom" placeholder="Especifique a área de interesse"></div>
         </div>
       </div>
-      <div class="foto-botoes-container">
-        <button type="button" id="btn-escolher-arquivo" class="btn-secundario">Escolher Arquivo</button>
-        <input type="file" id="foto-upload" accept="image/*" style="display:none;">
-        <button type="button" id="btn-abrir-camera" class="btn-secundario">Tirar Foto</button>
+    </div>
+
+    <!-- Etapa 5: Outras Informações -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="profissao">Profissão</label><input type="text" id="profissao" name="profissao"></div>
+        <div class="form-group"><label for="escolaridade">Escolaridade</label><select id="escolaridade" name="escolaridade"><option value="">Selecione</option><option value="analfabeto">Analfabeto</option><option value="fundamental_incompleto">Fundamental Incompleto</option><option value="fundamental_completo">Fundamental Completo</option><option value="medio_incompleto">Médio Incompleto</option><option value="medio_completo">Médio Completo</option><option value="superior_incompleto">Superior Incompleto</option><option value="superior_completo">Superior Completo</option><option value="pos_graduado">Pós-graduado</option></select></div>
+        <div class="form-group"><label for="cursoTeologico">Possui curso teológico/ministerial?</label><input type="text" id="cursoTeologico" name="cursoTeologico" placeholder="Ex: Seminário, curso de liderança, etc."></div>
+        <div class="form-group"><label for="comoConheceuIgreja">Como conheceu nossa igreja?</label><input type="text" id="comoConheceuIgreja" name="comoConheceuIgreja" placeholder="Ex: Amigo, redes sociais, etc."></div>
+        <div class="form-group full-width"><label for="restricaoSaude">Restrição alimentar ou condição de saúde importante?</label><textarea id="restricaoSaude" name="restricaoSaude" rows="3"></textarea></div>
+        <fieldset class="lgpd-fieldset full-width">
+          <legend>Consentimento (LGPD)</legend>
+          <div class="form-group"><label>Deseja receber comunicados por E-mail e WhatsApp?</label><div><input type="radio" id="comunicadosSim" name="autorizaComunicados" value="sim"><label for="comunicadosSim">Sim</label><input type="radio" id="comunicadosNao" name="autorizaComunicados" value="nao" checked><label for="comunicadosNao">Não</label></div></div>
+          <div class="form-group"><label>Autoriza o uso de sua imagem (fotos/vídeos) para divulgação?</label><div><input type="radio" id="imagemSim" name="autorizaImagem" value="sim"><label for="imagemSim">Sim</label><input type="radio" id="imagemNao" name="autorizaImagem" value="nao" checked><label for="imagemNao">Não</label></div></div>
+        </fieldset>
       </div>
     </div>
 
-    <div class="form-group"><label for="nome">Nome Completo</label><input type="text" id="nome" name="nome" required /></div>
-    <div class="flex-row">
-      <div class="form-group"><label for="cpf">CPF</label><input type="text" id="cpf" name="cpf"></div>
-      <div class="form-group"><label for="dataNascimento">Data de Nascimento</label><input type="date" id="dataNascimento" name="dataNascimento"></div>
-    </div>
-    <div class="form-group"><label for="telefone">Telefone</label><input type="tel" id="telefone" name="telefone"></div>
-    <div class="form-group"><label for="email">E-mail</label><input type="email" id="email" name="email"></div>
-    <div class="form-group"><label for="genero">Gênero</label>
-      <select id="genero" name="genero" required>
-        <option value="">Selecione</option>
-        <option value="masculino">Masculino</option>
-        <option value="feminino">Feminino</option>
-      </select>
-    </div>
-
-    <div class="form-group"><label for="endereco">Endereço</label><input type="text" id="endereco" name="endereco"></div>
-    <div class="flex-row">
-      <div class="form-group"><label for="bairro">Bairro</label><input type="text" id="bairro" name="bairro"></div>
-      <div class="form-group"><label for="cidade">Cidade</label><input type="text" id="cidade" name="cidade"></div>
-      <div class="form-group"><label for="estado">Estado</label><input type="text" id="estado" name="estado"></div>
-    </div>
-    
-    <div class="flex-row">
-      <div class="form-group"><label for="rg">RG</label><input type="text" id="rg" name="rg"></div>
-      <div class="form-group"><label for="naturalidade">Naturalidade</label><input type="text" id="naturalidade" name="naturalidade" placeholder="Ex: Fortaleza - CE"></div>
-    </div>
-
-    <div class="form-group"><label for="filiacao">Filiação (Nome da Mãe / Nome do Pai)</label><input type="text" id="filiacao" name="filiacao"></div>
-
-    <div class="flex-row">
-      <div class="form-group"><label for="estadoCivil">Estado Civil</label>
-        <select id="estadoCivil" name="estadoCivil">
-          <option value="">Selecione</option>
-          <option value="solteiro">Solteiro(a)</option>
-          <option value="casado">Casado(a)</option>
-          <option value="divorciado">Divorciado(a)</option>
-          <option value="viuvo">Viúvo(a)</option>
-        </select>
+    <!-- Botões de Navegação -->
+    <div class="form-navigation">
+      <button type="button" id="btn-voltar" class="btn-navegacao">Voltar à Lista</button>
+      <div>
+        <button type="button" id="btn-anterior" class="btn-navegacao" style="display: none;">Anterior</button>
+        <button type="button" id="btn-proximo" class="btn-principal">Próximo</button>
+        <button type="submit" class="btn-enviar" style="display: none;">Cadastrar</button>
       </div>
-      <div class="form-group hidden" id="containerDataCasamento"><label for="dataCasamento">Data de Casamento</label><input type="date" id="dataCasamento" name="dataCasamento"></div>
-      <div class="form-group hidden" id="containerDataDivorcio"><label for="dataDivorcio">Data de Divórcio</label><input type="date" id="dataDivorcio" name="dataDivorcio"></div>
-      <div class="form-group hidden" id="containerDataViuvez"><label for="dataViuvez">Data de viuvez</label><input type="date" id="dataViuvez" name="dataViuvez"></div>
-    </div>
-
-    <div class="form-group"><label for="nomeConjuge">Nome do Cônjuge (se aplicável)</label><input type="text" id="nomeConjuge" name="nomeConjuge"></div>
-    <div class="form-group" id="containerConjugeMembro"><label for="conjugeMembro">O cônjuge é membro desta igreja?</label><select id="conjugeMembro" name="conjugeMembro"><option value="">Selecione</option><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-    <div class="form-group hidden" id="containerBuscaConjuge"><label for="buscaConjuge">Buscar Cônjuge (Nome, CPF)</label><input type="text" id="buscaConjuge" name="buscaConjuge" placeholder="Funcionalidade em desenvolvimento..." disabled><div id="resultadosBuscaConjuge"></div><input type="hidden" id="conjugeId" name="conjugeId"></div>
-    <div class="form-group hidden" id="containerConjugeOutro"><label for="conjugeOutro">Nome do Cônjuge (se não for membro)</label><input type="text" id="conjugeOutro" name="conjugeOutro"></div>
-
-    <div class="form-group"><label>Filhos</label>
-      <div id="listaFilhos"></div>
-      <button type="button" id="btn-add-filho" class="btn-secundario-pequeno">Adicionar Filho</button>
-    </div>
-
-    <div class="flex-row">
-      <div class="form-group"><label for="batismoAguas">Batismo nas Águas?</label><select id="batismoAguas" name="batismoAguas"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-      <div class="form-group hidden" id="containerDataBatismoAguas"><label for="dataBatismo">Data</label><input type="date" id="dataBatismo" name="dataBatismo"></div>
-    </div>
-    <div class="flex-row">
-      <div class="form-group"><label for="batismoEspiritoSanto">Batismo com Espírito Santo?</label><select id="batismoEspiritoSanto" name="batismoEspiritoSanto"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-      <div class="form-group hidden" id="containerDataBatismoEspiritoSanto"><label for="dataBatismoEspiritoSanto">Data</label><input type="date" id="dataBatismoEspiritoSanto" name="dataBatismoEspiritoSanto"></div>
-    </div>
-    <div class="form-group"><label for="dataConversao">Data da Conversão</label><input type="date" id="dataConversao" name="dataConversao"></div>
-
-    <div class="form-group"><label for="grupoPequeno">Pequeno Grupo</label>
-      <select id="grupoPequeno" name="grupoPequeno">
-        <option value="">Carregando grupos...</option>
-      </select>
-    </div>
-    <div class="form-group hidden" id="outroGrupoContainer">
-      <label for="outroGrupo">Especifique o Grupo</label>
-      <input type="text" id="outroGrupo" name="outroGrupo">
-    </div>
-
-    <div class="flex-row">
-      <div class="form-group"><label for="profissao">Profissão</label><input type="text" id="profissao" name="profissao"></div>
-      <div class="form-group"><label for="escolaridade">Escolaridade</label>
-        <select id="escolaridade" name="escolaridade">
-          <option value="">Selecione</option>
-          <option value="analfabeto">Analfabeto</option>
-          <option value="fundamental_incompleto">Fundamental Incompleto</option>
-          <option value="fundamental_completo">Fundamental Completo</option>
-          <option value="medio_incompleto">Médio Incompleto</option>
-          <option value="medio_completo">Médio Completo</option>
-          <option value="superior_incompleto">Superior Incompleto</option>
-          <option value="superior_completo">Superior Completo</option>
-          <option value="pos_graduado">Pós-graduado</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group"><label for="veioDeOutraIgreja">Veio de outra igreja/denominação?</label><select id="veioDeOutraIgreja" name="veioDeOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-    <div class="form-group hidden" id="containerNomeOutraIgreja"><label for="nomeOutraIgreja">Qual?</label><input type="text" id="nomeOutraIgreja" name="nomeOutraIgreja"></div>
-    
-    <div class="form-group"><label for="liderancaOutraIgreja">Já exerceu alguma função de liderança em outra igreja?</label><select id="liderancaOutraIgreja" name="liderancaOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-    <div class="form-group hidden" id="containerQualLideranca"><label for="qualLideranca">Qual?</label><input type="text" id="qualLideranca" name="qualLideranca"></div>
-
-    <div class="form-group"><label for="cursoTeologico">Possui algum curso teológico ou de capacitação ministerial?</label><input type="text" id="cursoTeologico" name="cursoTeologico" placeholder="Ex: Seminário, curso de liderança, etc."></div>
-
-    <div class="form-group">
-      <label>Quais são seus dons, talentos ou áreas de interesse para servir?</label>
-      <div class="checkbox-grid">
-        <div class="checkbox-item"><input type="checkbox" id="domLouvor" name="dons" value="louvor"><label for="domLouvor">Louvor</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domMidia" name="dons" value="midia"><label for="domMidia">Mídias</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domEnsino" name="dons" value="ensino"><label for="domEnsino">Ensino</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domAcaoSocial" name="dons" value="acao_social"><label for="domAcaoSocial">Ação Social / Diaconia</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domRecepcao" name="dons" value="recepcao"><label for="domRecepcao">Recepção / Acolhimento</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domAdmin" name="dons" value="admin"><label for="domAdmin">Administração / Finanças</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domCozinha" name="dons" value="cozinha"><label for="domCozinha">Cozinha / Eventos</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domVisitacao" name="dons" value="visitacao"><label for="domVisitacao">Visitação / Aconselhamento</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domOracao" name="dons" value="oracao"><label for="domOracao">Oração / Intercessão</label></div>
-        <div class="checkbox-item"><input type="checkbox" id="domOutro" name="dons" value="outro"><label for="domOutro">Outro</label></div>
-      </div>
-      <div class="form-group hidden" id="containerLouvor"><input type="text" id="especificarLouvor" name="especificarLouvor" placeholder="Canta, toca qual instrumento?"></div>
-      <div class="form-group hidden" id="containerOutroDom"><input type="text" id="especificarOutroDom" name="especificarOutroDom" placeholder="Especifique a área de interesse"></div>
-    </div>
-
-    <div class="form-group"><label for="comoConheceuIgreja">Como conheceu nossa igreja?</label><input type="text" id="comoConheceuIgreja" name="comoConheceuIgreja" placeholder="Ex: Através de um amigo, redes sociais, etc."></div>
-
-    <div class="form-group"><label for="restricaoSaude">Tem alguma restrição alimentar ou condição de saúde importante?</label><textarea id="restricaoSaude" name="restricaoSaude" rows="3"></textarea></div>
-
-    <fieldset class="lgpd-fieldset">
-      <legend>Consentimento (LGPD)</legend>
-      <div class="form-group">
-        <label>Deseja receber comunicados da igreja por E-mail e WhatsApp?</label>
-        <div><input type="radio" id="comunicadosSim" name="autorizaComunicados" value="sim"><label for="comunicadosSim">Sim</label><input type="radio" id="comunicadosNao" name="autorizaComunicados" value="nao" checked><label for="comunicadosNao">Não</label></div>
-      </div>
-      <div class="form-group">
-        <label>Autoriza o uso de sua imagem (fotos/vídeos) para divulgação nas mídias da igreja?</label>
-        <div><input type="radio" id="imagemSim" name="autorizaImagem" value="sim"><label for="imagemSim">Sim</label><input type="radio" id="imagemNao" name="autorizaImagem" value="nao" checked><label for="imagemNao">Não</label></div>
-      </div>
-    </fieldset>
-
-    <div id="cargosEclesiasticos" class="form-group hidden">
-      <label for="cargoEclesiastico">Cargo Eclesiástico</label>
-      <select id="cargoEclesiastico" name="cargoEclesiastico"></select>
-    </div>
-    
-    <div class="form-group">
-      <label for="temMinisterio">Faz parte de algum ministério?</label>
-      <select id="temMinisterio" name="temMinisterio">
-        <option value="nao">Não</option>
-        <option value="sim">Sim</option>
-      </select>
-    </div>
-    <div id="ministerioArea" class="hidden">
-      <div class="form-group">
-        <label for="ministerio">Qual ministério?</label>
-        <select id="ministerio" name="ministerio">
-          <option value="">Selecione</option>
-          <option value="familia">Ministério da Família</option>
-          <option value="jovens">Ministério de Jovens</option>
-          <option value="mulheres">Ministério de Mulheres</option>
-          <option value="infantil">Ministério Infantil</option>
-          <option value="ebd">EBD</option>
-          <option value="missoes">Missões</option>
-          <option value="outro">Outro</option>
-        </select>
-      </div>
-      <div id="outroMinisterioContainer" class="form-group hidden">
-        <label for="nomeOutroMinisterio">Por favor, especifique o ministério:</label>
-        <input type="text" id="nomeOutroMinisterio" name="nomeOutroMinisterio" placeholder="Digite o nome do ministério">
-      </div>
-      <div class="form-group">
-        <label for="cargoMinisterio">Função no ministério:</label>
-        <select id="cargoMinisterio" name="cargoMinisterio">
-          <option value="">Selecione</option>
-          <option value="lider">Líder</option>
-          <option value="vice-lider">Vice-líder</option>
-          <option value="membro">Membro da Equipe</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group btn-container">
-        <button type="button" id="btn-voltar" class="btn-secundario">Voltar</button>
-        <button type="submit" class="btn-enviar">Cadastrar</button>
     </div>
   </form>
 </section>
@@ -319,270 +254,6 @@
 
 <script src="/components/menu.js"></script>
 <script src="/pages/config.js"></script>
-<script>
-    // Todo o seu JavaScript anterior continua aqui, sem nenhuma alteração.
-    // A única mudança é a adição de um event listener para o novo botão "Voltar".
-    
-document.addEventListener('DOMContentLoaded', () => {
-    // --- SELETORES E VARIÁVEIS GLOBAIS ---
-    const form = document.getElementById('form-cadastro-membro');
-    const tituloPagina = document.querySelector('.title-page');
-    const urlParams = new URLSearchParams(window.location.search);
-    const membroId = urlParams.get("id");
-    let fotoBase64 = null;    
-    const API_BASE_URL = window.API_BASE_URL;
-    let fotoExistenteUrl = null;
-
-    // --- LÓGICA DE FOTO E CÂMERA ---
-    const btnEscolherArquivo = document.getElementById('btn-escolher-arquivo');
-    const fotoUploadInput = document.getElementById('foto-upload');
-    const fotoPreview = document.getElementById('foto-preview');
-    const fotoPlaceholder = document.getElementById('foto-placeholder');
-    const modalCropper = document.getElementById('modal-cropper');
-    const imageToCrop = document.getElementById('image-to-crop');
-    const btnCancelarCrop = document.getElementById('btn-cancelar-crop');
-    const btnCortar = document.getElementById('btn-cortar');
-    let cropper;
-
-    btnEscolherArquivo.addEventListener('click', () => fotoUploadInput.click());
-    fotoUploadInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (ev) => { imageToCrop.src = ev.target.result; modalCropper.style.display = 'flex'; if (cropper) cropper.destroy(); cropper = new Cropper(imageToCrop, { aspectRatio: 3/4, viewMode: 1 }); }; reader.readAsDataURL(file); } });
-    btnCancelarCrop.addEventListener('click', () => modalCropper.style.display = 'none');
-    btnCortar.addEventListener('click', () => { const canvas = cropper.getCroppedCanvas({ width: 300, height: 400 }); fotoBase64 = canvas.toDataURL('image/jpeg'); fotoPreview.src = fotoBase64; fotoPreview.style.display = 'block'; fotoPlaceholder.style.display = 'none'; modalCropper.style.display = 'none'; });
-
-    const btnAbrirCamera = document.getElementById('btn-abrir-camera');
-    const modalCamera = document.getElementById('modal-camera');
-    const cameraFeed = document.getElementById('camera-feed');
-    const btnFecharCamera = document.getElementById('btn-fechar-camera');
-    const btnCapturar = document.getElementById('btn-capturar');
-    let stream;
-    btnAbrirCamera.addEventListener('click', async () => { try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); cameraFeed.srcObject = stream; modalCamera.style.display = 'flex'; } catch (err) { alert('Erro ao acessar a câmera: ' + err.message); } });
-    const fecharCamera = () => { stream?.getTracks().forEach(track => track.stop()); modalCamera.style.display = 'none'; };
-    btnFecharCamera.addEventListener('click', fecharCamera);
-    btnCapturar.addEventListener('click', () => { const canvas = document.createElement('canvas'); canvas.width = cameraFeed.videoWidth; canvas.height = cameraFeed.videoHeight; canvas.getContext('2d').drawImage(cameraFeed, 0, 0, canvas.width, canvas.height); fotoBase64 = canvas.toDataURL('image/jpeg'); fotoPreview.src = fotoBase64; fotoPreview.style.display = 'block'; fotoPlaceholder.style.display = 'none'; fecharCamera(); });
-
-    // --- LÓGICA DE CAMPOS DINÂMICOS ---
-    const selectGenero = document.getElementById('genero');
-    const selectCargo = document.getElementById('cargoEclesiastico');
-    const divCargos = document.getElementById('cargosEclesiasticos');
-    const selectGrupo = document.getElementById('grupoPequeno');
-    const divOutroGrupo = document.getElementById('outroGrupoContainer');
-    const selectTemMinisterio = document.getElementById('temMinisterio');
-    const divMinisterioArea = document.getElementById('ministerioArea');
-    const selectMinisterio = document.getElementById('ministerio');
-    const selectEstadoCivil = document.getElementById('estadoCivil');
-    const containerDataCasamento = document.getElementById('containerDataCasamento');
-    const containerDataDivorcio = document.getElementById('containerDataDivorcio');
-    const containerDataViuvez = document.getElementById('containerDataViuvez');
-    const selectVeioDeOutraIgreja = document.getElementById('veioDeOutraIgreja');
-    const containerNomeOutraIgreja = document.getElementById('containerNomeOutraIgreja');
-    const selectBatismoAguas = document.getElementById('batismoAguas');
-    const containerDataBatismoAguas = document.getElementById('containerDataBatismoAguas');
-    const selectBatismoEspiritoSanto = document.getElementById('batismoEspiritoSanto');
-    const containerDataBatismoEspiritoSanto = document.getElementById('containerDataBatismoEspiritoSanto');
-    const selectLideranca = document.getElementById('liderancaOutraIgreja');
-    const containerQualLideranca = document.getElementById('containerQualLideranca');
-    const domLouvorCheck = document.getElementById('domLouvor');
-    const containerLouvor = document.getElementById('containerLouvor');
-    const domOutroCheck = document.getElementById('domOutro');
-    const containerOutroDom = document.getElementById('containerOutroDom');
-    const btnAddFilho = document.getElementById('btn-add-filho');
-    const listaFilhosContainer = document.getElementById('listaFilhos');
-    let todosOsMembros = [];
-    let filhoCounter = 0;
-
-    const cargosMasculinos = [{ value: 'membro', text: 'Membro' }, { value: 'obreiro', text: 'Obreiro (Auxiliar)' }, { value: 'diacono', text: 'Diácono' }, { value: 'presbitero', text: 'Presbítero' }, { value: 'evangelista', text: 'Evangelista' }, { value: 'pastor', text: 'Pastor' }, { value: 'pastor-presidente', text: 'Pastor Presidente' }, { value: 'vice-presidente', text: 'Vice Presidente' }, { value: 'musico', text: 'Músico' }, { value: 'outro', text: 'Outro' }];
-    const cargosFemininos = [{ value: 'membro', text: 'Membro' }, { value: 'diaconisa', text: 'Diaconisa' }, { value: 'missionaria', text: 'Missionária' }, { value: 'regente', text: 'Regente' }, { value: 'musicista', text: 'Musicista' }, { value: 'pastora-presidente', text: 'Pastora Presidente' }, { value: 'vice-presidente', text: 'Vice Presidente' }, { value: 'outro', text: 'Outro' }];
-    
-    function atualizarCargos(genero, cargoSelecionado = null) {
-        selectCargo.innerHTML = '<option value="">Selecione um cargo</option>';
-        let lista = [];
-        if (genero === 'masculino') { lista = cargosMasculinos; divCargos.classList.remove('hidden'); }
-        else if (genero === 'feminino') { lista = cargosFemininos; divCargos.classList.remove('hidden'); }
-        else { divCargos.classList.add('hidden'); }
-        lista.forEach(c => { const opt = document.createElement('option'); opt.value = c.value; opt.textContent = c.text; selectCargo.appendChild(opt); });
-        if (cargoSelecionado) { selectCargo.value = cargoSelecionado; }
-    }
-    selectGenero.addEventListener('change', () => atualizarCargos(selectGenero.value));
-    selectGrupo.addEventListener('change', () => divOutroGrupo.classList.toggle('hidden', selectGrupo.value !== 'outro'));
-    selectTemMinisterio.addEventListener('change', () => { divMinisterioArea.classList.toggle('hidden', selectTemMinisterio.value !== 'sim'); });
-    selectMinisterio.addEventListener('change', () => { document.getElementById('outroMinisterioContainer').classList.toggle('hidden', selectMinisterio.value !== 'outro'); });
-    selectEstadoCivil.addEventListener('change', () => {
-        const valor = selectEstadoCivil.value;
-        containerDataCasamento.classList.toggle('hidden', valor !== 'casado');
-        containerDataDivorcio.classList.toggle('hidden', valor !== 'divorciado');
-        containerDataViuvez.classList.toggle('hidden', valor !== 'viuvo');
-        document.getElementById('containerConjugeMembro').classList.toggle('hidden', valor !== 'casado');
-        document.getElementById('nomeConjuge').closest('.form-group').classList.toggle('hidden', valor !== 'casado');
-    });
-    selectVeioDeOutraIgreja.addEventListener('change', () => containerNomeOutraIgreja.classList.toggle('hidden', selectVeioDeOutraIgreja.value !== 'sim'));
-    selectBatismoAguas.addEventListener('change', () => containerDataBatismoAguas.classList.toggle('hidden', selectBatismoAguas.value !== 'sim'));
-    selectBatismoEspiritoSanto.addEventListener('change', () => containerDataBatismoEspiritoSanto.classList.toggle('hidden', selectBatismoEspiritoSanto.value !== 'sim'));
-    selectLideranca.addEventListener('change', () => containerQualLideranca.classList.toggle('hidden', selectLideranca.value !== 'sim'));
-    domLouvorCheck.addEventListener('change', () => containerLouvor.classList.toggle('hidden', !domLouvorCheck.checked));
-    domOutroCheck.addEventListener('change', () => containerOutroDom.classList.toggle('hidden', !domOutroCheck.checked));
-
-    const adicionarFilho = (filho = { nome: '', dataNascimento: '' }) => {
-        const filhoId = `filho_${filhoCounter++}`;
-        const div = document.createElement('div');
-        div.className = 'filho-item';
-        div.id = filhoId;
-        div.innerHTML = `
-            <input type="text" name="filhos[${filhoId}][nome]" placeholder="Nome completo do filho" value="${filho.nome || ''}">
-            <input type="date" name="filhos[${filhoId}][dataNascimento]" value="${filho.dataNascimento ? filho.dataNascimento.substr(0, 10) : ''}">
-            <button type="button" class="btn-remover-filho">&times;</button>
-        `;
-        div.querySelector('.btn-remover-filho').addEventListener('click', () => div.remove());
-        listaFilhosContainer.appendChild(div);
-    };
-    btnAddFilho.addEventListener('click', () => adicionarFilho());
-
-    // --- FUNÇÃO DE UPLOAD DE FOTO ---
-    const uploadFoto = async () => {
-        // Se nenhuma foto nova foi selecionada, retorna a URL da foto existente (se houver)
-        if (!fotoBase64) {
-            return fotoExistenteUrl || null;
-        }
-
-        // Converte a string base64 para um arquivo Blob
-        const res = await fetch(fotoBase64);
-        const blob = await res.blob();
-        const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
-
-        const fotoFormData = new FormData();
-        fotoFormData.append('foto', file);
-
-        // Envia o arquivo para a rota de upload
-        const response = await window.api.post('/api/membros/upload-foto', fotoFormData);
-        return response.filePath;
-    };
-
-
-    const salvarMembro = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const dados = {};
-        const filhos = [];
-        const dons = [];
-        for (const [key, value] of formData.entries()) {
-            if (key.startsWith('filhos[')) {
-                const [_, id, field] = key.match(/filhos\[(.*?)\]\[(.*?)\]/);
-                let filho = filhos.find(f => f.id === id);
-                if (!filho) { filho = { id }; filhos.push(filho); }
-                filho[field] = value;
-            } else if (key === 'dons') {
-                dons.push(value);
-            } else if ((key === 'grupoPequeno' || key === 'conjugeId') && value === '') {
-                dados[key] = null;
-            } else {
-                // CORREÇÃO: Ignora campos que não devem ser enviados se vazios
-                if (key === 'buscaConjuge' && value === '') continue;
-
-                dados[key] = value;
-            }
-        }
-        dados.filhos = filhos.map(({id, ...rest}) => rest).filter(f => f.nome); // Remove ID e filhos sem nome
-        dados.dons = dons;
-        
-        try {
-            // 1. Verifica se uma nova foto foi selecionada (fotoBase64 existe)
-            if (fotoBase64) {
-                // Se sim, faz o upload e obtém o novo caminho
-                dados.foto = await uploadFoto();
-            } else {
-                // Se não, mantém o caminho da foto existente
-                dados.foto = fotoExistenteUrl;
-            }
-
-            // 2. Envia os dados do membro (incluindo o caminho da foto, novo ou existente) para o backend
-            if (membroId) {
-                await window.api.put(`/api/membros/${membroId}`, dados);
-            } else {
-                await window.api.post('/api/membros', dados);
-            }
-            alert(`Membro ${membroId ? 'atualizado' : 'cadastrado'} com sucesso!`);
-            window.location.href = '/pages/lista.membros/lista.membros.html'; // Redireciona para a lista
-        } catch (error) { console.error('Erro ao salvar:', error); alert(`Falha ao salvar: ${error.message}`); }
-    };
-
-    // --- INICIALIZAÇÃO DA PÁGINA ---
-    const carregarPequenosGrupos = async (grupoSelecionado = null) => {
-        const selectGrupo = document.getElementById('grupoPequeno');
-        try {            
-            const grupos = await window.api.get('/api/pequenos-grupos');
-            selectGrupo.innerHTML = '<option value="">Nenhum</option>'; // Opção padrão
-            grupos.forEach(grupo => {
-                const option = document.createElement('option');
-                option.value = grupo._id;
-                option.textContent = grupo.nome;
-                selectGrupo.appendChild(option);
-            });
-            if (grupoSelecionado) selectGrupo.value = grupoSelecionado;
-        } catch (error) { console.error('Erro ao carregar pequenos grupos:', error); selectGrupo.innerHTML = '<option value="">Não foi possível carregar os grupos</option>'; }
-    };
-    const inicializarPagina = async () => {
-        try {
-            todosOsMembros = await window.api.get('/api/membros');
-        } catch (e) {
-            console.error("Não foi possível carregar a lista de membros para busca.");
-        }
-        await carregarPequenosGrupos(); // Carrega os PGs antes de tudo
-        if (membroId) {
-            tituloPagina.textContent = 'Editar Membro';
-            document.querySelector(".btn-enviar").textContent = "Salvar Alterações";
-            try {
-                const m = await window.api.get(`/api/membros/${membroId}`);
-                Object.keys(m).forEach(key => { const campo = document.getElementById(key); if (campo && key !== 'grupoPequeno') { if (campo.type === 'date' && m[key]) { campo.value = m[key].substr(0, 10); } else { campo.value = m[key] || ''; } } });
-                await carregarPequenosGrupos(m.grupoPequeno); // Recarrega e seleciona o grupo do membro
-                atualizarCargos(m.genero, m.cargoEclesiastico);
-                if (m.temMinisterio === 'sim') { selectTemMinisterio.value = 'sim'; divMinisterioArea.classList.remove('hidden'); selectMinisterio.value = m.ministerio || ''; if (m.ministerio === 'outro') { document.getElementById('outroMinisterioContainer').classList.remove('hidden'); document.getElementById('nomeOutroMinisterio').value = m.nomeOutroMinisterio || ''; } document.getElementById('cargoMinisterio').value = m.cargoMinisterio || ''; }
-                if (m.estadoCivil) {
-                    selectEstadoCivil.value = m.estadoCivil;
-                    containerDataCasamento.classList.toggle('hidden', m.estadoCivil !== 'casado');
-                    containerDataDivorcio.classList.toggle('hidden', m.estadoCivil !== 'divorciado');
-                    containerDataViuvez.classList.toggle('hidden', m.estadoCivil !== 'viuvo');
-                }
-                if (m.filhos && m.filhos.length > 0) { m.filhos.forEach(adicionarFilho); }
-                if (m.veioDeOutraIgreja === 'sim') {
-                    selectVeioDeOutraIgreja.value = 'sim'; containerNomeOutraIgreja.classList.remove('hidden');
-                }
-                if (m.batismoAguas === 'sim') { selectBatismoAguas.value = 'sim'; containerDataBatismoAguas.classList.remove('hidden'); }
-                if (m.batismoEspiritoSanto === 'sim') { selectBatismoEspiritoSanto.value = 'sim'; containerDataBatismoEspiritoSanto.classList.remove('hidden'); }
-                if (m.liderancaOutraIgreja === 'sim') { selectLideranca.value = 'sim'; containerQualLideranca.classList.remove('hidden'); }
-                if (m.dons && Array.isArray(m.dons)) {
-                    m.dons.forEach(dom => {
-                        const check = document.getElementById(`dom${dom.charAt(0).toUpperCase() + dom.slice(1)}`);
-                        if (check) {
-                            check.checked = true;
-                            if (dom === 'louvor') containerLouvor.classList.remove('hidden');
-                            if (dom === 'outro') containerOutroDom.classList.remove('hidden');
-                        }
-                    });
-                }
-                if (m.autorizaComunicados) document.querySelector(`input[name="autorizaComunicados"][value="${m.autorizaComunicados}"]`).checked = true;
-                if (m.autorizaImagem) document.querySelector(`input[name="autorizaImagem"][value="${m.autorizaImagem}"]`).checked = true;
-
-                if (m.foto) { 
-                    fotoExistenteUrl = m.foto; 
-                    fotoPreview.src = m.foto; 
-                    fotoPreview.style.display = "block"; 
-                    fotoPlaceholder.style.display = "none"; 
-                }
-            } catch (error) { console.error('Erro ao carregar membro:', error); alert('Não foi possível carregar os dados do membro.'); }
-        } else {
-            tituloPagina.textContent = 'Cadastrar Novo Membro';
-        }
-        
-        form.addEventListener('submit', salvarMembro);
-
-        // --- ADICIONADO: Funcionalidade do botão Voltar ---
-        document.getElementById('btn-voltar').addEventListener('click', () => {
-            // Volta para a página anterior no histórico do navegador
-            window.history.back();
-        });
-    };
-
-    inicializarPagina();
-});
-</script>
+<script src="cadastro.membro.js"></script>
 
 </html>

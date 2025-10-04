@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let todosOsMembros = [];
     const CORES_BASE = ['#0033a0', '#ff8800', '#28a745', '#0056b3', '#ffcd56', '#4bc0c0', '#6c757d'];
 
+    // --- Seletores dos Filtros ---
+    const filtroGenero = document.getElementById('filtro-genero-analise');
+    const filtroFaixaEtaria = document.getElementById('filtro-faixa-etaria-analise');
+    const filtroEstadoCivil = document.getElementById('filtro-estado-civil-analise');
+    const btnLimparFiltros = document.getElementById('btn-limpar-filtros');
+
     const geradorDeCor = (function() {
         let matizAtual = 0;
         const incrementoDourado = 0.618033988749895;
@@ -269,6 +275,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function criarGraficoEstadoCivil(membros) {
+        const contagem = {};
+        membros.forEach(m => {
+            const estado = m.estadoCivil ? capitalizar(m.estadoCivil) : 'Não Informado';
+            contagem[estado] = (contagem[estado] || 0) + 1;
+        });
+
+        criarGrafico('grafico-estado-civil', 'pie', {
+            labels: Object.keys(contagem),
+            datasets: [{
+                label: 'Estado Civil',
+                data: Object.values(contagem),
+                backgroundColor: [CORES_BASE[0], CORES_BASE[1], CORES_BASE[2], CORES_BASE[3], CORES_BASE[6]],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        }, {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } }
+        });
+    }
+
+    function criarGraficoAniversariantesPorMes(membros) {
+        const contagemPorMes = Array(12).fill(0);
+        membros.forEach(m => {
+            if (m.dataNascimento) {
+                const mes = new Date(m.dataNascimento).getMonth(); // 0 = Janeiro, 11 = Dezembro
+                contagemPorMes[mes]++;
+            }
+        });
+
+        const labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+        criarGrafico('grafico-aniversariantes-mes', 'bar', {
+            labels: labels,
+            datasets: [{
+                label: 'Nº de Aniversariantes',
+                data: contagemPorMes,
+                backgroundColor: CORES_BASE[5]
+            }]
+        }, {
+            responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }
+        });
+    }
+
     function criarGraficoMinisterios(membros) {
         const contagem = {};
         membros.filter(m => m.temMinisterio === 'sim').forEach(m => {
@@ -402,6 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
         criarGraficoGenero(membros);
         criarGraficoFaixaEtaria(membros);
         criarGraficoCargos(membros);
+        criarGraficoAniversariantesPorMes(membros);
+        criarGraficoEstadoCivil(membros); // Adicionada a chamada para o novo gráfico
         criarGraficoMinisterios(membros);
         criarGraficoCrescimento(membros);
         criarGraficoFrequenciaPorPerfil();
@@ -414,11 +468,56 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('card-proximo-aniversariante').addEventListener('click', () => { mostrarModalAniversariantes(); });
     }
 
+    // --- LÓGICA DE FILTRAGEM ---
+    function aplicarFiltrosEAtualizar() {
+        const genero = filtroGenero.value;
+        const faixaEtaria = filtroFaixaEtaria.value;
+        const estadoCivil = filtroEstadoCivil.value;
+
+        let membrosFiltrados = todosOsMembros;
+
+        if (genero) {
+            membrosFiltrados = membrosFiltrados.filter(m => m.genero === genero);
+        }
+
+        if (estadoCivil) {
+            membrosFiltrados = membrosFiltrados.filter(m => m.estadoCivil === estadoCivil);
+        }
+
+        if (faixaEtaria) {
+            const [min, max] = faixaEtaria.split('-').map(Number);
+            membrosFiltrados = membrosFiltrados.filter(m => {
+                const idade = calcularIdade(m.dataNascimento);
+                if (idade === null) return false;
+                if (faixaEtaria === '60+') return idade >= 60;
+                return idade >= min && idade <= max;
+            });
+        }
+
+        atualizarDashboard(membrosFiltrados);
+    }
+
+    function limparFiltros() {
+        filtroGenero.value = '';
+        filtroFaixaEtaria.value = '';
+        filtroEstadoCivil.value = '';
+        aplicarFiltrosEAtualizar();
+    }
+
+    function adicionarEventListenersFiltros() {
+        filtroGenero.addEventListener('change', aplicarFiltrosEAtualizar);
+        filtroFaixaEtaria.addEventListener('change', aplicarFiltrosEAtualizar);
+        filtroEstadoCivil.addEventListener('change', aplicarFiltrosEAtualizar);
+        btnLimparFiltros.addEventListener('click', limparFiltros);
+    }
+
     async function iniciar() {
         injetarCSSModal();
         prepararCanvasWrapper('grafico-genero');
         prepararCanvasWrapper('grafico-faixa-etaria');
         prepararCanvasWrapper('grafico-cargos');
+        prepararCanvasWrapper('grafico-aniversariantes-mes');
+        prepararCanvasWrapper('grafico-estado-civil'); // Adicionado
         prepararCanvasWrapper('grafico-ministerios');
         prepararCanvasWrapper('grafico-frequencia-perfil');
         try {
@@ -429,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             atualizarDashboard(todosOsMembros);
             adicionarEventosAosCards();
+            adicionarEventListenersFiltros(); // Adiciona os listeners para os filtros
         } catch (error) {
             console.error('Falha ao carregar e processar dados:', error);
             document.querySelector('.conteudo').innerHTML = '<h1>Erro ao carregar dados. Verifique a conexão com o servidor.</h1>';

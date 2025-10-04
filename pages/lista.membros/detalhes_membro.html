@@ -511,8 +511,9 @@
                                     <div class="dropdown">
                                         <button class="btn-acao-detalhe btn-imprimir"><i class='bx bxs-id-card'></i> Cartão</button>
                                         <div class="dropdown-content">
-                                            <a id="link-personalizar-cartao" href="#"><i class='bx bxs-paint'></i> Personalizar / Imprimir</a>
-                                            <a id="link-ver-cartao-virtual" href="#" target="_blank"><i class='bx bx-share-alt'></i> Ver Cartão Virtual</a>
+                                            <a id="link-personalizar-cartao" href="#"><i class='bx bxs-paint'></i> Imprimir Cartão Físico</a>
+                                            <a id="link-ver-cartao-virtual" href="#" target="_blank"><i class='bx bx-link-external'></i> Ver Cartão Virtual</a>
+                                            <a id="btn-copiar-link-virtual" href="#"><i class='bx bx-copy'></i> Copiar Link</a>
                                         </div>
                                     </div>
                                     <button id="btn-excluir" class="btn-acao-detalhe btn-perigo"><i class='bx bxs-trash'></i> Excluir</button>
@@ -620,8 +621,21 @@
                     });
 
                     // Links do cartão
+                    const linkVirtualRelativo = `cartao_virtual.html?id=${membroId}`;
                     document.getElementById('link-personalizar-cartao').href = `cartao_membro.html?id=${membroId}`;
-                    document.getElementById('link-ver-cartao-virtual').href = `cartao_virtual.html?id=${membroId}`;
+                    document.getElementById('link-ver-cartao-virtual').href = linkVirtualRelativo;
+
+                    // --- ADICIONADO: Lógica para copiar o link ---
+                    document.getElementById('btn-copiar-link-virtual').addEventListener('click', (e) => {
+                        e.preventDefault(); // Previne a navegação do link
+                        const urlCompleta = new URL(linkVirtualRelativo, window.location.href).href;
+                        navigator.clipboard.writeText(urlCompleta).then(() => {
+                            alert('Link do Cartão Virtual copiado para a área de transferência!');
+                        }).catch(err => {
+                            console.error('Erro ao copiar o link: ', err);
+                            alert('Não foi possível copiar o link.');
+                        });
+                    });
                     
                     document.getElementById('btn-excluir').addEventListener('click', async () => {
                         if (confirm('Tem certeza que deseja excluir este membro? Esta ação não pode ser desfeita.')) {

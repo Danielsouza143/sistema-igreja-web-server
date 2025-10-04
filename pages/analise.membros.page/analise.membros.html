@@ -74,6 +74,28 @@
     <main class="conteudo">
         <h1 class="title-page">Análise de Membros</h1>
         
+        <section class="filtros-analise">
+            <div class="filtros-wrapper">
+                <select id="filtro-genero-analise" class="filtro-select">
+                    <option value="">Todos os Gêneros</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="feminino">Feminino</option>
+                </select>
+                <select id="filtro-faixa-etaria-analise" class="filtro-select">
+                    <option value="">Todas as Faixas Etárias</option>
+                    <option value="0-11">Crianças (0-11)</option>
+                    <option value="12-17">Adolescentes (12-17)</option>
+                    <option value="18-29">Jovens (18-29)</option>
+                    <option value="30-59">Adultos (30-59)</option>
+                    <option value="60+">Idosos (60+)</option>
+                </select>
+                <select id="filtro-estado-civil-analise" class="filtro-select">
+                    <option value="">Todos os Estados Civis</option><option value="solteiro">Solteiro(a)</option><option value="casado">Casado(a)</option><option value="divorciado">Divorciado(a)</option><option value="viuvo">Viúvo(a)</option>
+                </select>
+                <button id="btn-limpar-filtros" class="btn-secundario">Limpar Filtros</button>
+            </div>
+        </section>
+
         <section class="dashboard-resumo">
             <div id="card-total-membros" class="card-resumo card-interativo">
                 <i class='bx bxs-group'></i>
@@ -117,6 +139,10 @@
             <div class="grafico-wrapper">
                 <h2>Cargos Eclesiásticos</h2>
                 <canvas id="grafico-cargos"></canvas>
+            </div>
+            <div class="grafico-wrapper">
+                <h2>Aniversariantes por Mês</h2>
+                <canvas id="grafico-aniversariantes-mes"></canvas>
             </div>
             <div class="grafico-wrapper">
                 <h2>Engajamento Ministerial</h2>
