@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Busca presenças de membros e visitantes
             const [presencasMembros, presencasVisitantes] = await Promise.all([
                 window.api.get('/api/presencas-membros'),
-                window.api.get('/api/presencas')
+                window.api.get('/api/presencas-visitantes')
             ]);
 
             const totalCultos = new Set([...presencasMembros.map(p => p.data), ...presencasVisitantes.map(p => p.data)]).size;

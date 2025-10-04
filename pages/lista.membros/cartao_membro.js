@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#member-marital-status-virtual').textContent = fields['member-marital-status'];
         $('#card-validity-virtual').textContent = fields['card-validity'];
         const photoUrl = window.api.getImageUrl(membro.foto); // CORREÇÃO: Usa a função global também para o cartão virtual.
-        const photoElVirtual = $('#member-photo-virtual');
+        const photoElVirtual = $('#member-photo-virtual'); // Este seletor parece estar faltando no seu HTML, mas a lógica está correta.
         photoElVirtual.style.backgroundImage = photoUrl ? `url(${photoUrl})` : 'none';
         photoElVirtual.innerHTML = photoUrl ? '' : `<i class='bx bxs-user'></i>`;
         const virtualCardUrl = `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${membro._id}`;

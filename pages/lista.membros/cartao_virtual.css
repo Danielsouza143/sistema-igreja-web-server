@@ -57,9 +57,6 @@ body {
 .card-header .logo {
     width: 45px;
     height: 45px;
-    border-radius: 50%;
-    background-color: white;
-    padding: 5px;
 }
 
 .card-header h3 {
