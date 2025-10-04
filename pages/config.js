@@ -2,7 +2,7 @@
 // Este arquivo define a URL base para todas as chamadas de API no sistema.
 
 // Quando o sistema está online, usamos a URL pública do servidor no Render.
-const API_BASE_URL_PRODUCAO = 'https://sistema-igreja-web-server.onrender.com/';
+const API_BASE_URL_PRODUCAO = 'https://sistema-igreja-web-server.onrender.com';
 
 // Quando você está desenvolvendo no seu PC, pode usar o endereço local.
 const API_BASE_URL_LOCAL = 'http://localhost:3000';
