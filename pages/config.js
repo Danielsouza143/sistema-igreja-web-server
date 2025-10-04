@@ -1,27 +1,29 @@
-// Arquivo: /pages/config.js
+// Arquivo: /pages/config.js (VERSÃO FINAL PARA PRODUÇÃO)
 // Este arquivo define a URL base para todas as chamadas de API no sistema.
-// Altere esta variável se o endereço do seu servidor mudar.
-// Usar 'localhost' é mais estável para desenvolvimento, pois não muda.
 
-if (typeof window.API_BASE_URL === 'undefined') {
-    window.API_BASE_URL = 'http://localhost:8080';
-}
+// Quando o sistema está online, usamos a URL pública do servidor no Render.
+const API_BASE_URL_PRODUCAO = 'https://sistema-igreja-web-server.onrender.com/';
 
+// Quando você está desenvolvendo no seu PC, pode usar o endereço local.
+const API_BASE_URL_LOCAL = 'http://localhost:3000';
+
+// O código abaixo decide qual URL usar. Se o site está em 'localhost', usa a local.
+// Se está online (no Render, Netlify, etc.), usa a de produção.
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocal ? API_BASE_URL_LOCAL : API_BASE_URL_PRODUCAO;
+
+
+// O objeto 'api' continua o mesmo, ele vai usar a variável API_BASE_URL correta.
 if (typeof window.api === 'undefined') {
     window.api = {
         async request(endpoint, method = 'GET', data = null) {
             const isFormData = data instanceof FormData;
-
             const config = {
                 method,
                 headers: {
-                    // Adiciona o token de autorização se ele existir
-                    'Authorization': localStorage.getItem('userToken') 
-                        ? `Bearer ${localStorage.getItem('userToken')}` 
-                        : ''
+                    'Authorization': localStorage.getItem('userToken') ? `Bearer ${localStorage.getItem('userToken')}` : ''
                 }
             };
-
             if (data) {
                 if (!isFormData) {
                     config.headers['Content-Type'] = 'application/json';
@@ -30,43 +32,24 @@ if (typeof window.api === 'undefined') {
                     config.body = data;
                 }
             }
-
-            const response = await fetch(`${window.API_BASE_URL}${endpoint}`, config);
-
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
             if (!response.ok) {
-                // --- ADICIONADO: Lógica de redirecionamento ---
-                // Se o erro for 401 (Não Autorizado), o token é inválido ou expirou.
                 if (response.status === 401) {
-                    localStorage.removeItem('userToken'); // Limpa o token antigo
-                    window.location.href = '/index.html'; // Redireciona para a página de login
+                    localStorage.removeItem('userToken');
+                    window.location.href = '/index.html';
                 }
                 const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
                 throw new Error(errorData.message || `Erro na requisição: ${response.status}`);
             }
-
-            // Retorna a resposta JSON apenas se houver conteúdo
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return response.json();
             }
-            // Retorna a resposta bruta para casos como DELETE sem corpo
             return response;
         },
-
-        async get(endpoint) {
-            return this.request(endpoint);
-        },
-
-        async post(endpoint, data) {
-            return this.request(endpoint, 'POST', data);
-        },
-
-        async put(endpoint, data) {
-            return this.request(endpoint, 'PUT', data);
-        },
-
-        async delete(endpoint) {
-            return this.request(endpoint, 'DELETE');
-        }
+        async get(endpoint) { return this.request(endpoint); },
+        async post(endpoint, data) { return this.request(endpoint, 'POST', data); },
+        async put(endpoint, data) { return this.request(endpoint, 'PUT', data); },
+        async delete(endpoint) { return this.request(endpoint, 'DELETE'); }
     };
 }
