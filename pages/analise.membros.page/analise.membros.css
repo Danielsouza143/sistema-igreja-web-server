@@ -107,3 +107,34 @@
     border-radius: 8px;
     padding: 20px;
 }
+
+/* --- SEÇÃO DE FILTROS --- */
+.filtros-analise {
+    background-color: #f8f9fa;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid #e9ecef;
+}
+
+.filtros-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.filtro-select {
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.btn-secundario {
+    padding: 10px 20px; border-radius: 6px; border: 1px solid #ced4da; cursor: pointer; font-weight: 600; font-size: 1rem; background-color: #e9ecef; color: #343a40; transition: background-color 0.2s;
+}
+.btn-secundario:hover { background-color: #dee2e6; }
