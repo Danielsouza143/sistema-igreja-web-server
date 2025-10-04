@@ -1,0 +1,81 @@
+/* Arquivo: pages/styles/tabelas-abas.css */
+/* Estilos reutilizáveis para páginas com abas e tabelas */
+
+/* --- Container Principal da Página com Abas --- */
+.header-pagina {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.acoes-header {
+    display: flex;
+    gap: 15px;
+}
+
+/* --- Sistema de Abas --- */
+.container-abas {
+    background-color: var(--cor-fundo-card);
+    border-radius: var(--border-radius-padrao);
+    box-shadow: var(--sombra-padrao);
+    overflow: hidden;
+}
+
+.abas-links {
+    display: flex;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.aba-link {
+    padding: 14px 25px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--cor-texto-claro);
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.aba-link:hover {
+    color: var(--cor-primaria);
+}
+
+.aba-link.active {
+    color: var(--cor-acao);
+    border-bottom-color: var(--cor-acao);
+}
+
+/* --- Conteúdo das Abas (Correção Principal) --- */
+.abas-conteudo-wrapper {
+    padding: 25px;
+}
+
+.aba-conteudo {
+    display: none; /* Esconde todas as abas por padrão */
+}
+
+.aba-conteudo.active {
+    display: block; /* Mostra apenas a aba ativa */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Filtros e Tabela --- */
+.filtros-tabela {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.filtros-tabela input, .filtros-tabela select { width: 100%; max-width: 300px; padding: 10px; border: 1px solid var(--cor-borda); border-radius: 6px; }

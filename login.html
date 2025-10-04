@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gestão ADTC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/styles/global.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f7f9; }
+        .login-container { background-color: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .login-logo { width: 80px; margin-bottom: 20px; }
+        .login-container h1 { font-size: 1.8rem; margin-bottom: 10px; color: #333; }
+        .login-container p { color: #777; margin-bottom: 30px; }
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; }
+        .btn-login { width: 100%; padding: 14px; font-size: 1rem; font-weight: 600; background-color: var(--cor-primaria, #001f5d); color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
+        .btn-login:hover { background-color: #0033a0; }
+        .login-footer { margin-top: 20px; }
+        .login-footer a { color: #6c757d; font-size: 0.9rem; text-decoration: none; }
+        .login-footer a:hover { text-decoration: underline; color: var(--cor-primaria, #001f5d); }
+        .message { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; padding: 10px; border-radius: 8px; margin-top: 20px; display: none; }
+        .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 8px; margin-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="/pages/logo.tab.png" alt="Logo da Igreja" class="login-logo">
+        <h1>Bem-vindo!</h1>
+        <p id="login-subtitle">Faça login para acessar o sistema.</p>
+        <form id="form-login" class="">
+            <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn-login">Entrar</button>
+        </form>
+        <form id="form-forgot-password" class="hidden">
+            <div class="form-group">
+                <label for="forgot-username">Usuário (E-mail)</label>
+                <input type="email" id="forgot-username" required>
+            </div>
+            <button type="submit" class="btn-login">Enviar Link de Recuperação</button>
+        </form>
+        <div class="login-footer">
+            <a href="#" id="toggle-link">Esqueci minha senha</a>
+        </div>
+        <div id="message" class="message"></div>
+        <div id="error-message" class="error-message"></div>
+    </div>
+
+    <script src="/pages/config.js"></script>
+    <script>
+        const formLogin = document.getElementById('form-login');
+        const formForgotPassword = document.getElementById('form-forgot-password');
+        const toggleLink = document.getElementById('toggle-link');
+        const subtitle = document.getElementById('login-subtitle');
+        const messageEl = document.getElementById('message');
+        const errorEl = document.getElementById('error-message');
+
+        let isLoginView = true;
+
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginView = !isLoginView;
+            formLogin.classList.toggle('hidden', !isLoginView);
+            formForgotPassword.classList.toggle('hidden', isLoginView);
+            
+            if (isLoginView) {
+                subtitle.textContent = 'Faça login para acessar o sistema.';
+                toggleLink.textContent = 'Esqueci minha senha';
+            } else {
+                subtitle.textContent = 'Insira seu usuário para recuperar a senha.';
+                toggleLink.textContent = 'Voltar para o Login';
+            }
+            messageEl.style.display = 'none';
+            errorEl.style.display = 'none';
+        });
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                const response = await window.api.post('/api/auth/login', { username, password });
+                localStorage.setItem('userToken', response.token);
+                localStorage.setItem('userInfo', JSON.stringify(response.user));
+                window.location.href = '/pages/dashboard/dashboard.html';
+            } catch (error) {
+                errorEl.textContent = error.message || 'Erro ao tentar fazer login.';
+                errorEl.style.display = 'block';
+            }
+        });
+
+        formForgotPassword.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('forgot-username').value;
+            try {
+                const response = await window.api.post('/api/auth/forgot-password', { username });
+                messageEl.textContent = response.message;
+                messageEl.style.display = 'block';
+                errorEl.style.display = 'none';
+            } catch (error) {
+                errorEl.textContent = error.message || 'Erro ao solicitar recuperação.';
+                errorEl.style.display = 'block';
+                messageEl.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

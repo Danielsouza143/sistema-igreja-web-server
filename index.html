@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADTC - Sistema Administrativo</title>
+    <!-- Usando caminhos absolutos a partir da raiz do site -->
+    <link rel="stylesheet" href="pages/styles/global.css">
+    <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <!-- Corrigindo o caminho da imagem -->
+            <img src="/pages/logo.tab.png" alt="Logo da Igreja" class="login-logo">
+            <h2>Sistema Administrativo</h2>
+            <p>ADTC - Tabernáculo Celeste</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-button">Entrar</button>
+                <div id="error-message" class="error-message"></div>
+            </form>
+            <!-- Botão de cadastro que será exibido condicionalmente -->
+            <a href="/cadastro.usuario.html" id="btn-cadastrar-usuario" class="btn-cadastrar-usuario" style="display: none;">Cadastrar Novo Usuário</a>
+            <div class="login-footer">
+                <a href="#">Esqueceu a senha?</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/pages/config.js"></script>
+    <script src="/login.js"></script>
+    
+</body>
+</html>

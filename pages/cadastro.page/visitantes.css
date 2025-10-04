@@ -1,0 +1,132 @@
+/* --- GERAL E LAYOUT --- */
+/* As variáveis de cor e estilos de body agora estão no global.css */
+.conteudo { max-width: 1600px; margin: 20px auto; padding: 20px; background-color: var(--cor-branco); border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.title-page { font-size: 2.2rem; color: var(--cor-primaria); margin-bottom: 25px; text-align: center; }
+
+/* --- NAVEGAÇÃO POR ABAS --- */
+.abas-navegacao { display: flex; border-bottom: 2px solid var(--cor-cinza-claro); margin-bottom: 30px; }
+.aba-link { padding: 12px 25px; cursor: pointer; border: none; background: none; font-size: 1.1rem; font-weight: 600; color: #555; margin-bottom: -2px; border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s; }
+.aba-link:hover { color: var(--cor-acao); }
+.aba-link.active { color: var(--cor-acao); border-bottom-color: var(--cor-acao); }
+.aba-conteudo { display: none; }
+.aba-conteudo.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- BOTÕES E AÇÕES --- */
+.btn-principal { background-color: var(--cor-acao); color: white ; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-principal:hover { background-color: var(--cor-acao, #4d50ff); }
+.btn-principal:disabled { background-color: #ccc; cursor: not-allowed; }
+.btn-secundario { background-color: #6c757d; color: var(--cor-branco); padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+
+/* --- ABA LISTA DE VISITANTES --- */
+.acoes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+#busca-visitante { padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; max-width: 350px; }
+.tabela-wrapper { overflow-x: auto; }
+.tabela-dados { width: 100%; border-collapse: collapse; }
+.tabela-dados th, .tabela-dados td { padding: 15px; text-align: left; border-bottom: 1px solid var(--cor-cinza-claro); }
+.tabela-dados th { background-color: #f8f9fa; font-weight: 600; }
+.acoes-item { display: flex; gap: 10px; }
+.acoes-item i { font-size: 1.3rem; cursor: pointer; transition: transform 0.2s; }
+.acoes-item .bxs-edit { color: var(--cor-secundaria); }
+.acoes-item .bxs-trash { color: var(--cor-perigo); }
+.acoes-item i:hover { transform: scale(1.2); }
+
+/* --- MODAL DE CADASTRO --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
+.modal-overlay.active { display: flex; }
+.modal-content { background-color: var(--cor-branco); padding: 30px; border-radius: 8px; width: 90%; max-width: 700px; position: relative; }
+.modal-close { position: absolute; top: 10px; right: 15px; font-size: 2rem; color: #aaa; background: none; border: none; cursor: pointer; }
+.modal-content h2 { margin-top: 0; margin-bottom: 20px; color: var(--cor-primaria); }
+#form-visitante .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#form-visitante .form-group { display: flex; flex-direction: column; }
+#form-visitante .span-2 { grid-column: span 2; }
+#form-visitante label { font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+#form-visitante input, #form-visitante select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+
+/* --- ABA CONTROLE DE PRESENÇA --- */
+.presenca-header { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
+.presenca-header h2 { margin: 0; font-size: 1.5rem; color: var(--cor-primaria); }
+.presenca-header .filtro-grupo { display: flex; align-items: center; gap: 10px; }
+.presenca-header label { font-weight: 600; }
+.presenca-header input[type="date"], .presenca-header input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
+#lista-presenca-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-height: 50vh; overflow-y: auto; padding: 10px; }
+.item-presenca { display: flex; align-items: center; gap: 15px; padding: 12px; border: 1px solid var(--cor-cinza-claro); border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+.item-presenca:hover { background-color: #f8f9fa; }
+.item-presenca.presente { background-color: #e9f5ec; border-left: 4px solid var(--cor-sucesso); }
+.item-presenca input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+.item-presenca label { font-weight: 500; cursor: pointer; flex-grow: 1; }
+.presenca-footer { text-align: right; margin-top: 20px; }
+
+/* --- ABA ANÁLISES --- */
+.dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 40px; }
+.card-resumo { background-color: var(--cor-branco); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.07); border-left: 5px solid var(--cor-acao); display: flex; align-items: center; gap: 15px; }
+.card-resumo i { font-size: 2.5rem; color: var(--cor-acao); opacity: 0.8; }
+.card-resumo .valor-card { font-size: 2rem; font-weight: 700; color: var(--cor-texto); }
+.card-resumo p { margin: 0; font-size: 0.9rem; color: #555; }
+
+.graficos-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 40px; }
+.grafico-wrapper { background-color: var(--cor-branco); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.07); }
+.grafico-wrapper h2 { font-size: 1.3rem; margin-top: 0; margin-bottom: 20px; text-align: center; color: var(--cor-primaria); }
+
+/* CORREÇÃO: Contêiner do canvas para evitar esticamento infinito */
+.chart-canvas-container {
+    position: relative;
+    height: 350px; /* Altura fixa para os gráficos */
+    width: 100%;
+}
+
+.ranking-wrapper { background-color: var(--cor-branco); padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.07); }
+.ranking-wrapper h2 { font-size: 1.5rem; margin-top: 0; text-align: center; color: var(--cor-primaria); }
+.subtitulo-ranking { text-align: center; color: #666; margin-top: 10px; margin-bottom: 20px; }
+#lista-ranking-engajamento { list-style: none; padding: 0; }
+.ranking-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--cor-cinza-claro); }
+.ranking-item:last-child { border-bottom: none; }
+.ranking-posicao { font-size: 1.2rem; font-weight: 700; color: var(--cor-acao); width: 40px; text-align: center; }
+.ranking-nome { font-weight: 600; flex-grow: 1; }
+.ranking-presencas { font-size: 1.1rem; font-weight: 700; color: var(--cor-sucesso); }
+
+/* --- MODAL DE DETALHES --- */
+#detalhes-visitante-corpo .detalhe-header { display: flex; flex-direction: column; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--cor-cinza-claro); margin-bottom: 20px; text-align: center; }
+#detalhes-visitante-corpo .detalhe-header h2 { font-size: 1.8rem; margin: 0; color: var(--cor-primaria); }
+#detalhes-visitante-corpo .detalhe-header p { margin: 5px 0 0; color: #666; }
+#detalhes-visitante-corpo .detalhe-dados { margin-top: 15px; }
+#detalhes-visitante-corpo .detalhe-dados h3 { font-size: 1.2rem; color: var(--cor-secundaria); border-left: 3px solid var(--cor-secundaria); padding-left: 8px; margin-bottom: 10px; }
+#detalhes-visitante-corpo .detalhe-dados p { margin: 8px 0; font-size: 1rem; }
+.carregando-detalhe { text-align: center; padding: 40px; color: #888; }
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 992px) {
+    .title-page { font-size: 1.8rem; }
+    .abas-navegacao { overflow-x: auto; }
+    .aba-link { white-space: nowrap; }
+    #form-visitante .form-grid { grid-template-columns: 1fr; }
+    #form-visitante .span-2 { grid-column: span 1; }
+    .graficos-container { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .conteudo { padding: 15px; }
+    .acoes-header { flex-direction: column; align-items: stretch; }
+    #busca-visitante { max-width: 100%; }
+    .presenca-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+    .tabela-dados thead { display: none; }
+    .tabela-dados, .tabela-dados tbody, .tabela-dados tr, .tabela-dados td { display: block; width: 100%; }
+    .tabela-dados tr { margin-bottom: 15px; border: 1px solid var(--cor-cinza-claro); border-radius: 8px; padding: 10px; }
+    .tabela-dados td { text-align: right; padding-left: 50%; position: relative; border-bottom: 0; }
+    .tabela-dados td::before { content: attr(data-label); position: absolute; left: 10px; width: 45%; text-align: left; font-weight: 600; color: var(--cor-primaria); }
+}
+
+@media (max-width: 480px) {
+    .modal-content { padding: 20px; }
+    .aba-link { padding: 10px 15px; font-size: 1rem; }
+    .dashboard-resumo { grid-template-columns: 1fr; }
+}
+
+/* Mensagem de carregamento/vazio */
+.mensagem-carregando, .mensagem-vazio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    font-size: 1.1rem;
+}

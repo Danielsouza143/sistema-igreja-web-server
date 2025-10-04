@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Membro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/pages/styles/global.css">
+    <link rel="stylesheet" href="/components/menu.css">
+
+    <style>
+        /* --- ESTILOS GERAIS DA PÁGINA --- */
+        :root {
+            --cor-primaria: #001f5d;
+            --cor-secundaria: #0033a0;
+            --cor-fundo: #f4f7f9;
+            --cor-texto: #333;
+            --cor-branco: #fff;
+            --cor-cinza-claro: #eee;
+        }
+
+        /* --- RESET GERAL --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+        }
+
+        /* --- CONTEÚDO PRINCIPAL --- */
+        .conteudo {
+            padding: 20px;
+        }
+
+        .title-page {
+            font-size: 2rem;
+            color: var(--cor-primaria);
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        /* --- DETALHES DO MEMBRO --- */
+        .detalhes-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: var(--cor-branco);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .detalhes-header {
+            display: flex;
+            align-items: center;
+            padding: 24px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .detalhe-foto {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid var(--cor-branco);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .detalhe-foto-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: #adb5bd;
+        }
+
+        .membro-titulo-info {
+            flex-grow: 1;
+        }
+
+        .membro-titulo-info h2 {
+            font-size: 1.8rem;
+            color: var(--cor-primaria);
+            margin: 0 0 5px 0;
+        }
+
+        .membro-titulo-info p {
+            font-size: 1rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .detalhes-acoes {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn-acao-detalhe {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-acao-detalhe i {
+            font-size: 1.2rem;
+        }
+
+        .btn-editar { background-color: #0056b3; color: white; }
+        .btn-editar:hover { background-color: #004494; }
+
+        .btn-imprimir { background-color: #17a2b8; color: white; }
+        .btn-imprimir:hover { background-color: #138496; }
+
+        .btn-excluir, .btn-perigo { background-color: #dc3545; color: white; }
+        .btn-excluir:hover, .btn-perigo:hover { background-color: #c82333; }
+        
+        .btn-financeiro { background-color: #28a745; color: white; }
+        .btn-financeiro:hover { background-color: #218838; }
+
+        .btn-voltar { background-color: #6c757d; color: white; }
+        .btn-voltar:hover { background-color: #5a6268; }
+
+        /* --- Dropdown para Ações --- */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem;
+        }
+        .dropdown-content a:hover { background-color: #f1f1f1; }
+        .dropdown:hover .dropdown-content { display: block; }
+
+        /* --- ABAS --- */
+        .detalhes-nav {
+            display: flex;
+            background-color: #e9ecef;
+            padding: 0 24px;
+        }
+
+        .tab-link {
+            padding: 15px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #495057;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-link.active, .tab-link:hover {
+            color: var(--cor-primaria);
+            border-bottom-color: var(--cor-primaria);
+        }
+
+        .detalhes-conteudo {
+            padding: 24px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-group {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-group h4 {
+            font-size: 1.1rem;
+            color: var(--cor-primaria);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.95rem;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item strong {
+            color: #495057;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .info-item span {
+            color: #212529;
+            text-align: right;
+        }
+
+        .info-item ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: right;
+        }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            color: #aaa;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .tabela-contribuicoes {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .tabela-contribuicoes th,
+        .tabela-contribuicoes td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tabela-contribuicoes th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .detalhes-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .detalhes-acoes {
+                justify-content: center;
+            }
+
+            .detalhes-nav {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 0 10px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="menu-placeholder">
+        <nav class="menu">
+            <div class="menu-lado-esquerdo">
+                <div class="hamburger-menu hamburger-mobile" id="hamburger-btn-mobile"><i class='bx bx-menu'></i></div>
+                <img src="/pages/logo.tab.png" alt="logo-tab" width="65" class="menu-logo" id="menu-logo-img" />
+                <h3 id="menu-church-name">ADTC - Tabernáculo Celeste</h3>
+            </div>
+            <div class="menu-acoes">
+                <div class="notificacao-container" id="notificacao-container"><i class='bx bxs-bell'></i><span class="notificacao-contador" id="notificacao-contador"></span></div>
+                <div class="conta-area" id="conta-area-trigger">
+                    <div id="user-avatar" class="user-avatar">U</div>
+                </div>
+            </div>
+        </nav>
+        <aside class="sub-menu">
+            <div class="hamburger-menu hamburger-desktop" id="hamburger-btn-desktop"><i class='bx bx-menu'></i></div>
+            <div class="menu-categorias">
+                <a href="/pages/dashboard/dashboard.html" class="sub-menu-link">Dashboard</a>
+                <a href="/pages/cadastro.page/cadastro.html" class="sub-menu-link">Cadastro</a>
+                <a href="/pages/lista.membros/lista.membros.html" class="sub-menu-link">Membros</a>
+                <a href="/pages/financeiro.page/financeiro.html" class="sub-menu-link">Financeiro</a>
+                <a href="/pages/utensilios/utensilios.html" class="sub-menu-link">Utensílios</a>
+                <a href="/pages/eventos/eventos.html" class="sub-menu-link">Eventos</a>
+            </div>
+        </aside>
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <nav id="sidebar-menu" class="sidebar">
+            <div class="sidebar-header">
+                <h4>Navegação Principal</h4>
+                <i class='bx bx-x' id="sidebar-close-btn"></i>
+            </div>
+            <ul class="sidebar-links">
+                <li><a href="/pages/dashboard/dashboard.html"><i class='bx bxs-dashboard'></i> Dashboard</a></li>
+                <li>
+                    <details><summary><i class='bx bxs-user-plus'></i> Cadastros</summary>
+                        <ul>
+                            <li><a href="/pages/cadastro.page/cadastro.html">- Central de Cadastros</a></li>
+                            <li><a href="/pages/cadastro.membro.page/cadastro.membro.html">- Novo Membro</a></li>
+                            <li><a href="/pages/cadastro.page/visitantes.html">- Visitantes</a></li>
+                        </ul>
+                    </details>
+                </li>
+                <li>
+                    <details><summary><i class='bx bxs-group'></i> Membros</summary>
+                        <ul><li><a href="/pages/lista.membros/lista.membros.html#lista">- Lista de Membros</a></li><li><a href="/pages/lista.membros/lista.membros.html#presenca">- Controle de Presença</a></li></ul>
+                    </details>
+                </li>
+                <li>
+                    <details><summary><i class='bx bxs-dollar-circle'></i> Financeiro</summary>
+                        <ul><li><a href="/pages/financeiro.page/financeiro.html#lancamentos">- Lançamentos</a></li><li><a href="/pages/financeiro.page/financeiro.html#dizimos">- Dízimos e Ofertas</a></li></ul>
+                    </details>
+                </li>
+                <li>
+                    <details><summary><i class='bx bxs-home-heart'></i> Pequenos Grupos</summary>
+                        <ul><li><a href="/pages/pequenos-grupos/pequenos-grupos.html#painel-grupos">- Painel de Grupos</a></li><li><a href="/pages/pequenos-grupos/pequenos-grupos.html#analise-geral">- Análise Geral</a></li></ul>
+                    </details>
+                </li>
+                <li>
+                    <details><summary><i class='bx bxs-box'></i> Utensílios</summary>
+                        <ul><li><a href="/pages/utensilios/utensilios.html#inventario">- Inventário</a></li><li><a href="/pages/utensilios/utensilios.html#emprestimos">- Empréstimos</a></li><li><a href="/pages/utensilios/utensilios.html#manutencao">- Manutenção</a></li></ul>
+                    </details>
+                </li>
+                <li>
+                    <details><summary><i class='bx bxs-calendar-event'></i> Eventos</summary>
+                        <ul><li><a href="/pages/eventos/eventos.html#painel">- Painel de Eventos</a></li></ul>
+                    </details>
+                </li>
+                <hr>
+                <li><a href="/pages/configuracoes/configuracoes.html"><i class='bx bxs-cog'></i> Configurações</a></li>
+                <li>
+                    <details><summary><i class='bx bxs-info-circle'></i> Sobre</summary>
+                        <div class="sidebar-sobre"><p><strong>Versão:</strong> 1.0.0</p><a href="#" target="_blank">Site do Desenvolvedor</a></div>
+                    </details>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="conteudo">
+        <h1 id="membroNome" class="title-page">Carregando...</h1>
+        <div class="detalhes-container" id="detalhesDoMembro">
+            <div id="detalhes-header-placeholder"><!-- O cabeçalho será inserido aqui --></div>
+            <div id="detalhes-body-placeholder"><!-- O conteúdo das abas será inserido aqui --></div>
+        </div>
+    </main>
+
+    <div id="modal-financeiro" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="btn-fechar-modal">&times;</button>
+            <h2 id="modal-titulo-financeiro">Histórico de Contribuições</h2>
+            <div id="modal-corpo-financeiro"></div>
+        </div>
+    </div>
+
+    <script src="/pages/config.js"></script>
+    <script src="/components/menu.js"></script>
+    <script>
+        function imprimirComprovante(lancamento) {
+            const conteudo = `
+                <div style="font-family: Arial, sans-serif; width: 80mm; margin: 0 auto; padding: 10px;">
+                    <h2 style="text-align: center; margin: 0;">ADTC - Tabernáculo Celeste</h2>
+                    <p style="text-align: center; font-size: 12px; border-bottom: 1px dashed #000; padding-bottom: 10px;">Comprovante de Contribuição</p>
+                    <p><strong>Membro:</strong> ${lancamento.membroNome}</p>
+                    <p><strong>Data:</strong> ${new Date(lancamento.data).toLocaleDateString('pt-BR')}</p>
+                    <p><strong>Categoria:</strong> ${lancamento.categoria}</p>
+                    <p><strong>Descrição:</strong> ${lancamento.descricao}</p>
+                    <h3 style="text-align: right; margin-top: 15px;">Valor: R$ ${lancamento.valor.toFixed(2).replace('.', ',')}</h3>
+                    <p style="font-size: 10px; text-align: center; margin-top: 20px;">Agradecemos a sua fidelidade e contribuição.</p>
+                </div>
+            `;
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><title>Comprovante</title></head><body onload="window.print();window.close()">${conteudo}</body></html>`);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Seletores do DOM ---
+            const membroNomeH1 = document.getElementById('membroNome');
+            const detalhesContainer = document.getElementById('detalhesDoMembro');
+            const headerPlaceholder = document.getElementById('detalhes-header-placeholder');
+            const bodyPlaceholder = document.getElementById('detalhes-body-placeholder');
+            const urlParams = new URLSearchParams(window.location.search);
+            const membroId = urlParams.get('id');
+
+            // --- Funções Auxiliares ---
+            function calcularIdade(dataNascimento) {
+                if (!dataNascimento) return 'Não informada';
+                const hoje = new Date();
+                const nascimento = new Date(dataNascimento);
+                let idade = hoje.getFullYear() - nascimento.getFullYear();
+                const mes = hoje.getMonth() - nascimento.getMonth();
+                if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+                    idade--;
+                }
+                return idade >= 0 ? `${idade} anos` : 'Data inválida';
+            }
+
+            function capitalizar(str) {
+                if (!str) return '';
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            function formatarData(data) {
+                if (!data) return 'Não informado';
+                return new Date(data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+            }
+
+            if (!membroId) {
+                membroNomeH1.textContent = 'Erro: ID do membro não encontrado.';
+                detalhesContainer.innerHTML = '<p>O ID do membro não foi fornecido na URL.</p>';
+                return;
+            }
+
+            // --- Lógica Principal ---
+            window.api.get(`/api/membros/${membroId}`)
+                .then(membro => {
+                    membroNomeH1.textContent = `Detalhes do Membro`;
+
+                    // --- Renderização do HTML ---
+                    const headerHTML = `
+                        <div class="detalhes-header">
+                            ${membro.foto ? `<img src="${membro.foto}" alt="Foto de ${membro.nome}" class="detalhe-foto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                            <div class="detalhe-foto-placeholder" style="${membro.foto ? 'display:none;' : 'display:flex;'}"><i class='bx bx-user-circle'></i></div>
+                            <div class="membro-titulo-info">
+                                <h2>${membro.nome}</h2>
+                                <p>${capitalizar(membro.cargoEclesiastico) || 'Não definido'}</p>
+                                <div class="detalhes-acoes">
+                                    <button id="btn-editar" class="btn-acao-detalhe btn-editar"><i class='bx bxs-edit'></i> Editar</button>
+                                    <div class="dropdown">
+                                        <button class="btn-acao-detalhe btn-imprimir"><i class='bx bxs-id-card'></i> Cartão</button>
+                                        <div class="dropdown-content">
+                                            <a id="link-personalizar-cartao" href="#"><i class='bx bxs-paint'></i> Personalizar / Imprimir</a>
+                                            <a id="link-ver-cartao-virtual" href="#" target="_blank"><i class='bx bx-share-alt'></i> Ver Cartão Virtual</a>
+                                        </div>
+                                    </div>
+                                    <button id="btn-excluir" class="btn-acao-detalhe btn-perigo"><i class='bx bxs-trash'></i> Excluir</button>
+                                    <a href="/pages/lista.membros/lista.membros.html" class="btn-acao-detalhe btn-voltar"><i class='bx bx-arrow-back'></i> Voltar</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    const bodyHTML = `
+                        <nav class="detalhes-nav">
+                            <button class="tab-link active" data-tab="pessoal">Dados Pessoais</button>
+                            <button class="tab-link" data-tab="financeiro">Financeiro</button>
+                            <button class="tab-link" data-tab="contato">Contato e Endereço</button>
+                            <button class="tab-link" data-tab="ministerial">Dados Ministeriais</button>
+                            <button class="tab-link" data-tab="outros">Outras Informações</button>
+                        </nav>
+                        <div class="detalhes-conteudo">
+                            <div id="pessoal" class="tab-pane active">
+                                <div class="info-grid">
+                                    <div class="info-group">
+                                        <h4>Identificação</h4>
+                                        <div class="info-item"><strong>Nome Completo:</strong> <span>${membro.nome || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>CPF:</strong> <span>${membro.cpf || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>RG:</strong> <span>${membro.rg || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>Data de Nascimento:</strong> <span>${formatarData(membro.dataNascimento)}</span></div>
+                                        <div class="info-item"><strong>Idade:</strong> <span>${calcularIdade(membro.dataNascimento)}</span></div>
+                                        <div class="info-item"><strong>Gênero:</strong> <span>${capitalizar(membro.genero) || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>Naturalidade:</strong> <span>${membro.naturalidade || 'Não informada'}</span></div>
+                                    </div>
+                                    <div class="info-group">
+                                        <h4>Família</h4>
+                                        <div class="info-item"><strong>Filiação:</strong> <span>${membro.filiacao || 'Não informada'}</span></div>
+                                        <div class="info-item"><strong>Estado Civil:</strong> <span>${capitalizar(membro.estadoCivil) || 'Não informado'}</span></div>
+                                        ${membro.estadoCivil === 'casado' && membro.dataCasamento ? `<div class="info-item"><strong>Data Casamento:</strong> <span>${formatarData(membro.dataCasamento)}</span></div>` : ''}
+                                        ${membro.nomeConjuge ? `<div class="info-item"><strong>Cônjuge:</strong> <span>${membro.nomeConjuge}</span></div>` : ''}
+                                        <div class="info-item"><strong>Filhos:</strong> <span>${membro.filhos && membro.filhos.length > 0 ? `<ul>${membro.filhos.map(f => `<li>${f.nome} (${formatarData(f.dataNascimento)})</li>`).join('')}</ul>` : 'Não informado'}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="financeiro" class="tab-pane">
+                                <h4>Histórico de Contribuições</h4>
+                                <div id="historico-financeiro-container"><p>Carregando histórico...</p></div>
+                            </div>
+                            <div id="contato" class="tab-pane">
+                                <div class="info-grid">
+                                    <div class="info-group">
+                                        <h4>Contato</h4>
+                                        <div class="info-item"><strong>Telefone:</strong> <span>${membro.telefone || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>E-mail:</strong> <span>${membro.email || 'Não informado'}</span></div>
+                                    </div>
+                                    <div class="info-group">
+                                        <h4>Endereço</h4>
+                                        <div class="info-item"><strong>Endereço:</strong> <span>${membro.endereco || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>Bairro:</strong> <span>${membro.bairro || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>Cidade:</strong> <span>${membro.cidade || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>Estado:</strong> <span>${membro.estado || 'Não informado'}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="ministerial" class="tab-pane">
+                                <div class="info-grid">
+                                    <div class="info-group">
+                                        <h4>Vida Cristã</h4>
+                                        <div class="info-item"><strong>Data de Conversão:</strong> <span>${formatarData(membro.dataConversao)}</span></div>
+                                        <div class="info-item"><strong>Batismo nas Águas:</strong> <span>${membro.batismoAguas === 'sim' ? `Sim, em ${formatarData(membro.dataBatismo)}` : 'Não'}</span></div>
+                                        <div class="info-item"><strong>Batismo no Espírito Santo:</strong> <span>${membro.batismoEspiritoSanto === 'sim' ? `Sim, em ${formatarData(membro.dataBatismoEspiritoSanto)}` : 'Não'}</span></div>
+                                        <div class="info-item"><strong>Veio de outra Igreja:</strong> <span>${membro.veioDeOutraIgreja === 'sim' ? `Sim (${membro.nomeOutraIgreja || 'Não especificada'})` : 'Não'}</span></div>
+                                    </div>
+                                    <div class="info-group">
+                                        <h4>Envolvimento</h4>
+                                        <div class="info-item"><strong>Cargo Eclesiástico:</strong> <span>${capitalizar(membro.cargoEclesiastico) || 'Não definido'}</span></div>
+                                        <div class="info-item"><strong>Pequeno Grupo:</strong> <span>${membro.grupoPequeno?.nome || 'Nenhum'}</span></div>
+                                        <div class="info-item"><strong>Ministério:</strong> <span>${membro.temMinisterio === 'sim' ? (membro.ministerio === 'outro' ? membro.nomeOutroMinisterio : capitalizar(membro.ministerio)) : 'Não participa'}</span></div>
+                                        ${membro.temMinisterio === 'sim' ? `<div class="info-item"><strong>Função no Ministério:</strong> <span>${capitalizar(membro.cargoMinisterio) || 'Não informado'}</span></div>` : ''}
+                                        ${membro.dons && membro.dons.length > 0 ? `<div class="info-item"><strong>Dons e Talentos:</strong> <span>${membro.dons.map(d => capitalizar(d.replace(/_/g, ' '))).join(', ')}</span></div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="outros" class="tab-pane">
+                                <div class="info-grid">
+                                    <div class="info-group">
+                                        <h4>Informações Adicionais</h4>
+                                        <div class="info-item"><strong>Profissão:</strong> <span>${membro.profissao || 'Não informada'}</span></div>
+                                        <div class="info-item"><strong>Escolaridade:</strong> <span>${membro.escolaridade ? capitalizar(membro.escolaridade.replace(/_/g, ' ')) : 'Não informada'}</span></div>
+                                        <div class="info-item"><strong>Como nos conheceu:</strong> <span>${membro.comoConheceuIgreja || 'Não informado'}</span></div>
+                                        <div class="info-item"><strong>Restrição de Saúde:</strong> <span>${membro.restricaoSaude || 'Nenhuma'}</span></div>
+                                    </div>
+                                    <div class="info-group">
+                                        <h4>Consentimentos (LGPD)</h4>
+                                        <div class="info-item"><strong>Autoriza Comunicados:</strong> <span>${capitalizar(membro.autorizaComunicados) || 'Não'}</span></div>
+                                        <div class="info-item"><strong>Autoriza Uso de Imagem:</strong> <span>${capitalizar(membro.autorizaImagem) || 'Não'}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    headerPlaceholder.innerHTML = headerHTML;
+                    bodyPlaceholder.innerHTML = bodyHTML;
+
+                    // --- Adiciona Event Listeners ---
+                    document.getElementById('btn-editar').addEventListener('click', () => { 
+                        window.location.href = `/pages/cadastro.membro.page/cadastro.membro.html?id=${membroId}`; 
+                    });
+
+                    // Links do cartão
+                    document.getElementById('link-personalizar-cartao').href = `cartao_membro.html?id=${membroId}`;
+                    document.getElementById('link-ver-cartao-virtual').href = `cartao_virtual.html?id=${membroId}`;
+                    
+                    document.getElementById('btn-excluir').addEventListener('click', async () => {
+                        if (confirm('Tem certeza que deseja excluir este membro? Esta ação não pode ser desfeita.')) {
+                            try {
+                                await window.api.delete(`/api/membros/${membroId}`);
+                                alert('Membro excluído com sucesso!');
+                                window.location.href = '/pages/lista.membros/lista.membros.html';
+                            } catch (error) {
+                                console.error('Erro ao excluir membro:', error);
+                                alert('Falha ao excluir membro.');
+                            }
+                        }
+                    });
+
+                    // Lógica das abas
+                    const tabLinks = document.querySelectorAll('.tab-link');
+                    const tabPanes = document.querySelectorAll('.tab-pane');
+                    tabLinks.forEach(link => {
+                        link.addEventListener('click', () => {
+                            const tabId = link.dataset.tab;
+                            tabLinks.forEach(l => l.classList.remove('active'));
+                            link.classList.add('active');
+                            tabPanes.forEach(pane => pane.classList.remove('active'));
+                            document.getElementById(tabId).classList.add('active');
+
+                            // Carrega o histórico financeiro ao clicar na aba
+                            if (tabId === 'financeiro' && !document.getElementById('historico-financeiro-container').hasAttribute('data-loaded')) {
+                                carregarHistoricoFinanceiro(membro);
+                            }
+                        });
+                    });
+
+                    // Função para carregar o histórico financeiro na aba
+                    const carregarHistoricoFinanceiro = async (membro) => {
+                        const container = document.getElementById('historico-financeiro-container');
+                        try {
+                            const contribuicoes = await window.api.get(`/api/membros/${membroId}/contribuicoes`);
+                            container.setAttribute('data-loaded', 'true'); // Marca como carregado
+                            if (contribuicoes.length === 0) {
+                                container.innerHTML = '<p>Nenhuma contribuição encontrada para este membro.</p>';
+                            } else {
+                                container.innerHTML = `
+                                    <table class="tabela-contribuicoes">
+                                        <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Ações</th></tr></thead>
+                                        <tbody>
+                                            ${contribuicoes.map(c => `<tr><td>${new Date(c.data).toLocaleDateString('pt-BR')}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td><td><button class="btn-imprimir-comprovante" data-id="${c._id}">Imprimir</button></td></tr>`).join('')}
+                                        </tbody>
+                                    </table>`;
+                                container.querySelectorAll('.btn-imprimir-comprovante').forEach(btn => btn.addEventListener('click', (e) => {
+                                    const lancamento = contribuicoes.find(c => c._id === e.target.dataset.id);
+                                    imprimirComprovante({ ...lancamento, membroNome: membro.nome });
+                                }));
+                            }
+                        } catch (error) { 
+                            console.error('Erro ao buscar histórico financeiro:', error); 
+                            container.innerHTML = '<p>Erro ao buscar histórico financeiro.</p>';
+                        }
+                    };
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar detalhes do membro:', error);
+                    membroNomeH1.textContent = 'Erro ao carregar detalhes do membro.';
+                    detalhesContainer.innerHTML = '<p>Não foi possível carregar os detalhes do membro. Verifique se o ID é válido e tente novamente mais tarde.</p>';
+                });
+        });
+    </script>
+</body>
+</html>

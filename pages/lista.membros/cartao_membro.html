@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Cartão de Membro</title>
+    <link rel="icon" href="/pages/logo.tab.png" type="image/png">    
+    <!-- Adicionando as fontes que faltavam (Lato, Montserrat) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Poppins:wght@600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/pages/styles/global.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/menu.css">
+    <link rel="stylesheet" href="cartao_membro.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <header id="menu-placeholder"></header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-actions">
+                <button id="btn-back" class="btn-icon btn-back" title="Voltar"><i class='bx bx-arrow-back'></i></button>
+                <h1>Cartão de Membro</h1>
+            </div>
+            <div class="header-actions">
+                <button id="btn-print-multiple" class="btn btn-secondary"><i class='bx bxs-group'></i> Impressão em Lote</button>
+                <button id="btn-download" class="btn btn-secondary"><i class='bx bxs-download'></i> Baixar</button>
+                <button id="btn-print" class="btn btn-primary"><i class='bx bxs-printer'></i> Imprimir</button>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <!-- Coluna de Controles -->
+            <aside class="control-panel">
+                <div class="control-section">
+                    <label class="control-label">Modo de Visualização</label>
+                    <div class="segmented-control">
+                        <input type="radio" name="view-switch" id="view-physical" value="physical" checked>
+                        <label for="view-physical">Físico</label>
+                        <input type="radio" name="view-switch" id="view-virtual" value="virtual">
+                        <label for="view-virtual">Virtual</label>
+                    </div>
+                </div>
+
+                <div id="customize-panel" class="customize-panel">
+                    <h4>Estilo do Cartão</h4>
+                    <div class="form-group color-selector-group">
+                        <div class="color-input-wrapper">
+                            <label for="color-primary">Principal</label>
+                            <input type="color" id="color-primary" value="#1a2a4c" title="Cor Principal">
+                        </div>
+                        <div class="color-input-wrapper">
+                            <label for="color-secondary">Destaque</label>
+                            <input type="color" id="color-secondary" value="#f0a500" title="Cor de Destaque">
+                        </div>
+                        <div class="color-input-wrapper">
+                            <label for="color-text">Texto</label>
+                            <input type="color" id="color-text" value="#ffffff" title="Cor do Texto">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="font-select">Fonte do Cartão</label>
+                        <select id="font-select">
+                            <option value="'Poppins', sans-serif">Poppins</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Lato', sans-serif">Lato</option>
+                            <option value="'Montserrat', sans-serif">Montserrat</option>
+                        </select>
+                    </div>
+
+                    <h4>Fundo do Cartão</h4>
+                    <div class="form-group">
+                        <div class="gallery-header">
+                            <label>Galeria</label>
+                            <button id="btn-clear-gallery" class="btn-link" title="Limpar imagens personalizadas"><i class='bx bx-trash'></i> Limpar</button>
+                        </div>
+                        <div class="background-gallery" id="background-gallery">
+                            <div class="gallery-item active" data-bg="var(--card-color-primary)" style="background: var(--card-color-primary);"></div>
+                            <!-- Itens da galeria e upload serão gerenciados via JS -->
+                            <button id="btn-add-background" class="gallery-item add-item" title="Adicionar Imagem de Fundo"><i class='bx bx-plus'></i></button>
+                        </div>
+                        <input type="file" id="background-upload" accept="image/*" style="display: none;">
+                    </div>
+
+                    <h4>Padrões (Presets)</h4>
+                    <div class="form-group">
+                        <label for="preset-load">Carregar Padrão</label>
+                        <select id="preset-load"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="preset-save-name">Salvar Padrão Atual como</label>
+                        <div class="preset-manager">
+                            <input type="text" id="preset-save-name" placeholder="Ex: Padrão 2025">
+                            <button id="btn-save-preset" class="btn btn-primary"><i class='bx bx-save'></i></button>
+                        </div>
+                    </div>
+                    <div class="preset-controls">
+                        <button id="btn-delete-preset" class="btn btn-danger"><i class='bx bxs-trash'></i> Excluir Padrão</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Área de Visualização -->
+            <section class="display-area">
+                <div class="card-viewport">
+                    <div id="physical-card-preview" class="card-preview active">
+                        <!-- O conteúdo da frente e do verso do cartão físico será injetado aqui pelo JS -->
+                        <div id="card-front" class="card physical-card"></div>
+                        <div id="card-back" class="card physical-card"></div>
+                    </div>
+                    <div id="virtual-card-preview" class="card-preview">
+                        <div id="virtual-card" class="card virtual-card">
+                            <div class="card-bg"></div>
+                            <div class="virtual-card-header"><img src="/pages/logo.tab.png" alt="Logo" class="logo"><h3>ADTC - Tabernáculo Celeste</h3></div>
+                            <div class="member-photo" id="member-photo-virtual"></div>
+                            <h2 id="member-name-virtual">Nome do Membro</h2>
+                            <p id="member-role-virtual">Cargo</p>
+                            <div class="virtual-card-info-grid">
+                                <p><span>RG</span><span id="member-rg-virtual">...</span></p>
+                                <p><span>Membro Desde</span><span id="member-since-virtual">...</span></p>
+                                <p><span>Nascimento</span><span id="member-birthdate-virtual">...</span></p>
+                                <p><span>Estado Civil</span><span id="member-marital-status-virtual">...</span></p>
+                            </div>
+                            <div class="qr-code-container" id="qr-code-virtual"></div>
+                            <div class="virtual-card-footer"><p>Validade: <span id="card-validity-virtual">...</span></p></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="print-modal-backdrop" class="modal-backdrop" style="display: none;">
+        <div id="print-modal" class="modal">
+            <h2>Impressão em Lote</h2>
+            <p>Selecione os membros que deseja imprimir o cartão.</p>
+            <div class="form-group">
+                <input type="text" id="member-search-input" placeholder="Buscar membro por nome...">
+            </div>
+            <div id="member-selection-list" class="member-selection-list"></div>
+            <div class="modal-actions">
+                <button id="btn-cancel-batch-print" class="btn btn-secondary">Cancelar</button>
+                <button id="btn-confirm-batch-print" class="btn btn-primary">Gerar Impressão</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cortar Imagem de Fundo -->
+    <div id="modal-cropper-bg" class="modal-backdrop" style="display: none;">
+        <div class="modal">
+            <h2>Ajustar Imagem de Fundo</h2>
+            <div class="cropper-container">
+                <img id="image-to-crop-bg" src="">
+            </div>
+            <div class="modal-actions">
+                <button id="btn-cancelar-crop-bg" class="btn btn-secondary">Cancelar</button>
+                <button id="btn-cortar-bg" class="btn btn-primary">Cortar e Usar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/pages/config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="cartao_membro.js"></script>
+</body>
+</html>

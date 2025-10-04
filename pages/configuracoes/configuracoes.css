@@ -1,0 +1,263 @@
+/* Arquivo: configuracoes.css */
+
+/* --- Temas (Claro e Escuro) - Variáveis já estão em global.css, mas podem ser sobrescritas aqui se necessário --- */
+:root {
+    --cor-primaria: #001f5d;
+    --cor-fundo: #f4f7f9;
+    --cor-fundo-card: #fff;
+    --cor-texto: #333;
+    --cor-borda: #dee2e6;
+    --cor-borda-fraca: #eee;
+}
+
+body[data-theme="dark"] {
+    --cor-fundo: #121212;
+    --cor-fundo-card: #1e1e1e;
+    --cor-texto: #e0e0e0;
+    --cor-borda: #444;
+    --cor-borda-fraca: #333;
+}
+
+/* Transição suave para a troca de tema */
+body, .config-card, .btn-principal, .btn-secundario {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- Layout Principal da Página de Configurações --- */
+.config-container {
+    display: grid;
+    grid-template-columns: 240px 1fr; /* Coluna fixa para navegação, restante flexível */
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* --- Navegação Lateral --- */
+.config-nav {
+    background-color: var(--cor-fundo-card);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: var(--sombra-padrao);
+    position: sticky; /* Mantém a navegação visível ao rolar */
+    top: 20px;
+}
+
+.config-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.config-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: var(--cor-texto-claro);
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.config-nav-link i {
+    font-size: 1.4rem;
+}
+
+.config-nav-link:hover {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+}
+
+.config-nav-link.active {
+    background-color: var(--cor-acao);
+    color: white;
+    box-shadow: 0 4px 8px rgba(77, 80, 255, 0.3);
+}
+
+/* --- Conteúdo das Seções --- */
+.config-content {
+    min-width: 0; /* Previne overflow em layouts de grid */
+}
+
+.config-section {
+    display: none; /* Esconde todas as seções por padrão */
+}
+
+.config-section.active {
+    display: block; /* Mostra apenas a seção ativa */
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.config-card {
+    background-color: var(--cor-fundo-card);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: var(--sombra-padrao);
+    border: 1px solid var(--cor-borda);
+    margin-top: 20px;
+}
+
+.config-card:first-of-type {
+    margin-top: 0;
+}
+
+.config-card.full-width {
+    grid-column: 1 / -1; /* Ocupa a largura total */
+}
+
+.config-card h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.config-card h4 {
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+.config-card h3 .bx {
+    font-size: 1.5rem;
+}
+
+/* --- Módulo de Aparência --- */
+.theme-switcher {
+    display: flex;
+    background-color: var(--cor-fundo);
+    border-radius: 8px;
+    padding: 5px;
+    border: 1px solid var(--cor-borda);
+}
+
+.theme-btn {
+    flex-grow: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--cor-texto);
+    transition: all 0.2s ease-in-out;
+}
+
+.theme-btn.active {
+    background-color: var(--cor-fundo-card);
+    color: var(--cor-primaria);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logo-preview-container {
+    width: 120px; height: 120px; border: 2px dashed var(--cor-borda); border-radius: 50%; padding: 5px; margin-bottom: 15px;
+}
+.logo-preview-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+
+input[type="color"] {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+/* --- Módulo de Usuários, Categorias e Logs --- */
+.lista-configs li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px 5px;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+}
+
+.membro-info {
+    font-weight: 600;
+}
+
+.membro-funcao {
+    font-size: 0.85rem;
+    color: var(--cor-texto-claro);
+    margin-left: 10px;
+}
+
+.acoes-item i {
+    font-size: 1.3rem;
+    cursor: pointer;
+    margin-left: 15px;
+    color: var(--cor-texto-claro);
+    transition: color 0.2s;
+}
+.acoes-item i:hover { color: var(--cor-acao); }
+.acoes-item .bxs-trash:hover { color: var(--cor-perigo); }
+
+.header-actions {
+    margin-bottom: 15px;
+    text-align: right;
+}
+
+/* Estilos para o Log de Atividades */
+#log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: var(--cor-fundo);
+}
+.log-item-details { font-size: 0.9rem; }
+.log-item-meta { font-size: 0.75rem; color: var(--cor-texto-claro); }
+.log-item-meta span { margin-right: 15px; }
+
+/* Categorias */
+.categorias-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.categoria-coluna h4 {
+    color: var(--cor-primaria);
+}
+.add-config-form { display: flex; gap: 10px; margin-top: 10px; }
+.add-config-form input { flex-grow: 1; }
+
+/* --- Módulo de Backup --- */
+.backup-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 992px) {
+    .config-container {
+        grid-template-columns: 1fr; /* Coluna única em telas menores */
+    }
+    .config-nav {
+        position: static; /* Remove o 'sticky' */
+        margin-bottom: 30px;
+    }
+    .config-nav ul {
+        display: flex;
+        overflow-x: auto; /* Permite rolagem horizontal na navegação */
+        padding-bottom: 10px;
+    }
+    .config-nav-link {
+        white-space: nowrap; /* Impede que o texto quebre */
+    }
+}
+
+@media (max-width: 600px) {
+    .categorias-container { grid-template-columns: 1fr; }
+}

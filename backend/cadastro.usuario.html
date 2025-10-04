@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Novo Usuário</title>
+    <link rel="stylesheet" href="/styles/global.css">
+    <link rel="stylesheet" href="/login.css"> <!-- Reutilizando o CSS da tela de login -->
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <img src="/pages/logo.tab.png" alt="Logo da Igreja" class="login-logo">
+            <h2>Cadastrar Novo Usuário</h2>
+            <p>Crie uma nova conta de acesso ao sistema.</p>
+            <form id="cadastro-usuario-form">
+                <div class="input-group">
+                    <label for="username">Usuário (E-mail)</label>
+                    <input type="email" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha (mínimo 6 caracteres)</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="input-group">
+                    <label for="role">Tipo de Conta</label>
+                    <select id="role" name="role" required>
+                        <option value="user">Usuário Padrão</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <button type="submit" class="login-button">Cadastrar Usuário</button>
+                <div id="error-message" class="error-message"></div>
+            </form>
+            <div class="login-footer">
+                <a href="/index.html">Voltar para o Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/pages/config.js"></script>
+    <script>
+        // Script simples para este formulário
+        document.getElementById('cadastro-usuario-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Lógica para chamar a API de criação de usuário (a ser criada no backend)
+            alert('Funcionalidade de cadastro de usuário em desenvolvimento no backend.');
+        });
+    </script>
+</body>
+</html>

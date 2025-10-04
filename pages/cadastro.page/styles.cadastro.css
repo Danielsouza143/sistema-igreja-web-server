@@ -1,0 +1,222 @@
+/* Reset básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', sans-serif;
+}
+
+body {
+  background-color: #f4f7f9;
+}
+.sub-menu {
+  min-width: 100px;
+  color: white;
+  background-color: var(--cor-acao, #4d50ff);
+}
+
+.conteudo {
+  margin: 40px auto;
+  padding: 20px;
+  max-width: 1700px;
+  border-radius: 25px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  min-height: 500px;
+  position: relative;
+  overflow: hidden; /* evita o ícone sair da área visível */
+}
+
+/* Ícone de fundo */
+.icone-fundo {
+  position: absolute;
+  bottom: -5%; /* Movido para baixo */
+  right: -5%;  /* Movido para a direita */
+  transform: translate(-50%, -50%);
+  font-size: clamp(12rem, 25vw, 25rem); /* Aumentado e responsivo */
+  color: #c9e6ff;
+  opacity: 0.25; /* mais discreto */
+  pointer-events: none; /* não atrapalha cliques */
+  z-index: 0;
+}
+
+/* Título interno */
+.title-page {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin: 20px 0 30px;
+  position: relative;
+  z-index: 1; /* fica acima do ícone */
+}
+
+/* Estrutura dos cartões */
+.cadastro-membros {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  position: relative;
+  z-index: 1; /* conteúdo sempre acima do fundo */
+}
+
+.linha-superior,
+.linha-inferior {
+  display: flex;
+  flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
+  justify-content: center;
+  gap: 30px; /* Espaçamento entre os cards */
+  width: 100%;
+}
+
+/* Cartões base */
+.cadastrar-membros,
+.lista-membros,
+.analise,
+.visitantes,
+.pequenos-grupos {
+  position: relative;
+  padding: 20px;
+  border-radius: 25px;
+  text-align: left;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1; 
+  min-width: 280px; /* Reduzido para melhor encaixe em telas menores */
+  max-width: 450px; /* Largura máxima */
+  height: 200px;
+  z-index: 1; /* garante que fica acima do fundo */
+}
+
+.visitantes {
+  background: linear-gradient(135deg, #ff8c00, #ffa500);
+}
+
+.pequenos-grupos {
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+}
+
+.analise {
+  color: #2c2c2c; /* Cor do texto específica para este card */
+  /* As regras de tamanho e largura agora são controladas pela classe base e pela responsividade */
+  
+}
+/* Cores */
+.cadastrar-membros {
+  background-color: #00cf53;
+}
+
+.lista-membros {
+  background-color: #0033a0;
+}
+
+.analise {
+  background-color: #fcff2d;
+}
+
+/* Hover */
+.cadastrar-membros:hover,
+.lista-membros:hover,
+.analise:hover,
+.visitantes:hover,
+.pequenos-grupos:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Ícones dentro dos cards */
+.cadastrar-membros i,
+.lista-membros i,
+.analise i,
+.visitantes i,
+.pequenos-grupos i {
+  font-size: 5rem;
+  opacity: 0.7;
+  margin-left: 15px;
+}
+
+.cadastrar-membros i,
+.lista-membros i,
+.visitantes i,
+.pequenos-grupos i {
+  color: #ffffff;
+}
+
+.analise i {
+  color: #00062fd4;
+}
+
+.link-card {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* ======================= */
+/* Responsividade */
+/* ======================= */
+
+/* Tablets */
+@media (max-width: 992px) {
+  .conteudo {
+    padding: 16px;
+  }
+  .linha-superior,
+  .linha-inferior {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .cadastrar-membros,
+  .lista-membros,
+  .analise,
+  .visitantes,
+  .pequenos-grupos {
+    width: 100%; /* Ocupa toda a largura disponível */
+    max-width: 500px; /* Limita a largura máxima em telas de tablet */  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+  .title-page {
+    font-size: 1.8rem;
+  }
+  .cadastrar-membros,
+  .lista-membros,
+  .analise,
+  .visitantes,
+  .pequenos-grupos {
+    height: 180px; /* Altura um pouco menor para celular */
+    padding: 30px;
+    font-size: 1.5rem;
+    
+  }
+  .icone-fundo {
+    font-size: clamp(6rem, 40vw, 12rem);
+  }
+}
+
+/* Celulares pequenos */
+@media (max-width: 480px) {
+  .conteudo {
+    padding: 12px;
+  }
+  .cadastrar-membros,
+  .lista-membros,
+  .analise,
+  .visitantes,
+  .pequenos-grupos {
+    height: 160px; /* Altura ainda menor para telas pequenas */
+    font-size: 1.3rem;
+  }
+}

@@ -1,0 +1,85 @@
+/* --- GERAL E LAYOUT --- */
+.conteudo { max-width: 1600px; margin: 20px auto; padding: 20px; background-color: var(--cor-branco); border-radius: 15px; box-shadow: var(--sombra-padrao); }
+.title-page { font-size: 2.2rem; color: var(--cor-primaria); margin-bottom: 25px; text-align: center; }
+
+/* --- NAVEGAÇÃO POR ABAS --- */
+.abas-navegacao { display: flex; border-bottom: 2px solid var(--cor-cinza-claro); margin-bottom: 30px; }
+.aba-link { padding: 12px 25px; cursor: pointer; border: none; background: none; font-size: 1.1rem; font-weight: 600; color: #555; margin-bottom: -2px; border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s; }
+.aba-link:hover { color: var(--cor-acao); }
+.aba-link.active { color: var(--cor-acao); border-bottom-color: var(--cor-acao); }
+.aba-conteudo { display: none; }
+.aba-conteudo.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- BOTÕES E AÇÕES --- */
+.btn-principal { background-color: var(--cor-acao); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-principal:hover { background-color: var(--cor-secundaria); }
+.btn-principal:disabled { background-color: #ccc; cursor: not-allowed; }
+
+/* --- ABA LISTA DE MEMBROS --- */
+.acoes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+.filtros-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.filtros-container input, .filtros-container select { padding: 10px; border: 1px solid var(--cor-borda); border-radius: 6px; }
+.tabela-wrapper { overflow-x: auto; }
+.tabela-dados { width: 100%; border-collapse: collapse; box-shadow: var(--sombra-padrao); border-radius: var(--border-radius-padrao); overflow: hidden; }
+.tabela-dados th, .tabela-dados td { padding: 15px; text-align: left; border-bottom: 1px solid var(--cor-cinza-claro); }
+.tabela-dados th { background-color: #f8f9fa; font-weight: 600; }
+.tabela-dados tbody tr { cursor: pointer; transition: background-color 0.2s; }
+.tabela-dados tbody tr:hover { background-color: #f8f9fa; }
+.acoes-item { display: flex; gap: 15px; }
+.acoes-item i { font-size: 1.3rem; cursor: pointer; transition: transform 0.2s; }
+.acoes-item .bxs-edit { color: var(--cor-secundaria); } .acoes-item .bxs-edit:hover { transform: scale(1.2); }
+.acoes-item .bxs-printer { color: #17a2b8; } .acoes-item .bxs-printer:hover { transform: scale(1.2); }
+.acoes-item .bxs-trash { color: var(--cor-perigo); } .acoes-item .bxs-trash:hover { transform: scale(1.2); }
+
+/* --- ABA CONTROLE DE PRESENÇA --- */
+.presenca-header { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
+.presenca-header h2 { margin: 0; font-size: 1.5rem; color: var(--cor-primaria); }
+.presenca-header .filtro-grupo { display: flex; align-items: center; gap: 10px; }
+.presenca-header label { font-weight: 600; }
+.presenca-header input[type="date"], .presenca-header input[type="text"] { padding: 8px; border: 1px solid var(--cor-borda); border-radius: 5px; font-size: 1rem; }
+#lista-presenca-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-height: 50vh; overflow-y: auto; padding: 10px; }
+.item-presenca { display: flex; align-items: center; gap: 15px; padding: 12px; border: 1px solid var(--cor-cinza-claro); border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+.item-presenca:hover { background-color: #f8f9fa; }
+.item-presenca.presente { background-color: #e9f5ec; border-left: 4px solid var(--cor-sucesso); }
+.item-presenca input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+.item-presenca label { font-weight: 500; cursor: pointer; flex-grow: 1; }
+.presenca-footer { text-align: right; margin-top: 20px; }
+
+/* --- ABA ENGAJAMENTO --- */
+.ranking-wrapper { background-color: var(--cor-branco); padding: 25px; border-radius: 8px; box-shadow: var(--sombra-padrao); max-width: 800px; margin: 0 auto; }
+.ranking-wrapper h2 { font-size: 1.5rem; margin-top: 0; text-align: center; color: var(--cor-primaria); display: flex; align-items: center; justify-content: center; gap: 10px; }
+.subtitulo-ranking { text-align: center; color: #666; margin-top: 10px; margin-bottom: 20px; }
+#lista-ranking-engajamento { list-style: none; padding: 0; }
+.ranking-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--cor-cinza-claro); }
+.ranking-item:last-child { border-bottom: none; }
+.ranking-posicao { font-size: 1.2rem; font-weight: 700; color: var(--cor-acao); width: 40px; text-align: center; }
+.ranking-nome { font-weight: 600; flex-grow: 1; }
+.ranking-alerta { color: var(--cor-perigo); margin-left: 10px; font-size: 1.2rem; }
+.ranking-presencas { font-size: 1.1rem; font-weight: 700; color: var(--cor-sucesso); }
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 992px) {
+    .abas-navegacao { overflow-x: auto; }
+    .aba-link { white-space: nowrap; }
+}
+
+@media (max-width: 768px) {
+    .acoes-header { flex-direction: column; align-items: stretch; }
+    .filtros-container { flex-direction: column; align-items: stretch; }
+    .presenca-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+    
+    /* Tabela responsiva */
+    .tabela-dados thead { display: none; }
+    .tabela-dados, .tabela-dados tbody, .tabela-dados tr, .tabela-dados td { display: block; width: 100%; }
+    .tabela-dados tr { margin-bottom: 15px; border: 1px solid var(--cor-cinza-claro); border-radius: 8px; padding: 10px; }
+    .tabela-dados td { text-align: right; padding-left: 50%; position: relative; border-bottom: 0; display: flex; align-items: center; justify-content: flex-end; }
+    .tabela-dados td::before { content: attr(data-label); position: absolute; left: 10px; width: 45%; text-align: left; font-weight: 600; color: var(--cor-primaria); }
+}
+
+.mensagem-vazio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    font-size: 1.1rem;
+}

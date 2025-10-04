@@ -1,0 +1,121 @@
+/* Arquivo: pages/utensilios/utensilios.css */
+
+/* --- Estilos para os Badges de Status --- */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Cor para status "Disponível" */
+.status-disponível {
+    background-color: var(--cor-sucesso, #28a745);
+}
+
+/* Cor para status "Emprestado" */
+.status-emprestado {
+    background-color: var(--cor-alerta, #ffc107);
+    color: #333;
+}
+
+/* Cor para status "Atrasado" */
+.status-atrasado {
+    background-color: var(--cor-perigo, #dc3545);
+}
+
+/* Cor para status "Em Manutenção" */
+.status-em-manutencao {
+    background-color: var(--cor-texto-claro, #6c757d);
+}
+
+/* --- Estilos para Foto na Tabela e Modal --- */
+.coluna-foto {
+    width: 60px;
+}
+
+.foto-tabela {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--cor-borda);
+}
+
+.foto-preview-container-utensilio {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--cor-borda);
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.foto-preview-container-utensilio img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- Estilos para o Cropper Modal --- */
+.cropper-container {
+    width: 100%;
+    height: 40vh;
+    margin-bottom: 20px;
+}
+
+/* --- Estilos para o Modal de Detalhes --- */
+.modal-lg {
+    max-width: 800px;
+}
+
+.detalhes-item-corpo {
+    padding: 10px;
+}
+
+.detalhe-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 25px;
+}
+
+.detalhe-foto-container {
+    width: 200px;
+    height: 200px;
+    border-radius: var(--border-radius-padrao);
+    overflow: hidden;
+    border: 1px solid var(--cor-borda);
+}
+
+.detalhe-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info-bloco {
+    margin-bottom: 20px;
+}
+
+.info-bloco h4 {
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    color: var(--cor-primaria);
+}
+
+.info-bloco p {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+/* --- Aumenta o tamanho dos ícones de ação na tabela --- */
+.tabela-padrao .acoes-item i {
+    font-size: 1.4rem; /* Tamanho maior para os ícones */
+    padding: 5px;      /* Adiciona uma área de clique maior */
+    margin: 0 2px;
+    gap: 1px ;
+}
