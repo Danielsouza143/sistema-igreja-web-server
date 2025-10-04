@@ -1,0 +1,41 @@
+# Arquivo: render.yaml
+# Define todos os serviços que compõem a sua aplicação.
+
+services:
+  # Serviço 1: O Backend (API Node.js)
+  - type: web
+    name: sistema-igreja-api # Nome do seu serviço de backend
+    env: node
+    rootDir: backend        # Diz ao Render para olhar dentro da pasta 'backend'
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Para os 'segredos' (senhas e chaves), usamos 'sync: false'.
+      # Isso cria a variável no Render, mas você precisa colar o valor manualmente no painel por segurança.
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+  # Serviço 2: O Frontend (Site Estático)
+  - type: static
+    name: sistema-igreja-web # Nome do seu serviço de frontend
+    # O Netlify/Vercel são geralmente melhores para o frontend, 
+    # mas podemos implantá-lo aqui também para manter tudo em um só lugar.
+    staticPublishPath: .  # Diz ao Render para servir os arquivos da pasta raiz do projeto
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
