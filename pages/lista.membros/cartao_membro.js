@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CARD HTML GENERATION ---
     const createCardHTML = (membro, type) => {
         const fields = getMemberFields(membro);
-        const photoUrl = membro.foto ? new URL(membro.foto, window.location.origin).href : null;
+        const photoUrl = window.api.getImageUrl(membro.foto); // CORREÇÃO: Usa a função global para montar a URL da foto.
         const photoStyle = photoUrl ? `background-image: url(${photoUrl})` : '';
         const photoContent = photoUrl ? '' : `<i class='bx bxs-user'></i>`;
         const qrCodeId = `qr-code-${type}-${membro._id}`;
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#member-birthdate-virtual').textContent = fields['member-birthdate'];
         $('#member-marital-status-virtual').textContent = fields['member-marital-status'];
         $('#card-validity-virtual').textContent = fields['card-validity'];
-        const photoUrl = membro.foto || null;
+        const photoUrl = window.api.getImageUrl(membro.foto); // CORREÇÃO: Usa a função global também para o cartão virtual.
         const photoElVirtual = $('#member-photo-virtual');
         photoElVirtual.style.backgroundImage = photoUrl ? `url(${photoUrl})` : 'none';
         photoElVirtual.innerHTML = photoUrl ? '' : `<i class='bx bxs-user'></i>`;
