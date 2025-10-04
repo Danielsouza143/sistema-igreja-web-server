@@ -56,6 +56,13 @@ if (typeof window.api === 'undefined') {
                 throw error; // Re-lança outros erros (como os que já tratamos acima)
             }
         },
+        // NOVA FUNÇÃO: Monta a URL correta para imagens
+        getImageUrl(path) {
+            if (!path) {
+                return ''; // Retorna vazio se o caminho for nulo/inválido
+            }
+            return isLocal ? path : `${API_BASE_URL}${path}`;
+        },
         async get(endpoint) { return this.request(endpoint); },
         async post(endpoint, data) { return this.request(endpoint, 'POST', data); },
         async put(endpoint, data) { return this.request(endpoint, 'PUT', data); },
