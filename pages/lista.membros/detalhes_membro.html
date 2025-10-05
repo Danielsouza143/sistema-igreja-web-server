@@ -468,7 +468,9 @@
             function calcularIdade(dataNascimento) {
                 if (!dataNascimento) return 'Não informada';
                 const hoje = new Date();
-                const nascimento = new Date(dataNascimento);
+                // CORREÇÃO: Trata a data como UTC para evitar problemas de fuso horário.
+                // Adiciona 'T00:00:00' para garantir que a data seja interpretada corretamente.
+                const nascimento = new Date(dataNascimento + 'T00:00:00');
                 let idade = hoje.getFullYear() - nascimento.getFullYear();
                 const mes = hoje.getMonth() - nascimento.getMonth();
                 if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
