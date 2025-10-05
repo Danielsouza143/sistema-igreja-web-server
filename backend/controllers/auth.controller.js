@@ -1,4 +1,5 @@
 import User from '../models/user.model.js';
+import Config from '../models/config.js'; // CORREÇÃO: Adicionado para buscar o nome da igreja
 import jwt from 'jsonwebtoken';
 
 /**
@@ -57,10 +58,13 @@ export const login = async (req, res, next) => {
  */
 export const getSetupStatus = async (req, res, next) => {
     try {
-        // Conta quantos usuários com a role 'admin' existem no banco de dados.
-        const adminCount = await User.countDocuments({ role: 'admin' });
-
-        res.status(200).json({ needsSetup: adminCount === 0 });
+        const userCount = await User.countDocuments();
+        const config = await Config.findOne();
+        
+        res.status(200).json({ 
+            needsSetup: userCount === 0,
+            churchName: config?.identidade?.nomeIgreja || 'Igreja'
+        });
     } catch (error) {
         next(error);
     }

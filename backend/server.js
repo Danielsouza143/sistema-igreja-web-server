@@ -13,7 +13,7 @@ import eventosRoutes from './routes/eventos.routes.js';
 import utensiliosRoutes from './routes/utensilios.routes.js';
 import configsRoutes from './routes/configs.routes.js';
 import usersRoutes from './routes/users.routes.js';
-import Config from './models/config.model.js'; // Importar o modelo de Config
+import Config from './models/config.js'; // CORREÇÃO: O nome do arquivo é config.js
 import Membro from './models/membro.model.js'; // Importar o modelo de Membro
 import authRoutes from './routes/auth.routes.js';
 import logsRoutes from './routes/logs.routes.js';
