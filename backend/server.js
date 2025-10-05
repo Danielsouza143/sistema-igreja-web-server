@@ -13,6 +13,7 @@ import eventosRoutes from './routes/eventos.routes.js';
 import utensiliosRoutes from './routes/utensilios.routes.js';
 import configsRoutes from './routes/configs.routes.js';
 import usersRoutes from './routes/users.routes.js';
+import Config from './models/config.model.js'; // Importar o modelo de Config
 import Membro from './models/membro.model.js'; // Importar o modelo de Membro
 import authRoutes from './routes/auth.routes.js';
 import logsRoutes from './routes/logs.routes.js';
@@ -38,6 +39,17 @@ app.use(express.json());
 // --- REGISTRO DAS ROTAS DA API ---
 // Rota pública de login
 app.use('/api/auth', authRoutes);
+
+// Adiciona o nome da igreja na rota de status
+authRoutes.get('/setup-status', async (req, res) => {
+    const userCount = await User.countDocuments();
+    const config = await Config.findOne();
+    res.json({ 
+        needsSetup: userCount === 0,
+        churchName: config?.identidade?.nomeIgreja || 'Igreja'
+    });
+});
+
 
 // Rota pública para checar CPF (usada no formulário de cadastro)
 app.get('/api/membros/check-cpf/:cpf', async (req, res, next) => {

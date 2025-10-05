@@ -12,7 +12,10 @@ const router = express.Router();
 // Resolve o caminho absoluto para o diretório de uploads na raiz do projeto
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const uploadDir = path.resolve(__dirname, '..', '..', 'uploads');
+// O Render monta o disco em /app/uploads. Em desenvolvimento, usamos o local.
+const uploadDir = process.env.NODE_ENV === 'production' 
+    ? '/app/uploads' 
+    : path.resolve(__dirname, '..', '..', 'uploads');
 
 // Garante que o diretório de uploads exista. Se não, ele será criado.
 if (!fs.existsSync(uploadDir)) {

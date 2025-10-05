@@ -9,6 +9,10 @@ services:
     rootDir: backend        # Diz ao Render para olhar dentro da pasta 'backend'
     buildCommand: "npm install"
     startCommand: "node server.js"
+    disks:
+      - name: uploads-disk      # O mesmo nome que você deu ao disco no painel
+        mountPath: /app/uploads # O mesmo caminho de montagem
+        sizeGB: 1               # O mesmo tamanho
     envVars:
       - key: NODE_ENV
         value: production
