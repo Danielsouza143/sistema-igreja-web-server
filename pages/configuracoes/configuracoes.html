@@ -12,9 +12,13 @@
     <link rel="stylesheet" href="configuracoes.css">
     <link rel="stylesheet" href="/pages/styles/global.css"> 
     <link rel="stylesheet" href="/components/menu.css">
+
+    <!-- Cropper.js for logo cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" defer></script>
 </head>
 <body data-theme="light">
-    <header id="menu-placeholder">
+    <header>
         <nav class="menu">
             <div class="menu-lado-esquerdo">
                 <div class="hamburger-menu hamburger-mobile" id="hamburger-btn-mobile"><i class='bx bx-menu'></i></div>
@@ -167,9 +171,11 @@
                                 <img id="logo-preview" src="/pages/logo.tab.png" alt="Pré-visualização do logo">
                             </div>
                             <input type="file" id="logo-upload-input" accept="image/png, image/jpeg" style="display: none;">
-                            <button id="btn-trocar-logo" class="btn-secundario">Trocar Logo</button>
+                            <div class="logo-actions">
+                                <button type="button" id="btn-trocar-logo" class="btn btn-secundario">Trocar Logo</button>
+                                <button type="button" id="btn-salvar-identidade" class="btn btn-principal">Salvar Identidade</button>
+                            </div>
                         </div>
-                        <button id="btn-salvar-identidade" class="btn-principal">Salvar Identidade</button>
                     </div>
                 </section>
 
@@ -239,7 +245,7 @@
                             </ul>
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </main>
@@ -278,9 +284,25 @@
         </div>
     </div>
 
-
     <script src="/pages/config.js"></script>
-    <script src="configuracoes.js"></script>
     <script src="/components/menu.js"></script>
+    <script src="configuracoes.js"></script>
+
+    <!-- Modal para Cortar Logo -->
+    <div id="modal-crop-logo" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Cortar Logo</h2>
+                <button type="button" class="btn-fechar-modal" data-close-modal="modal-crop-logo">&times;</button>
+            </div>
+            <div class="crop-container">
+                <img id="image-to-crop" src="" alt="Imagem para cortar">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secundario" data-close-modal="modal-crop-logo">Cancelar</button>
+                <button type="button" id="btn-confirmar-corte" class="btn btn-principal">Confirmar Corte</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

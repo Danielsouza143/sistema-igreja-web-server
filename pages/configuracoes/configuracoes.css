@@ -261,3 +261,45 @@ input[type="color"] {
 @media (max-width: 600px) {
     .categorias-container { grid-template-columns: 1fr; }
 }
+
+/* --- Estilos Adicionais para Botões de Identidade --- */
+#btn-trocar-logo,
+#btn-salvar-identidade {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Espaçamento entre ícone e texto */
+}
+
+#btn-trocar-logo::before {
+    font-family: 'Boxicons';
+    content: '\eb15'; /* Ícone de upload */
+    font-size: 1.2rem;
+}
+
+#btn-salvar-identidade::before {
+    font-family: 'Boxicons';
+    content: '\ea45'; /* Ícone de salvar (disquete) */
+    font-size: 1.2rem;
+}
+
+/* Ajuste no container de botões para melhor espaçamento */
+.logo-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* --- Estilos para o Modal de Corte de Logo --- */
+.crop-container {
+    width: 100%;
+    height: 400px; /* Altura fixa para o container da imagem */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background-color: #f0f0f0;
+}
+
+#image-to-crop {
+    display: block;
+    max-width: 100%;
+}

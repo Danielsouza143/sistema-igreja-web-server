@@ -18,15 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadCardData = async () => {
         try {
-            // CORREÇÃO: A rota de configs é protegida. Usaremos a rota pública de setup-status que também tem o nome.
-            // Ou, melhor ainda, vamos buscar as configs pelo menu.js que já faz isso.
-            // A forma mais simples é buscar as configs aqui, mas a rota precisa ser pública ou usar um token.
-            // Por simplicidade, vamos assumir que o menu.js já carregou o nome.
-            // Se não, a melhor prática seria ter uma rota pública para configs básicas.
-            // Vamos usar a rota de setup que é pública.
-            const status = await window.api.get('/api/auth/setup-status');
-            if (status.churchName) {
-                document.getElementById('nome-igreja').textContent = status.churchName;
+            // CORREÇÃO: Busca as configurações de uma nova rota pública.
+            const configs = await window.api.get('/api/public/configs');
+            const identidade = configs.identidade || {};
+            
+            document.getElementById('nome-igreja').textContent = identidade.nomeIgreja || 'Igreja';
+            if (identidade.logoIgrejaUrl) {
+                // CORREÇÃO: Usa a função global para montar a URL da imagem corretamente.
+                document.getElementById('logo-igreja').src = window.api.getImageUrl(identidade.logoIgrejaUrl);
             }
 
             // Busca os dados públicos do membro

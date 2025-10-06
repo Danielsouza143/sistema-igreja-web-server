@@ -5,12 +5,16 @@
 const API_BASE_URL_PRODUCAO = 'https://sistema-igreja-web-server.onrender.com';
 
 // Quando você está desenvolvendo no seu PC, pode usar o endereço local.
-const API_BASE_URL_LOCAL = 'http://localhost:3000';
+const API_BASE_URL_LOCAL = 'http://localhost:8080';
 
-// O código abaixo decide qual URL usar. Se o site está em 'localhost', usa a local.
-// Se está online (no Render, Netlify, etc.), usa a de produção.
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = isLocal ? API_BASE_URL_LOCAL : API_BASE_URL_PRODUCAO;
+// O código abaixo decide automaticamente qual URL usar.
+// Se o site estiver rodando em 'localhost', usa a URL local. Caso contrário, usa a de produção.
+let API_BASE_URL;
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    API_BASE_URL = API_BASE_URL_LOCAL;
+} else {
+    API_BASE_URL = API_BASE_URL_PRODUCAO;
+}
 
 
 // O objeto 'api' continua o mesmo, ele vai usar a variável API_BASE_URL correta.
@@ -35,10 +39,11 @@ if (typeof window.api === 'undefined') {
             try {
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
                 if (!response.ok) {
-                    if (response.status === 401) {
+                    if (response.status === 401 && window.location.pathname !== '/login.html') {
                         localStorage.removeItem('userToken');
-                        localStorage.removeItem('userInfo'); // Limpa também os dados do usuário
-                        window.location.href = '/index.html';
+                        localStorage.removeItem('userInfo');
+                        window.location.href = '/login.html'; // Redireciona apenas se não estiver já no login
+                        return Promise.reject(new Error('Sessão expirada. Redirecionando para o login.'));
                     }
                     const errorData = await response.json().catch(() => ({ message: 'Erro de comunicação com o servidor.' }));
                     throw new Error(errorData.message || `Erro na requisição: ${response.status}`);
@@ -61,7 +66,12 @@ if (typeof window.api === 'undefined') {
             if (!path) {
                 return ''; // Retorna vazio se o caminho for nulo/inválido
             }
-            return isLocal ? path : `${API_BASE_URL}${path}`;
+            // Se o path já for uma URL completa (ex: de um CDN), não faz nada.
+            if (path.startsWith('http')) {
+                return path;
+            }
+            // Sempre monta a URL completa usando a API_BASE_URL para o ambiente local.
+            return `${API_BASE_URL}${path}`;
         },
         async get(endpoint) { return this.request(endpoint); },
         async post(endpoint, data) { return this.request(endpoint, 'POST', data); },

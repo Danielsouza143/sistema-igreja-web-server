@@ -1,5 +1,58 @@
-// Arquivo: components/menu.js (Versão Final Simplificada)
 document.addEventListener('DOMContentLoaded', () => {
+
+    // --- LÓGICA DE IDENTIDADE DA IGREJA (MOVIDA DE CHURCH-IDENTITY.JS) ---
+    class ChurchIdentity {
+        static async loadAndApplyIdentity() {
+            try {
+                const configs = await window.api.get('/api/public/configs');
+                if (!configs || !configs.identidade) {
+                    throw new Error('Objeto de identidade não encontrado nas configurações.');
+                }
+                const { nomeIgreja, logoIgrejaUrl } = configs.identidade;
+                this.updateMenuDisplay(nomeIgreja, logoIgrejaUrl);
+                localStorage.setItem('churchIdentity', JSON.stringify({ nomeIgreja, logoIgrejaUrl }));
+            } catch (error) {
+                console.error('Falha ao carregar a identidade da igreja:', error);
+                const storedIdentity = JSON.parse(localStorage.getItem('churchIdentity'));
+                if (storedIdentity) {
+                    this.updateMenuDisplay(storedIdentity.nomeIgreja, storedIdentity.logoIgrejaUrl);
+                }
+            }
+        }
+
+        static updateMenuDisplay(nomeIgreja, logoUrl) {
+            const menuLogo = document.getElementById('menu-logo-img');
+            const menuChurchName = document.getElementById('menu-church-name');
+            if (menuLogo) {
+                menuLogo.src = window.api.getImageUrl(logoUrl) || '/pages/logo.tab.png';
+            }
+            if (menuChurchName) {
+                menuChurchName.textContent = nomeIgreja || 'Sistema Igreja';
+            }
+        }
+
+        static init() {
+            window.addEventListener('churchIdentityUpdated', (event) => {
+                const { nomeIgreja, logoUrl } = event.detail;
+                ChurchIdentity.updateMenuDisplay(nomeIgreja, logoUrl);
+                localStorage.setItem('churchIdentity', JSON.stringify({ nomeIgreja, logoIgrejaUrl: logoUrl }));
+            });
+
+            this.loadAndApplyIdentity();
+
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'churchIdentity') {
+                    const newIdentity = JSON.parse(event.newValue);
+                    if (newIdentity) {
+                        ChurchIdentity.updateMenuDisplay(newIdentity.nomeIgreja, newIdentity.logoIgrejaUrl);
+                    }
+                }
+            });
+        }
+    }
+    // --- FIM DA LÓGICA DE IDENTIDADE ---
+
+
     const hamburgerBtnDesktop = document.getElementById('hamburger-btn-desktop');
     const hamburgerBtnMobile = document.getElementById('hamburger-btn-mobile');
     const sidebar = document.getElementById('sidebar-menu');
@@ -7,29 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('sidebar-close-btn');
     let userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
-    // --- LÓGICA DE CARREGAMENTO GLOBAL DE CONFIGS ---
-    const aplicarConfigsGlobais = async () => {
+    const aplicarAparencia = async () => {
         try {
             const configs = await window.api.get('/api/configs') || {};
-
-            // Aplica Aparência
             const aparencia = configs.aparencia || { theme: 'light', corPrimaria: '#001f5d' };
             document.body.dataset.theme = aparencia.theme;
             document.documentElement.style.setProperty('--cor-primaria', aparencia.corPrimaria);
-
-            // Aplica Identidade da Igreja
-            const identidade = configs.identidade || { nomeIgreja: 'ADTC - Tabernáculo Celeste', logoIgrejaUrl: '/pages/logo.tab.png' }; 
-            const menuChurchName = document.getElementById('menu-church-name');
-            const menuLogoImg = document.getElementById('menu-logo-img');
-            if (menuChurchName) {
-                menuChurchName.textContent = identidade.nomeIgreja;
-            }
-            if (menuLogoImg) {
-                menuLogoImg.src = identidade.logoIgrejaUrl;
-            }
         } catch (error) {
-            console.error('Erro ao carregar configurações globais:', error);
-            // Mantém os valores padrão do HTML em caso de falha.
+            console.error('Erro ao aplicar aparência:', error);
         }
     };
 
@@ -49,30 +87,24 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn.addEventListener('click', toggleSidebar);
     overlay.addEventListener('click', toggleSidebar);
 
-    // Lógica para destacar o link ativo
     const currentPage = window.location.pathname;
     const allLinks = document.querySelectorAll('.sub-menu-link, .sidebar-links a');
 
     allLinks.forEach(link => {
-        // Compara o pathname do link com o da página atual.
-        // Isso garante que /pages/configuracoes/configuracoes.html seja destacado corretamente.
         if (link.pathname === currentPage) {
             link.classList.add('active');
-            // Se o link ativo estiver dentro de um <details>, abre ele
             if (link.closest('details')) {
                 link.closest('details').open = true;
             }
         }
     });
 
-    // --- LÓGICA DO MODAL DA CONTA E LOGOUT ---
     const contaTrigger = document.getElementById('conta-area-trigger');
-    const userAvatar = document.getElementById('user-avatar'); // Avatar pequeno no menu
+    const userAvatar = document.getElementById('user-avatar');
     const modalConta = document.getElementById('modal-conta-usuario');
 
-    // Função para atualizar o display do usuário, pode ser chamada de outros lugares
     window.updateUserDisplay = () => {
-        userInfo = JSON.parse(localStorage.getItem('userInfo')); // Recarrega info
+        userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (userInfo) {
             const nome = userInfo.name || userInfo.username;
             if (userAvatar) {
@@ -84,23 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contaTrigger && modalConta) {
         contaTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Preenche o modal com as informações do usuário
             const nome = userInfo.name || userInfo.username;
             document.getElementById('conta-modal-avatar').textContent = nome.charAt(0).toUpperCase();
             document.getElementById('conta-modal-nome').textContent = nome;
-            document.getElementById('conta-modal-email').textContent = userInfo.username; // Assumindo que username é o email
+            document.getElementById('conta-modal-email').textContent = userInfo.username;
             document.getElementById('conta-modal-role').textContent = userInfo.role === 'admin' ? 'Administrador' : 'Operador';
             modalConta.style.display = 'flex';
         });
 
-        // Lógica para fechar o modal
         modalConta.addEventListener('click', (e) => {
             if (e.target.matches('.modal-overlay') || e.target.closest('[data-close-modal="modal-conta-usuario"]')) {
                 modalConta.style.display = 'none';
             }
         });
         
-        // Lógica de Logout
         document.getElementById('btn-modal-logout').addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('userToken');
@@ -109,19 +138,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Esconde o link de configurações se o usuário não for admin
     if (userInfo && userInfo.role !== 'admin') {
         const configLink = document.querySelector('a[href*="configuracoes.html"]');
         if (configLink) configLink.closest('li').style.display = 'none';
     }
 
-    // --- LÓGICA DE NOTIFICAÇÕES (MOVIDA DE GLOBAL.JS) ---
     const notificacaoContainer = document.getElementById('notificacao-container');
     const contadorEl = document.getElementById('notificacao-contador');
-    const painelEl = document.getElementById('notificacao-painel'); // Assumindo que este painel existe no HTML do menu
+    const painelEl = document.getElementById('notificacao-painel');
 
     if (notificacaoContainer && contadorEl) {
-        // Expõe a função para ser chamada por outros scripts (ex: utensilios.js)
         window.renderizarNotificacoes = function() {
             let notificacoes = JSON.parse(localStorage.getItem('notificacoes')) || [];
             const naoLidas = notificacoes.filter(n => !n.lida);
@@ -148,20 +174,20 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         notificacaoContainer.addEventListener('click', (e) => {
-            // Lógica para mostrar/esconder painel e marcar como lido
-            // (Esta parte depende de como o painel de notificações foi implementado no HTML)
         });
 
-        window.renderizarNotificacoes(); // Primeira renderização
+        window.renderizarNotificacoes();
     }
-    // --- FIM DA LÓGICA DE NOTIFICAÇÕES ---
 
-    // Inicialização
-    aplicarConfigsGlobais();
+    // --- INICIALIZAÇÃO ---
+    ChurchIdentity.init(); // INICIA A LÓGICA DE IDENTIDADE
+    aplicarAparencia();
     if (window.updateUserDisplay) window.updateUserDisplay();
 
-    // Ouve por mudanças nas configurações para reaplicar dinamicamente
-    window.addEventListener('configsUpdated', () => {
-        aplicarConfigsGlobais();
+    window.addEventListener('configsUpdated', (e) => {
+        if (e.detail && e.detail.aparencia) {
+            document.body.dataset.theme = e.detail.aparencia.theme;
+            document.documentElement.style.setProperty('--cor-primaria', e.detail.aparencia.corPrimaria);
+        }
     });
 });

@@ -40,16 +40,6 @@ app.use(express.json());
 // Rota pública de login
 app.use('/api/auth', authRoutes);
 
-// Adiciona o nome da igreja na rota de status
-authRoutes.get('/setup-status', async (req, res) => {
-    const userCount = await User.countDocuments();
-    const config = await Config.findOne();
-    res.json({ 
-        needsSetup: userCount === 0,
-        churchName: config?.identidade?.nomeIgreja || 'Igreja'
-    });
-});
-
 
 // Rota pública para checar CPF (usada no formulário de cadastro)
 app.get('/api/membros/check-cpf/:cpf', async (req, res, next) => {
@@ -83,6 +73,20 @@ app.get('/api/public/membro/:id', async (req, res, next) => {
             return res.status(404).json({ message: 'Membro não encontrado.' });
         }
         res.status(200).json(membro);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// --- ADICIONADO: Rota pública para configurações de identidade ---
+// Usada pelo cartão virtual e potencialmente outras páginas públicas.
+app.get('/api/public/configs', async (req, res, next) => {
+    try {
+        const config = await Config.findOne({ singleton: 'main' }).select('identidade');
+        if (!config) {
+            return res.status(404).json({ message: 'Configurações não encontradas.' });
+        }
+        res.status(200).json(config);
     } catch (error) {
         next(error);
     }

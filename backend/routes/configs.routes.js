@@ -1,9 +1,17 @@
 import express from 'express';
-import Config from '../models/config.js';
 import multer from 'multer';
 import path, { dirname } from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+
+// Importando os novos controladores
+import {
+    getConfig,
+    updateConfig,
+    uploadLogo,
+    exportConfig,
+    importConfig
+} from '../controllers/configs.controller.js';
 
 const router = express.Router();
 
@@ -21,52 +29,31 @@ if (!fs.existsSync(uploadDir)) {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
-    cb(null, 'logo' + path.extname(file.originalname)); // Sempre sobrescreve o logo com o mesmo nome
+    // Salva sempre com o mesmo nome para substituir o logo antigo
+    cb(null, 'logo' + path.extname(file.originalname));
   }
 });
 const upload = multer({ storage: storage });
 
+// --- ROTAS PRINCIPAIS ---
+
 // Rota para buscar TODAS as configurações
-// O frontend usará isso para popular a página
-router.get('/', async (req, res) => {
-    try {
-        // Encontra o único documento de configuração ou cria um novo se não existir
-        let config = await Config.findOne({ singleton: 'main' });
-        if (!config) {
-            config = new Config();
-            await config.save();
-        }
-        res.json(config);
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao buscar configurações', error });
-    }
-});
+router.get('/', getConfig);
 
-// Rota para SALVAR as configurações
-// O frontend chama essa rota ao adicionar ou remover uma categoria
-router.post('/', async (req, res) => {
-    try {
-        // Encontra e atualiza o documento de configuração.
-        // O 'upsert: true' garante que, se o documento não for encontrado, ele será criado.
-        const configAtualizada = await Config.findOneAndUpdate(
-            { singleton: 'main' },
-            req.body, // Salva todo o corpo da requisição
-            { new: true, upsert: true, setDefaultsOnInsert: true }
-        );
+// Rota para ATUALIZAR uma ou mais configurações (aparência, categorias, etc.)
+router.patch('/', updateConfig);
 
-        res.json(configAtualizada);
-    } catch (error) {
-        res.status(400).json({ message: 'Erro ao salvar configurações', error });
-    }
-});
+// Rota para fazer UPLOAD do logo e atualizar o nome da igreja
+router.post('/upload-logo', upload.single('logo'), uploadLogo);
 
-router.post('/upload-logo', upload.single('logo'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
-    }
-    // Retorna o caminho do arquivo para ser salvo no documento de config
-    const filePath = `/uploads/logo/${req.file.filename}`;
-    res.status(200).json({ filePath: filePath });
-});
+
+// --- ROTAS DE BACKUP E RESTAURAÇÃO ---
+
+// Rota para EXPORTAR as configurações
+router.get('/export', exportConfig);
+
+// Rota para IMPORTAR as configurações
+router.post('/import', importConfig);
+
 
 export default router;

@@ -17,8 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (status.needsSetup) {
                 window.location.href = '/setup-admin.html';
             } else {
-                // Se o setup já foi feito, mostra o botão para cadastrar novos usuários
-                if (btnCadastrar) btnCadastrar.style.display = 'block';
+                // Se o setup já foi feito, o sistema está pronto para login.
             }
         } catch (error) {
             errorMessage.textContent = 'Não foi possível conectar ao servidor para verificar o status do sistema.';

@@ -11,6 +11,28 @@ const configSchema = new mongoose.Schema({
         unique: true,
         required: true,
     },
+    // ADICIONADO: Seção para armazenar a identidade da igreja
+    identidade: {
+        nomeIgreja: {
+            type: String,
+            default: 'Nome da Igreja'
+        },
+        logoIgrejaUrl: {
+            type: String,
+            default: ''
+        }
+    },
+    // ADICIONADO: Seção para armazenar as configurações de aparência
+    aparencia: {
+        theme: {
+            type: String,
+            default: 'light'
+        },
+        corPrimaria: {
+            type: String,
+            default: '#001f5d'
+        }
+    },
     utensilios_categorias: {
         type: [String],
         default: [

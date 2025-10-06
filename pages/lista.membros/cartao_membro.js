@@ -5,23 +5,30 @@ document.addEventListener('DOMContentLoaded', () => {
     let allMembers = [];
     let presets = {};
     let customBackgrounds = [];
+    // A identidade agora será carregada do localStorage, que é mantido atualizado pelo menu.js
+    let churchIdentity = JSON.parse(localStorage.getItem('churchIdentity')) || { nomeIgreja: 'Igreja', logoUrl: '/pages/logo.tab.png' };
     let cropper;
  
-    const $ = (selector) => document.querySelector(selector);
+    const $ = (selector) => {
+        const element = document.querySelector(selector);
+        if (!element) {
+            console.error(`Element with selector "${selector}" not found.`);
+        }
+        return element;
+    };
     const $$ = (selector) => document.querySelectorAll(selector);
 
     // --- INITIALIZATION ---
     const init = async () => {
         loadPresets();
         loadCustomBackgrounds();
-        await loadMenu();
         attachEventListeners();
  
         if (membroId) {
           try {
             const membro = await window.api.get(`/api/membros/${membroId}`);
             currentMember = membro;
-            populateCardViews(membro);
+            populateCardViews(membro); // Renderiza o cartão com a identidade já carregada
             
             const lastPresetName = localStorage.getItem('card-last-preset');
             const presetToLoad = (lastPresetName && presets[lastPresetName]) ? presets[lastPresetName] : presets[Object.keys(presets)[0]] || {};
@@ -38,40 +45,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const loadMenu = async () => {
-        try {
-            const response = await fetch('/components/menu.html');
-            const menuHTML = await response.text();
-            $('#menu-placeholder').innerHTML = menuHTML;
-            const menuScript = document.createElement('script');
-            menuScript.src = '/components/menu.js';
-            document.body.appendChild(menuScript);
-        } catch (error) {
-            console.error('Falha ao carregar o menu:', error);
+    // --- ATUALIZAÇÃO DE IDENTIDADE EM TEMPO REAL ---
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'churchIdentity') {
+            console.log('Identidade da igreja atualizada em outra aba. Atualizando cartão...');
+            churchIdentity = JSON.parse(event.newValue);
+            if (currentMember) {
+                populateCardViews(currentMember); // Redesenha o cartão com os novos dados
+            }
         }
-    };
+    });
 
     // --- CARD HTML GENERATION ---
-    const createCardHTML = (membro, type) => {
+    const createCardHTML = (membro, type, cardOptions) => {
         const fields = getMemberFields(membro);
-        const photoUrl = window.api.getImageUrl(membro.foto); // CORREÇÃO: Usa a função global para montar a URL da foto.
+        const photoUrl = window.api.getImageUrl(membro.foto);
         const photoStyle = photoUrl ? `background-image: url(${photoUrl})` : '';
-        const photoContent = photoUrl ? '' : `<i class='bx bxs-user'></i>`;
+        const photoContent = !photoUrl ? `<i class='bx bxs-user'></i>` : '';
         const qrCodeId = `qr-code-${type}-${membro._id}`;
-        const logoUrl = new URL('/pages/logo.tab.png', window.location.origin).href;
+        const logoFinalUrl = churchIdentity.logoIgrejaUrl || '/pages/logo.tab.png';
+        const congregationText = cardOptions?.congregationText || 'CONGREGAÇÃO SEDE';
 
         if (type === 'front') {
             return `
                 <div class="card-bg-shapes">
                     <div class="shape1"></div>
                     <div class="shape2"></div>
-                    <img src="${logoUrl}" alt="Logo Watermark" class="watermark-logo">
+                    <img src="${logoFinalUrl}" alt="Logo Watermark" class="watermark-logo">
                 </div>
                 <div class="card-header-new">
-                    <img src="${logoUrl}" alt="Logo" class="header-logo-new">
+                    <img src="${logoFinalUrl}" alt="Logo" class="header-logo-new">
                     <div class="church-info-new">
-                        <h3>ADTC - TABERNÁCULO CELESTE</h3>
-                        <p>CONGREGAÇÃO SEDE</p>
+                        <h3>${churchIdentity.nomeIgreja}</h3>
+                        <p>${congregationText}</p>
                     </div>
                 </div>
                 <div class="card-body-new">
@@ -81,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p class="member-role-new">${fields['member-role']}</p>
                         <div class="member-info-grid-new">
                             <p><span>RG:</span> ${fields['member-rg']}</p>
-                            <p><span>MEMBRO DESDE:</span> ${fields['member-since']}</p>
+                            <p><span>CPF:</span> ${fields['member-cpf']}</p>
                             <p><span>VALIDADE:</span> ${fields['card-validity']}</p>
                         </div>
                     </div>
@@ -106,42 +112,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="signature-line"><span>Assinatura do Pastor</span></div>
                 </div>
                 <div class="card-back-footer">
-                    <p>Este cartão é pessoal, intransferível e propriedade da ADTC - Tabernáculo Celeste.</p>
+                    <p>Este cartão é pessoal, intransferível e propriedade da ${churchIdentity.nomeIgreja}.</p>
                 </div>
             `;
         }
     };
 
+    const getCardOptions = () => {
+        return {
+            congregationText: $('#congregacao-text').value.trim()
+        };
+    };
+
+    // O resto do arquivo permanece o mesmo...
     // --- DATA POPULATION ---
     const populateCardViews = (membro) => {
-        $('#card-front').innerHTML = createCardHTML(membro, 'front');
-        $('#card-back').innerHTML = createCardHTML(membro, 'back');
+        const cardOptions = getCardOptions();
+        $('#card-front').innerHTML = createCardHTML(membro, 'front', cardOptions);
+        $('#card-back').innerHTML = createCardHTML(membro, 'back', cardOptions);
         const fields = getMemberFields(membro);
         $('#member-name-virtual').textContent = fields['member-name'];
         $('#member-role-virtual').textContent = fields['member-role'];
         $('#member-rg-virtual').textContent = fields['member-rg'];
-        $('#member-since-virtual').textContent = fields['member-since'];
+        $('#member-cpf-virtual').textContent = fields['member-cpf'];
         $('#member-birthdate-virtual').textContent = fields['member-birthdate'];
         $('#member-marital-status-virtual').textContent = fields['member-marital-status'];
         $('#card-validity-virtual').textContent = fields['card-validity'];
-        const photoUrl = window.api.getImageUrl(membro.foto); // CORREÇÃO: Usa a função global também para o cartão virtual.
-        const photoElVirtual = $('#member-photo-virtual'); // Este seletor parece estar faltando no seu HTML, mas a lógica está correta.
+        const photoUrl = window.api.getImageUrl(membro.foto);
+        const photoElVirtual = $('#member-photo-virtual');
         photoElVirtual.style.backgroundImage = photoUrl ? `url(${photoUrl})` : 'none';
-        photoElVirtual.innerHTML = photoUrl ? '' : `<i class='bx bxs-user'></i>`;
+        photoElVirtual.innerHTML = !photoUrl ? `<i class='bx bxs-user'></i>` : '';
         const virtualCardUrl = `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${membro._id}`;
         generateQRCode(virtualCardUrl, $(`#qr-code-back-${membro._id}`));
         generateQRCode(virtualCardUrl, $('#qr-code-virtual'));
+        // Atualiza o cabeçalho do cartão virtual também
+        const virtualHeaderLogo = $('#virtual-card .virtual-card-header .logo');
+        const virtualHeaderName = $('#virtual-card .virtual-card-header h3');
+        if(virtualHeaderLogo) virtualHeaderLogo.src = churchIdentity.logoIgrejaUrl || '/pages/logo.tab.png';
+        if(virtualHeaderName) virtualHeaderName.textContent = churchIdentity.nomeIgreja;
     };
     
     const getMemberFields = (membro) => {
-        const validityDate = new Date();
-        validityDate.setFullYear(validityDate.getFullYear() + 2);
+        const dataCadastro = new Date(membro.dataCadastro);
+        const anoEmissao = dataCadastro.getFullYear();
+        const validade = new Date(anoEmissao, 11, 31); // 31 de dezembro do ano de emissão
+
         return {
             'member-name': membro.nome,
             'member-role': capitalize(membro.cargoEclesiastico || 'Membro'),
             'member-rg': membro.rg || 'Não informado',
-            'member-since': formatDate(membro.dataCadastro || membro.dataConversao),
-            'card-validity': validityDate.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }),
+            'member-cpf': membro.cpf || 'Não informado',
+            'card-validity': validade.toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
             'member-birthdate': formatDate(membro.dataNascimento),
             'member-marital-status': capitalize(membro.estadoCivil),
             'member-baptism-date': formatDate(membro.dataBatismo),
@@ -157,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#color-primary').addEventListener('input', applyCustomization);
         $('#color-secondary').addEventListener('input', applyCustomization);
         $('#color-text').addEventListener('input', applyCustomization);
+        $('#congregacao-text').addEventListener('input', applyCustomization);
         $('#font-select').addEventListener('change', applyCustomization);
         $('#btn-add-background').addEventListener('click', () => $('#background-upload').click());
         $('#background-upload').addEventListener('change', handleBackgroundUpload);
@@ -234,26 +256,36 @@ document.addEventListener('DOMContentLoaded', () => {
             '--card-color-text': $('#color-text').value.trim(),
             '--card-background': $('.gallery-item.active')?.dataset.bg || 'var(--card-color-primary)',
             '--card-font-family': $('#font-select').value.trim(),
+            'congregacao-text': $('#congregacao-text').value.trim(),
         };
         if ($('.gallery-item[data-bg="var(--card-color-primary)"]').classList.contains('active')) {
             preset['--card-background'] = $('#color-primary').value;
         }
         applyPreset(preset);
+        if (currentMember) { // Re-render card on customization change
+            populateCardViews(currentMember);
+        }
         return preset;
     };
 
     const applyPreset = (preset) => {
         if (!preset) return;
         Object.keys(preset).forEach(key => {
-            document.documentElement.style.setProperty(key, preset[key]);
+            if (key.startsWith('--')) {
+                document.documentElement.style.setProperty(key, preset[key]);
+            }
         });
         $('#color-primary').value = preset['--card-color-primary'] || '#1a2a4c';
         $('#color-secondary').value = preset['--card-color-secondary'] || '#f0a500';
         $('#color-text').value = preset['--card-color-text'] || '#ffffff';
         $('#font-select').value = preset['--card-font-family'] || "'Poppins', sans-serif";
+        $('#congregacao-text').value = preset['congregacao-text'] || 'CONGREGAÇÃO SEDE';
         $$('.gallery-item').forEach(item => {
             item.classList.toggle('active', item.dataset.bg === preset['--card-background']);
         });
+        if (currentMember) { // Re-render card when preset is applied
+            populateCardViews(currentMember);
+        }
     };
 
     const savePreset = () => {
@@ -279,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 '--card-color-text': '#ffffff', 
                 '--card-background': '#1a2a4c',
                 '--card-font-family': "'Poppins', sans-serif",
+                'congregacao-text': 'CONGREGAÇÃO SEDE',
             };
         }
         updatePresetList();
@@ -351,11 +384,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // ALTERAÇÃO 1: Adiciona a classe 'card-back-style' ao verso do cartão
+        const cardOptions = getCardOptions();
         const printContent = `
             <div class="print-page">
-                <div class="card physical-card">${createCardHTML(currentMember, 'front')}</div>
-                <div class="card physical-card card-back-style">${createCardHTML(currentMember, 'back')}</div>
+                <div class="card physical-card">${createCardHTML(currentMember, 'front', cardOptions)}</div>
+                <div class="card physical-card card-back-style">${createCardHTML(currentMember, 'back', cardOptions)}</div>
             </div>`;
         
         launchPrint(printContent, [currentMember]);
@@ -401,13 +434,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const selectedMembers = selectedIds.map(id => allMembers.find(m => m._id == id)).filter(Boolean);
         
+        const cardOptions = getCardOptions();
         let cardsHTML = '';
         selectedMembers.forEach(membro => {
-            // ALTERAÇÃO 2: Adiciona a classe 'card-back-style' também na impressão em lote
             cardsHTML += `
                 <div class="print-page">
-                    <div class="card physical-card">${createCardHTML(membro, 'front')}</div>
-                    <div class="card physical-card card-back-style">${createCardHTML(membro, 'back')}</div>
+                    <div class="card physical-card">${createCardHTML(membro, 'front', cardOptions)}</div>
+                    <div class="card physical-card card-back-style">${createCardHTML(membro, 'back', cardOptions)}</div>
                 </div>`;
         });
         
@@ -424,14 +457,13 @@ document.addEventListener('DOMContentLoaded', () => {
             membersToPrint.forEach(member => {
                 const virtualCardUrl = `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${member._id}`;
                 const container = printWindow.document.getElementById(`qr-code-back-${member._id}`);
-                // Chama a função generateQRCode no contexto da nova janela (printWindow)
                 generateQRCode(virtualCardUrl, container, printWindow);
             });
             
             setTimeout(() => {
                 printWindow.print();
                 printWindow.close();
-            }, 500); // Um pequeno atraso para garantir a renderização de tudo
+            }, 500); 
         };
     };
 
@@ -508,12 +540,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </html>`;
     };
     
-    // ALTERAÇÃO 4: Simplifica a função, pois o script já estará carregado
     const generateQRCode = (url, container, context = window) => {
         if (!container) return;
         container.innerHTML = '';
         try {
-            // Acessa a biblioteca 'qrcode' do contexto da janela fornecida
             const qr = context.qrcode(0, 'L');
             qr.addData(url);
             qr.make();

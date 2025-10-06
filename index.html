@@ -7,6 +7,7 @@
     <!-- Usando caminhos absolutos a partir da raiz do site -->
     <link rel="stylesheet" href="pages/styles/global.css">
     <link rel="stylesheet" href="/login.css">
+    <script src="/js/church-identity.js"></script>
 </head>
 <body>
     <div class="login-container">
@@ -37,6 +38,10 @@
 
     <script src="/pages/config.js"></script>
     <script src="/login.js"></script>
-    
+    <script>
+        // Example usage in member pages
+        const memberCard = await MemberCard.generateCard(memberData);
+        cardContainer.innerHTML = memberCard;
+    </script>
 </body>
 </html>

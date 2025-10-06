@@ -2,5 +2,5 @@
 const userToken = localStorage.getItem('userToken');
 
 if (!userToken) {
-    window.location.href = '/index.html'; // Redireciona para a tela de login
+    window.location.href = '/login.html'; // Redireciona para a tela de login
 }
