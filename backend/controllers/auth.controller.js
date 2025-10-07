@@ -42,8 +42,8 @@ export const login = async (req, res, next) => {
             try {
                 await sendEmail({
                     email: user.username, // Assumindo que o username é o e-mail
-                    subject: 'Seu código de verificação de dois fatores',
-                    message: `Olá ${user.name || 'usuário'},\n\nSeu código de verificação é: ${mfaCode}\n\nEste código expira em 10 minutos.\n`
+                    subject: 'Código de Verificação - Sistema Igreja',
+                    message: `Olá ${user.name || 'usuário'},\n\nBem-vindo ao nosso sistema! Use o código a seguir para verificar seu acesso:\n\nCódigo de Verificação: ${mfaCode}\n\nEste código é válido por 10 minutos.\n\nAtenciosamente,\nEquipe do Sistema`
                 });
 
                 return res.status(200).json({ mfaRequired: true, message: 'Código de verificação enviado para o seu e-mail.' });
