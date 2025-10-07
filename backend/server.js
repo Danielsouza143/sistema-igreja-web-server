@@ -35,6 +35,49 @@ app.use(cors());
 // Middleware para parsear JSON
 app.use(express.json());
 
+// --- Configuração de diretórios --- //
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+const pagesDir = path.join(rootDir, 'pages');
+const componentsDir = path.join(rootDir, 'components');
+const jsDir = path.join(rootDir, 'js');
+const assetsDir = path.join(rootDir, 'assets');
+const uploadsDir = path.join(rootDir, 'uploads');
+
+// --- Middleware para servir páginas HTML protegidas --- //
+const serveProtectedHtml = (req, res, next) => {
+    const filePath = path.join(rootDir, req.path);
+    // Verifica se o arquivo existe e é um HTML
+    if (filePath.endsWith('.html') && fs.existsSync(filePath)) {
+        // Se o usuário não estiver autenticado, redireciona para o login
+        if (!req.user) {
+            return res.redirect('/login.html');
+        }
+        // Se autenticado, serve o arquivo
+        return res.sendFile(filePath);
+    }
+    next(); // Continua para o próximo middleware/rota se não for um HTML protegido
+};
+
+// --- Rotas públicas para arquivos estáticos (CSS, JS, imagens, etc.) ---
+// Servir arquivos estáticos que não precisam de autenticação
+app.use('/pages/styles', express.static(path.join(pagesDir, 'styles')));
+app.use('/pages/logo.tab.png', express.static(path.join(pagesDir, 'logo.tab.png')));
+app.use('/components', express.static(componentsDir));
+app.use('/js', express.static(jsDir));
+app.use('/assets', express.static(assetsDir));
+app.use('/uploads', express.static(uploadsDir));
+app.use('/auth-guard.js', express.static(path.join(rootDir, 'auth-guard.js')));
+app.use('/login.html', express.static(path.join(rootDir, 'login.html')));
+app.use('/index.html', express.static(path.join(rootDir, 'index.html')));
+app.use('/reset-password.html', express.static(path.join(rootDir, 'reset-password.html')));
+app.use('/setup-admin.html', express.static(path.join(rootDir, 'setup-admin.html')));
+
+// --- Rotas para páginas HTML protegidas --- //
+// Todas as páginas dentro de /pages/ (exceto as públicas como login) serão protegidas
+app.get('/pages/:folder/:file', protect, serveProtectedHtml);
+app.get('/pages/:file', protect, serveProtectedHtml);
 
 // --- REGISTRO DAS ROTAS DA API ---
 // Rota pública de login
@@ -111,17 +154,19 @@ app.use('/api/emprestimos', protect, isAdmin, emprestimosRoutes);
 
 // --- ROTAS ESTÁTICAS ---
 // Configuração para servir arquivos estáticos (como imagens de perfil)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+app.use('/uploads', express.static(uploadsDir));
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-app.use('/uploads/comprovantes', express.static(path.join(__dirname, '../uploads/comprovantes')));
-app.use('/uploads/logo', express.static(path.join(__dirname, '../uploads/logo')));
-
-// --- ADICIONADO: Servir arquivos estáticos da raiz do projeto (CSS, JS, HTML) ---
-// Esta deve ser uma das últimas rotas, para não interceptar as de API.
-const rootDir = path.resolve(__dirname, '..');
-app.use(express.static(rootDir));
+// Servir arquivos estáticos da raiz do projeto que não são HTML protegidos
+app.use(express.static(rootDir, { 
+    index: false, // Não servir index.html automaticamente
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html') && !path.includes('login.html') && !path.includes('index.html') && !path.includes('reset-password.html') && !path.includes('setup-admin.html')) {
+            // Não permitir que arquivos HTML protegidos sejam servidos diretamente
+            res.set('X-Blocked-By', 'Auth-Middleware');
+            // Poderíamos redirecionar aqui, mas o middleware de rota fará isso
+        }
+    }
+}));
 
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {

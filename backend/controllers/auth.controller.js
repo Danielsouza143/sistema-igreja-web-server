@@ -1,6 +1,13 @@
 import User from '../models/user.model.js';
-import Config from '../models/config.js'; // CORREÇÃO: Adicionado para buscar o nome da igreja
+import Config from '../models/config.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto'; // Importa o módulo crypto
+import sendEmail from '../utils/sendEmail.js'; // Importa a função de enviar email
+
+// Função para gerar o código MFA
+const generateMfaCode = () => {
+    return crypto.randomInt(100000, 999999).toString();
+};
 
 /**
  * Lida com o login de um usuário.
@@ -8,46 +15,60 @@ import jwt from 'jsonwebtoken';
 export const login = async (req, res, next) => {
     const { username, password } = req.body;
 
-    // 1. Validação básica da entrada
     if (!username || !password) {
         return res.status(400).json({ message: 'Nome de usuário e senha são obrigatórios.' });
     }
 
     try {
-        // 2. Busca o usuário no banco de dados (sempre em minúsculas)
-        // O .select('+password') é crucial para trazer a senha, que por padrão está oculta no model.
         const user = await User.findOne({ username: username.toLowerCase() }).select('+password');
 
-        // 3. VERIFICAÇÃO CRÍTICA: Se o usuário não existe, retorna erro 401.
-        // Isso previne o erro 500 que estava acontecendo.
         if (!user) {
             return res.status(401).json({ message: 'Usuário ou senha inválidos.' });
         }
 
-        // 4. Compara a senha fornecida com a senha hasheada no banco
         const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Usuário ou senha inválidos.' });
         }
 
-        // 5. Se tudo estiver correto, gera o token JWT
+        // Lógica do MFA
+        if (!user.mfaVerified) {
+            const mfaCode = generateMfaCode();
+            user.mfaCode = mfaCode; // Idealmente, hasheie o código antes de salvar
+            user.mfaCodeExpires = Date.now() + 10 * 60 * 1000; // Expira em 10 minutos
+            await user.save();
+
+            try {
+                await sendEmail({
+                    email: user.username, // Assumindo que o username é o e-mail
+                    subject: 'Seu código de verificação de dois fatores',
+                    message: `Olá ${user.name || 'usuário'},\n\nSeu código de verificação é: ${mfaCode}\n\nEste código expira em 10 minutos.\n`
+                });
+
+                return res.status(200).json({ mfaRequired: true, message: 'Código de verificação enviado para o seu e-mail.' });
+
+            } catch (error) {
+                console.error('Erro ao enviar e-mail de MFA:', error);
+                return res.status(500).json({ message: 'Não foi possível enviar o código de verificação. Tente novamente mais tarde.' });
+            }
+        }
+
+        // Se MFA já foi verificado, procede com o login normal
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-            expiresIn: '8h' // Token expira em 8 horas
+            expiresIn: '8h'
         });
 
-        // 6. Prepara a resposta, removendo dados sensíveis
         const userResponse = {
             id: user._id,
             username: user.username,
-            name: user.name, // Adicionado para que o nome completo já venha no login
+            name: user.name,
             role: user.role
         };
 
         res.status(200).json({ token, user: userResponse });
 
     } catch (error) {
-        // Encaminha qualquer outro erro inesperado para o middleware de erro
         next(error);
     }
 };
@@ -65,6 +86,77 @@ export const getSetupStatus = async (req, res, next) => {
             needsSetup: userCount === 0,
             churchName: config?.identidade?.nomeIgreja || 'Igreja'
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Verifica se o MFA é necessário para um usuário.
+ */
+export const getMfaStatus = async (req, res, next) => {
+    const { username } = req.query;
+
+    if (!username) {
+        return res.status(400).json({ message: 'Nome de usuário é obrigatório.' });
+    }
+
+    try {
+        const user = await User.findOne({ username: username.toLowerCase() });
+
+        if (!user) {
+            // Não revela se o usuário existe por segurança
+            return res.status(200).json({ mfaRequired: false });
+        }
+
+        res.status(200).json({ mfaRequired: !user.mfaVerified });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Verifica o código MFA e completa o login.
+ */
+export const verifyMfa = async (req, res, next) => {
+    const { username, mfaCode } = req.body;
+
+    if (!username || !mfaCode) {
+        return res.status(400).json({ message: 'Nome de usuário e código MFA são obrigatórios.' });
+    }
+
+    try {
+        const user = await User.findOne({ 
+            username: username.toLowerCase(), 
+            mfaCode: mfaCode, 
+            mfaCodeExpires: { $gt: Date.now() } 
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Código de verificação inválido ou expirado.' });
+        }
+
+        // Marca o MFA como verificado e limpa os campos
+        user.mfaVerified = true;
+        user.mfaCode = undefined;
+        user.mfaCodeExpires = undefined;
+        await user.save();
+
+        // Gera o token JWT para finalizar o login
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: '8h'
+        });
+
+        const userResponse = {
+            id: user._id,
+            username: user.username,
+            name: user.name,
+            role: user.role
+        };
+
+        res.status(200).json({ token, user: userResponse });
+
     } catch (error) {
         next(error);
     }

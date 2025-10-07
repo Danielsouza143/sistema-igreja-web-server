@@ -9,6 +9,10 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
+    name: {
+        type: String,
+        trim: true
+    },
     password: {
         type: String,
         required: [true, 'A senha é obrigatória.'],
@@ -21,7 +25,13 @@ const userSchema = new mongoose.Schema({
         default: 'user'
     },
     resetPasswordToken: String,
-    resetPasswordExpire: Date
+    resetPasswordExpire: Date,
+    mfaCode: String,
+    mfaCodeExpires: Date,
+    mfaVerified: {
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true });
 
 // Middleware (hook) para criptografar a senha ANTES de salvar
