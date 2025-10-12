@@ -1,0 +1,245 @@
+/* Arquivo: pages/lista.membros/detalhes.css */
+
+/* --- Container Principal --- */
+.conteudo {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.title-page {
+    margin-bottom: 25px;
+}
+
+/* --- Cabeçalho de Detalhes --- */
+.detalhes-header {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    padding: 25px;
+    background-color: var(--cor-fundo-card);
+    border-radius: var(--border-radius-padrao);
+    margin-bottom: 20px;
+    box-shadow: var(--sombra-padrao);
+}
+
+.detalhe-foto {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--cor-fundo);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.detalhe-foto-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: var(--cor-borda);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    color: var(--cor-texto-claro);
+}
+
+.membro-titulo-info h2 {
+    margin: 0 0 5px 0;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+.membro-titulo-info p {
+    margin: 0 0 15px 0;
+    font-size: 1.2rem;
+    color: var(--cor-texto-claro);
+}
+
+/* --- Botões de Ação --- */
+.detalhes-acoes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center; /* Alinha os botões verticalmente */
+}
+
+.btn-acao-detalhe {
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: none; /* Remove a borda, pois agora temos fundo */
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    line-height: 1.5; /* Garante altura consistente */
+}
+.btn-acao-detalhe:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.btn-editar { background-color: var(--cor-acao); }
+.btn-perigo { background-color: var(--cor-perigo); }
+.btn-voltar { background-color: var(--cor-texto-claro); }
+.btn-imprimir { background-color: var(--cor-secundaria); }
+
+
+/* --- Dropdown --- */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 180px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 10;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+
+/* --- Corpo dos Detalhes (Abas) --- */
+.detalhes-nav {
+    display: flex;
+    border-bottom: 1px solid var(--cor-borda);
+    margin-bottom: 25px;
+}
+
+.tab-link {
+    padding: 12px 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: var(--cor-texto-claro);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+.tab-link.active {
+    color: var(--cor-primaria);
+    border-bottom-color: var(--cor-primaria);
+    font-weight: 600;
+}
+
+.detalhes-conteudo {
+    background-color: var(--cor-fundo-card);
+    padding: 25px;
+    border-radius: var(--border-radius-padrao);
+    box-shadow: var(--sombra-padrao);
+}
+
+.tab-pane {
+    display: none;
+}
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.4s;
+}
+
+/* --- Grid de Informações --- */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.info-group h4 {
+    font-size: 1.2rem;
+    color: var(--cor-primaria);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--cor-borda-leve);
+}
+
+.info-item {
+    display: flex;
+    justify-content: flex-start; /* Alterado de space-between */
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--cor-borda-leve);
+    gap: 15px; /* Adiciona um espaçamento entre os itens */
+}
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: var(--cor-texto-principal);
+    flex-shrink: 0; /* Impede que o strong encolha */
+}
+
+.info-item span {
+    color: var(--cor-texto-claro);
+    text-align: right;
+    margin-left: auto; /* Empurra o span para a direita */
+}
+
+.info-item ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: right;
+}
+
+/* --- Tabela de Histórico Financeiro --- */
+.tabela-contribuicoes {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.tabela-contribuicoes th, .tabela-contribuicoes td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+}
+
+.tabela-contribuicoes th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+.tabela-contribuicoes tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.tabela-contribuicoes .btn-imprimir-comprovante {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto-claro);
+    border: 1px solid var(--cor-borda);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.tabela-contribuicoes .btn-imprimir-comprovante:hover {
+    background-color: var(--cor-borda);
+}
