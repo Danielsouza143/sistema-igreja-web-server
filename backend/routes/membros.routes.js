@@ -13,10 +13,9 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // O Render monta o disco em /app/uploads. Em desenvolvimento, usamos o local.
-const uploadDir = process.env.NODE_ENV === 'production' 
-    ? '/app/uploads' 
-    : path.resolve(__dirname, '..', '..', 'uploads');
-
+const uploadDir = process.env.NODE_ENV === 'production'
+? '/app/uploads/membros'
+: path.resolve(__dirname, '..', '..', 'uploads', 'membros');
 // Garante que o diretório de uploads exista. Se não, ele será criado.
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -45,7 +44,7 @@ router.post('/upload-foto', upload.single('foto'), (req, res) => {
   // Retorna o caminho do arquivo para ser salvo no documento do membro
   // O caminho deve ser relativo à URL, não ao sistema de arquivos.
   // Ex: /uploads/foto-12345.jpg
-  const filePath = `/uploads/${req.file.filename}`;
+  const filePath = `/uploads/membros/${req.file.filename}`;
   res.status(200).json({ filePath: filePath });
 });
 
