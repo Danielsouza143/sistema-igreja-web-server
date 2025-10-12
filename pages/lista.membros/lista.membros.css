@@ -83,3 +83,44 @@
     color: #888;
     font-size: 1.1rem;
 }
+
+/* --- Estilos para Foto e Status na Lista --- */
+
+.membro-foto-lista {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--cor-borda);
+}
+
+.membro-foto-placeholder {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: var(--cor-cinza-claro);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--cor-texto-claro);
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-ativo {
+    background-color: #e9f5ec; /* Fundo verde claro */
+    color: var(--cor-sucesso);
+}
+
+.status-inativo {
+    background-color: #f8f9fa; /* Fundo cinza claro */
+    color: var(--cor-texto-claro);
+}

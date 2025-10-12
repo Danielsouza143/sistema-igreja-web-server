@@ -36,33 +36,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderizarTabelaMembros = (membros) => {
         tabelaCorpo.innerHTML = '';
         if (membros.length === 0) {
-            tabelaCorpo.innerHTML = '<tr><td colspan="4" class="mensagem-vazio">Nenhum membro encontrado.</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="6" class="mensagem-vazio">Nenhum membro encontrado.</td></tr>';
             return;
         }
 
-        // Calcula a última data de presença para cada membro
-        const ultimaPresencaMap = {};
-        Object.entries(presencasMembros).forEach(([data, ids]) => {
-            ids.forEach(id => {
-                if (!ultimaPresencaMap[id] || new Date(data) > new Date(ultimaPresencaMap[id])) {
-                    ultimaPresencaMap[id] = data;
-                }
-            });
-        });
-
         membros.forEach(membro => {
-            const ultimaPresenca = ultimaPresencaMap[membro._id] ? new Date(ultimaPresencaMap[membro._id]) : null;
-            const hoje = new Date();
-            const diasDesdeUltimaPresenca = ultimaPresenca ? Math.floor((hoje - ultimaPresenca) / (1000 * 60 * 60 * 24)) : Infinity;
-            
-            // Define o membro como inativo se a última presença foi há mais de 60 dias
-            const isInativo = diasDesdeUltimaPresenca > 60;
-            const statusIcon = isInativo ? `<i class='bx bxs-moon status-inativo' title='Inativo (sem presença há mais de 60 dias)'></i>` : '';
-
             const tr = document.createElement('tr');
             tr.dataset.id = membro._id;
+
+            // Célula da Foto
+            const fotoHtml = membro.foto
+                ? `<img src="${window.api.getImageUrl(membro.foto)}" alt="${membro.nome}" class="membro-foto-lista">`
+                : `<div class="membro-foto-placeholder"><i class='bx bx-user'></i></div>`;
+
+            // Célula do Status
+            const status = membro.status || 'inativo';
+            const statusClasse = `status-badge status-${status}`;
+            const statusTexto = status.charAt(0).toUpperCase() + status.slice(1);
+            const statusHtml = `<span class="${statusClasse}">${statusTexto}</span>`;
+
             tr.innerHTML = `
-                <td data-label="Nome">${membro.nome} ${statusIcon}</td>
+                <td data-label="Foto">${fotoHtml}</td>
+                <td data-label="Nome">${membro.nome}</td>
+                <td data-label="Status">${statusHtml}</td>
                 <td data-label="Cargo">${membro.cargoEclesiastico || 'Não definido'}</td>
                 <td data-label="Telefone">${membro.telefone || 'Não informado'}</td>
                 <td data-label="Ações">

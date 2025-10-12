@@ -7,6 +7,12 @@ const filhoSchema = new mongoose.Schema({
 
 const membroSchema = new mongoose.Schema({
     nome: { type: String, required: true },
+    status: { 
+        type: String, 
+        required: true, 
+        enum: ['ativo', 'inativo'], 
+        default: 'ativo' 
+    },
     foto: { type: String },
     cpf: { type: String },
     dataNascimento: { type: Date },
