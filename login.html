@@ -73,6 +73,36 @@
 
     <script src="/pages/config.js"></script>
     <script>
+        // Polyfill para window.api para ambiente de navegador
+        if (!window.api) {
+            console.log("Creating window.api polyfill for browser environment.");
+            window.api = {
+                get: async (url) => {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                },
+                post: async (url, data) => {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                }
+            };
+        }
+    </script>
+    <script>
         const formLogin = document.getElementById('form-login');
         const formForgotPassword = document.getElementById('form-forgot-password');
         const toggleLink = document.getElementById('toggle-link');

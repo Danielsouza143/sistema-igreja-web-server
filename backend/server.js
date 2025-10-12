@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs'; // ADICIONADO: Importar o módulo 'fs'
 
 // Importando as rotas
 import membrosRoutes from './routes/membros.routes.js';
@@ -48,7 +49,7 @@ const uploadsDir = path.join(rootDir, 'uploads');
 // --- Middleware para servir páginas HTML protegidas --- //
 const serveProtectedHtml = (req, res, next) => {
     const filePath = path.join(rootDir, req.path);
-    // Verifica se o arquivo existe e é um HTML
+    // Verifica se o arquivo existe e é um HTML (usando o 'fs' importado)
     if (filePath.endsWith('.html') && fs.existsSync(filePath)) {
         // Se o usuário não estiver autenticado, redireciona para o login
         if (!req.user) {
@@ -149,8 +150,8 @@ app.use('/api/configs', protect, isAdmin, configsRoutes);
 app.use('/api/users', protect, isAdmin, usersRoutes);
 app.use('/api/logs', protect, isAdmin, logsRoutes);
 app.use('/api/lembretes', protect, isAdmin, lembretesRoutes);
-app.use('/api/utensilios', protect, isAdmin, utensiliosRoutes); // Movido para rotas de admin
-app.use('/api/emprestimos', protect, isAdmin, emprestimosRoutes);
+app.use('/api/utensilios', protect, utensiliosRoutes); // CORRIGIDO: Acessível por usuários logados
+app.use('/api/emprestimos', protect, emprestimosRoutes); // CORRIGIDO: Acessível por usuários logados
 
 // --- ROTAS ESTÁTICAS ---
 // Configuração para servir arquivos estáticos (como imagens de perfil)

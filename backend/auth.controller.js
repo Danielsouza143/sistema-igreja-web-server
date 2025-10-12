@@ -1,10 +1,11 @@
-import User from '../models/user.model.js';
+import User from './models/user.model.js';
 import jwt from 'jsonwebtoken';
 
 /**
  * Lida com o login de um usuário.
  */
 export const login = async (req, res, next) => {
+    console.log('@@@ LOGIN FUNCTION FROM auth.controller.js @@@');
     const { username, password } = req.body;
 
     // 1. Validação básica da entrada
