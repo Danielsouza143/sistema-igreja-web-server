@@ -64,18 +64,23 @@ if (typeof window.api === 'undefined') {
         // NOVA FUNÇÃO: Monta a URL correta para imagens
         getImageUrl(path) {
             if (!path) {
-                return ''; // Retorna vazio se o caminho for nulo/inválido
+                return '';
             }
-            // Se o path já for uma URL completa (ex: de um CDN), não faz nada.
             if (path.startsWith('http')) {
                 return path;
             }
-            // Em produção, o caminho relativo /uploads/... já é suficiente.
-            // Em desenvolvimento, precisamos da URL completa do backend.
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                return `${API_BASE_URL}${path}`;
+
+            // Verifica se o ambiente é de produção (online)
+            const isProduction = window.location.hostname !== 'localhost' &&
+                                 window.location.hostname !== '127.0.0.1' &&
+                                 window.location.protocol !== 'file:';
+
+            if (isProduction) {
+                // Em produção, o caminho relativo /uploads/... é suficiente
+                return path;
             } else {
-                return path; // Em produção, apenas o caminho relativo é necessário.
+                // Em desenvolvimento (localhost, 127.0.0.1 ou file://), precisamos da URL completa do backend
+                return `${API_BASE_URL}${path}`;
             }
         },
         async get(endpoint) { return this.request(endpoint); },
