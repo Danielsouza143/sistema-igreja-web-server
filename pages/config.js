@@ -70,8 +70,13 @@ if (typeof window.api === 'undefined') {
             if (path.startsWith('http')) {
                 return path;
             }
-            // Sempre monta a URL completa usando a API_BASE_URL para o ambiente local.
-            return `${API_BASE_URL}${path}`;
+            // Em produção, o caminho relativo /uploads/... já é suficiente.
+            // Em desenvolvimento, precisamos da URL completa do backend.
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return `${API_BASE_URL}${path}`;
+            } else {
+                return path; // Em produção, apenas o caminho relativo é necessário.
+            }
         },
         async get(endpoint) { return this.request(endpoint); },
         async post(endpoint, data) { return this.request(endpoint, 'POST', data); },
