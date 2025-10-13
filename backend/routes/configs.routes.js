@@ -18,7 +18,13 @@ const router = express.Router();
 // --- Configuração do Multer para upload do logo ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const uploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'logo');
+const uploadDir = process.env.NODE_ENV === 'production' 
+    ? '/app/uploads/logo' 
+    : path.resolve(__dirname, '..', '..', 'uploads', 'logo');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
