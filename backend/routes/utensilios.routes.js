@@ -10,15 +10,7 @@ import { fileURLToPath } from 'url';
 const router = express.Router();
 
 // --- Configuração do Multer para upload de arquivos de utensílios ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const uploadDir = process.env.NODE_ENV === 'production' 
-    ? '/app/uploads/utensilios' 
-    : path.resolve(__dirname, '..', '..', 'uploads', 'utensilios');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const uploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'utensilios');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),

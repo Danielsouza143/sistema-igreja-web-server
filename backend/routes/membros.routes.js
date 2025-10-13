@@ -9,18 +9,7 @@ import { logActivity } from '../utils/logActivity.js';
 
 const router = express.Router();
 
-// Resolve o caminho absoluto para o diretório de uploads na raiz do projeto
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-// O Render monta o disco em /app/uploads. Em desenvolvimento, usamos o local.
-const uploadDir = process.env.NODE_ENV === 'production'
-? '/app/uploads/membros'
-: path.resolve(__dirname, '..', '..', 'uploads', 'membros');
-// Garante que o diretório de uploads exista. Se não, ele será criado.
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log(`Diretório de uploads criado em: ${uploadDir}`);
-}
+const uploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'membros');
 
 // Configuração do Multer para upload de imagens
 const storage = multer.diskStorage({

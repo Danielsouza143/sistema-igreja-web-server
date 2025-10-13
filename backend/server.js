@@ -53,10 +53,16 @@ const uploadsDir = process.env.NODE_ENV === 'production'
     ? '/app/uploads' 
     : path.join(rootDir, 'uploads');
 
-// Garante que o diretório de uploads local exista (apenas em desenvolvimento)
-if (process.env.NODE_ENV !== 'production' && !fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log(`Diretório de uploads local criado em: ${uploadsDir}`);
+// Garante que o diretório de uploads e seus subdiretórios existam
+const subdirectories = ['membros', 'logo', 'comprovantes', 'utensilios'];
+if (process.env.NODE_ENV !== 'production') {
+    subdirectories.forEach(subdir => {
+        const dirPath = path.join(uploadsDir, subdir);
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+            console.log(`Diretório de uploads local criado em: ${dirPath}`);
+        }
+    });
 }
 
 
