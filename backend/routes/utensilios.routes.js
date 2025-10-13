@@ -74,13 +74,14 @@ router.get('/manutencao', async (req, res, next) => {
 router.post('/', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFiscal', maxCount: 1 }]), async (req, res, next) => {
     try {
         const dados = { ...req.body };
+        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
 
         // Adiciona os caminhos dos arquivos ao objeto de dados, se existirem
         if (req.files && req.files.foto) {
-            dados.fotoUrl = `/uploads/utensilios/${req.files.foto[0].filename}`;
+            dados.fotoUrl = `${backendUrl}/uploads/utensilios/${req.files.foto[0].filename}`;
         }
         if (req.files && req.files.notaFiscal) {
-            dados.notaFiscalUrl = `/uploads/utensilios/${req.files.notaFiscal[0].filename}`;
+            dados.notaFiscalUrl = `${backendUrl}/uploads/utensilios/${req.files.notaFiscal[0].filename}`;
         }
 
         const novoUtensilio = new Utensilio(dados);
@@ -96,12 +97,13 @@ router.post('/', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFisc
 router.put('/:id', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFiscal', maxCount: 1 }]), async (req, res, next) => {
     try {
         const dados = { ...req.body };
+        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
 
         if (req.files && req.files.foto) {
-            dados.fotoUrl = `/uploads/utensilios/${req.files.foto[0].filename}`;
+            dados.fotoUrl = `${backendUrl}/uploads/utensilios/${req.files.foto[0].filename}`;
         }
         if (req.files && req.files.notaFiscal) {
-            dados.notaFiscalUrl = `/uploads/utensilios/${req.files.notaFiscal[0].filename}`;
+            dados.notaFiscalUrl = `${backendUrl}/uploads/utensilios/${req.files.notaFiscal[0].filename}`;
         }
 
         const utensilio = await Utensilio.findByIdAndUpdate(req.params.id, dados, { new: true, runValidators: true });

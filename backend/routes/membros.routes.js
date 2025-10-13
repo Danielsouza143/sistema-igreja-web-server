@@ -40,10 +40,8 @@ router.post('/upload-foto', upload.single('foto'), (req, res) => {
   if (!req.file) {
     return res.status(400).send({ message: 'Nenhum arquivo enviado.' });
   }
-  // Retorna o caminho do arquivo para ser salvo no documento do membro
-  // O caminho deve ser relativo à URL, não ao sistema de arquivos.
-  // Ex: /uploads/foto-12345.jpg
-  const filePath = `/uploads/membros/${req.file.filename}`;
+  const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
+  const filePath = `${backendUrl}/uploads/membros/${req.file.filename}`;
   res.status(200).json({ filePath: filePath });
 });
 

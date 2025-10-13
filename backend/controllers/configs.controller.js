@@ -40,10 +40,12 @@ export const updateConfig = async (req, res, next) => {
 export const uploadLogo = async (req, res, next) => {
     const { nomeIgreja } = req.body;
     const updateData = {};
+    const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
 
     try {
         if (req.file) {
-            updateData['identidade.logoIgrejaUrl'] = `/uploads/logo/${req.file.filename}`;
+            // Constrói a URL completa para o logo
+            updateData['identidade.logoIgrejaUrl'] = `${backendUrl}/uploads/logo/${req.file.filename}`;
         }
         if (nomeIgreja || nomeIgreja === '') { // Permite definir um nome vazio
             updateData['identidade.nomeIgreja'] = nomeIgreja;

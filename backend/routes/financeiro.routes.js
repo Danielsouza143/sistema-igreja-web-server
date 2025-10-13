@@ -101,7 +101,8 @@ router.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
     }
-    const filePath = `/uploads/comprovantes/${req.file.filename}`;
+    const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
+    const filePath = `${backendUrl}/uploads/comprovantes/${req.file.filename}`;
     res.status(200).json({ filePath: filePath });
 });
 
