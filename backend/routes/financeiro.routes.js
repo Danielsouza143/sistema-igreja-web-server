@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 const router = express.Router();
 
 // --- Configuração do Multer para upload de comprovantes ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const uploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'comprovantes');
 
 const storage = multer.diskStorage({

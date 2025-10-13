@@ -4,11 +4,14 @@ import Lancamento from '../models/lancamento.model.js';
 import multer from 'multer';
 import path, { dirname } from 'path';
 import fs from 'fs';
+
 import { fileURLToPath } from 'url';
 import { logActivity } from '../utils/logActivity.js';
 
 const router = express.Router();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const uploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'membros');
 
 // Configuração do Multer para upload de imagens
