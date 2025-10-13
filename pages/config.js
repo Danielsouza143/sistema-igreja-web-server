@@ -29,11 +29,13 @@ if (typeof window.api === 'undefined') {
                 }
             };
             if (data) {
-                if (!isFormData) {
+                if (isFormData) {
+                    // Para FormData, o navegador define o Content-Type automaticamente com o boundary correto.
+                    // Não definimos manualmente.
+                    config.body = data;
+                } else {
                     config.headers['Content-Type'] = 'application/json';
                     config.body = JSON.stringify(data);
-                } else {
-                    config.body = data;
                 }
             }
             try {

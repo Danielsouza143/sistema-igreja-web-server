@@ -23,6 +23,16 @@ const eventoSchema = new mongoose.Schema({
     local: { type: String, required: true },
     responsavelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Membro', required: true },
     descricao: { type: String, default: '' },
+    
+    // Novos campos para Agenda
+    tipo: { 
+        type: String, 
+        enum: ['Evento', 'Programação'], 
+        default: 'Evento' 
+    },
+    recorrencia: { type: String, default: '' }, // Ex: "Toda terça-feira às 20h"
+    cartazUrl: { type: String, default: '' },
+
     financeiro: {
         envolveFundos: { type: Boolean, default: false },
         meta: { type: Number, default: 0 },

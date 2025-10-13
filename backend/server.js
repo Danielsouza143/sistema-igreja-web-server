@@ -30,8 +30,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Configuração de CORS
-app.use(cors());
+// Configuração de CORS explícita para permitir uploads com autorização
+app.use(cors({
+  origin: '*', // Em produção, considere restringir para o domínio do seu frontend
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type, Authorization'
+}));
 
 // Middleware para parsear JSON
 app.use(express.json());

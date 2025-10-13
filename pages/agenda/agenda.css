@@ -1,0 +1,172 @@
+/* Arquivo: pages/agenda/agenda.css */
+
+/* --- Ajustes Específicos para a Página da Agenda --- */
+
+#calendar-zoom-controls {
+    display: flex;
+    gap: 5px;
+}
+
+#calendar-zoom-controls .btn {
+    padding: 8px 12px;
+    font-size: 1rem;
+}
+
+/* --- Estilos para o FullCalendar (Polimento) --- */
+
+:root {
+    --fc-border-color: var(--cor-borda);
+    --fc-today-bg-color: #eef2f5; /* Um pouco mais sutil que o padrão */
+    --fc-event-border-radius: 4px;
+    --fc-event-font-size: 0.8rem;
+    --fc-event-font-weight: 600;
+}
+
+/* Botões do Header do Calendário */
+.fc .fc-button {
+    background-color: var(--cor-fundo-card);
+    color: var(--cor-texto-claro);
+    border: 1px solid var(--cor-borda);
+    padding: 8px 15px;
+    text-transform: capitalize;
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.fc .fc-button:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active, 
+.fc .fc-button-primary:not(:disabled):active {
+    background-color: var(--cor-acao);
+    border-color: var(--cor-acao);
+    color: var(--cor-branco);
+}
+
+/* Células do Calendário */
+.fc .fc-daygrid-day:hover {
+    background-color: rgba(77, 80, 255, 0.05);
+}
+
+/* Estilo dos Eventos no Calendário */
+.fc-event {
+    cursor: pointer;
+    padding: 4px 6px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.fc-event .fc-event-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--cor-branco);
+}
+
+.fc-event .event-icon {
+    font-size: 1.1em;
+}
+
+.fc-event .fc-event-title-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* --- Estilos para a Visualização em Lista (Cards) --- */
+#lista-eventos-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.evento-card {
+    background-color: var(--cor-fundo-card);
+    border-radius: var(--border-radius-padrao);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.evento-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sombra-padrao);
+}
+
+.card-header {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+}
+
+.card-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--cor-primaria);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-body {
+    padding: 15px;
+    flex-grow: 1;
+    font-size: 0.9rem;
+}
+
+.card-body p {
+    margin: 0 0 10px 0;
+    color: var(--cor-texto-claro);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-body p:last-child {
+    margin-bottom: 0;
+}
+
+.card-body i {
+    font-size: 1.2em;
+    color: var(--cor-texto-claro);
+}
+
+.card-footer {
+    padding: 12px 15px;
+    background-color: #fcfcfc;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--cor-borda-fraca);
+}
+
+/* Estilos para os badges de tipo na lista */
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+}
+
+.badge.evento {
+    background-color: #e36e00; /* Laranja */
+}
+
+.badge.programação {
+    background-color: var(--cor-acao); /* Azul */
+}
+
+/* Ajustes no Modal */
+#cartaz-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: var(--border-radius-padrao);
+    border: 1px solid var(--cor-borda);
+    margin-top: 15px;
+}
