@@ -4,7 +4,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs'; // ADICIONADO: Importar o módulo 'fs'
 
 // Importando as rotas
 import membrosRoutes from './routes/membros.routes.js';
@@ -51,18 +50,6 @@ const componentsDir = path.join(rootDir, 'components');
 const jsDir = path.join(rootDir, 'js');
 const assetsDir = path.join(rootDir, 'assets');
 
-// --- Configuração do diretório de UPLOADS ---
-// Define o diretório de uploads com base no ambiente
-const uploadsDir = process.env.NODE_ENV === 'production' 
-    ? '/app/uploads' 
-    : path.join(rootDir, 'uploads');
-
-// Garante que o diretório de uploads local exista (apenas em desenvolvimento)
-if (process.env.NODE_ENV !== 'production' && !fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log(`Diretório de uploads local criado em: ${uploadsDir}`);
-}
-
 
 // --- Middleware para servir páginas HTML protegidas --- //
 const serveProtectedHtml = (req, res, next) => {
@@ -86,9 +73,6 @@ app.use('/pages/logo.tab.png', express.static(path.join(pagesDir, 'logo.tab.png'
 app.use('/components', express.static(componentsDir));
 app.use('/js', express.static(jsDir));
 app.use('/assets', express.static(assetsDir));
-
-// A LINHA MAIS IMPORTANTE: Serve os arquivos da pasta de uploads (local ou do disco persistente)
-app.use('/uploads', express.static(uploadsDir));
 
 app.use('/auth-guard.js', express.static(path.join(rootDir, 'auth-guard.js')));
 app.use('/login.html', express.static(path.join(rootDir, 'login.html')));

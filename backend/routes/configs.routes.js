@@ -1,8 +1,5 @@
 import express from 'express';
-import multer from 'multer';
-import path, { dirname } from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { s3Upload } from '../utils/s3-upload.js';
 
 // Importando os novos controladores
 import {
@@ -15,25 +12,8 @@ import {
 
 const router = express.Router();
 
-// --- Configuração do Multer para upload do logo ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const uploadDir = process.env.NODE_ENV === 'production' 
-    ? '/app/uploads/logo' 
-    : path.resolve(__dirname, '..', '..', 'uploads', 'logo');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    // Salva sempre com o mesmo nome para substituir o logo antigo
-    cb(null, 'logo' + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage: storage });
+// --- Configuração do Multer para upload do logo (agora para S3) ---
+const upload = s3Upload('logo');
 
 // --- ROTAS PRINCIPAIS ---
 

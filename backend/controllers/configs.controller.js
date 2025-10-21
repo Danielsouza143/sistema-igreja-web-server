@@ -1,5 +1,6 @@
 import Config from '../models/config.js';
 import mongoose from 'mongoose';
+import { s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
 
 /**
  * Busca a configuração única do sistema.
@@ -40,12 +41,21 @@ export const updateConfig = async (req, res, next) => {
 export const uploadLogo = async (req, res, next) => {
     const { nomeIgreja } = req.body;
     const updateData = {};
-    const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
 
     try {
+        const currentConfig = await Config.findOne({ singleton: 'main' });
+        const oldLogoUrl = currentConfig?.identidade?.logoIgrejaUrl;
+
         if (req.file) {
-            // Constrói a URL completa para o logo
-            updateData['identidade.logoIgrejaUrl'] = `${backendUrl}/uploads/logo/${req.file.filename}`;
+            // Se houver um logo antigo e um novo foi enviado, exclua o antigo do S3
+            if (oldLogoUrl) {
+                const oldKey = getS3KeyFromUrl(oldLogoUrl);
+                if (oldKey) {
+                    await s3Delete(oldKey);
+                }
+            }
+            // Usa a URL do S3 fornecida pelo multer-s3
+            updateData['identidade.logoIgrejaUrl'] = req.file.location;
         }
         if (nomeIgreja || nomeIgreja === '') { // Permite definir um nome vazio
             updateData['identidade.nomeIgreja'] = nomeIgreja;
@@ -102,7 +112,7 @@ export const importConfig = async (req, res, next) => {
     try {
         // Encontra o config existente e o substitui pelos dados importados,
         // mantendo o _id e o singleton originais.
-        const updatedConfig = await Config.findOneAndReplace(
+        const updatedConfig = await Config.findOneAndUpdate(
             { singleton: 'main' },
             { ...importData, singleton: 'main' }, // Garante que o singleton seja mantido
             { new: true, upsert: true, runValidators: true }

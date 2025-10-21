@@ -68,22 +68,12 @@ if (typeof window.api === 'undefined') {
             if (!path) {
                 return '';
             }
-            if (path.startsWith('http')) {
+            // Se o caminho já é uma URL completa (S3), retorna-o diretamente
+            if (path.startsWith('http://') || path.startsWith('https://')) {
                 return path;
             }
-
-            // Verifica se o ambiente é de produção (online)
-            const isProduction = window.location.hostname !== 'localhost' &&
-                                 window.location.hostname !== '127.0.0.1' &&
-                                 window.location.protocol !== 'file:';
-
-            if (isProduction) {
-                // Em produção, o caminho relativo /uploads/... é suficiente
-                return path;
-            } else {
-                // Em desenvolvimento (localhost, 127.0.0.1 ou file://), precisamos da URL completa do backend
-                return `${API_BASE_URL}${path}`;
-            }
+            // Caso contrário, retorna vazio ou um placeholder, pois não esperamos mais caminhos relativos
+            return ''; 
         },
         async get(endpoint) { return this.request(endpoint); },
         async post(endpoint, data) { return this.request(endpoint, 'POST', data); },

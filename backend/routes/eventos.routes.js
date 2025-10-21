@@ -1,34 +1,14 @@
 import express from 'express';
 import Evento from '../models/evento.js';
 import Config from '../models/config.js'; // Importar o modelo de Config
-import multer from 'multer';
-import path, { dirname } from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
 
 console.log('--- DEBUG: O arquivo eventos.routes.js foi carregado pelo servidor. ---');
 
 const router = express.Router();
 
-// --- Configuração do Multer para upload de cartazes ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const uploadDir = process.env.NODE_ENV === 'production' 
-    ? '/app/uploads/eventos' 
-    : path.resolve(__dirname, '..', '..', 'uploads', 'eventos');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'cartaz-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage: storage });
+// --- Configuração do Multer para upload de cartazes (agora para S3) ---
+const upload = s3Upload('eventos');
 
 // GET /api/eventos/configs - Rota para buscar configurações de eventos (categorias, etc.)
 router.get('/configs', async (req, res) => {
@@ -57,7 +37,7 @@ router.post('/', upload.single('cartaz'), async (req, res) => {
     try {
         const eventoData = { ...req.body };
         if (req.file) {
-            eventoData.cartazUrl = `/uploads/eventos/${req.file.filename}`;
+            eventoData.cartazUrl = req.file.location;
         }
         // Lógica para converter dados financeiros que chegam como string
         if (eventoData.financeiro) {
@@ -80,9 +60,23 @@ router.post('/', upload.single('cartaz'), async (req, res) => {
 router.put('/:id', upload.single('cartaz'), async (req, res) => {
     try {
         const eventoData = { ...req.body };
-        if (req.file) {
-            eventoData.cartazUrl = `/uploads/eventos/${req.file.filename}`;
+        const existingEvento = await Evento.findById(req.params.id);
+
+        if (!existingEvento) {
+            return res.status(404).json({ message: 'Evento não encontrado' });
         }
+
+        if (req.file) {
+            // Se um novo cartaz foi enviado, exclua o antigo do S3, se existir
+            if (existingEvento.cartazUrl) {
+                const oldKey = getS3KeyFromUrl(existingEvento.cartazUrl);
+                if (oldKey) {
+                    await s3Delete(oldKey);
+                }
+            }
+            eventoData.cartazUrl = req.file.location;
+        }
+
         // Lógica para converter dados financeiros que chegam como string
         if (eventoData.financeiro) {
             eventoData.financeiro = JSON.parse(eventoData.financeiro);
@@ -93,7 +87,6 @@ router.put('/:id', upload.single('cartaz'), async (req, res) => {
         }
 
         const eventoAtualizado = await Evento.findByIdAndUpdate(req.params.id, eventoData, { new: true });
-        if (!eventoAtualizado) return res.status(404).json({ message: 'Evento não encontrado' });
         res.json(eventoAtualizado);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao atualizar evento', error: error.message });

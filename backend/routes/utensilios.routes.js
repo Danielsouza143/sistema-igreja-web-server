@@ -2,29 +2,12 @@ import express from 'express';
 import Utensilio from '../models/utensilio.model.js';
 import Emprestimo from '../models/emprestimo.model.js'; // Assumindo que o modelo se chama emprestimo.model.js
 import { logActivity } from '../utils/logActivity.js';
-import multer from 'multer';
-import path, { dirname } from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
 
 const router = express.Router();
 
-// --- Configuração do Multer para upload de arquivos de utensílios ---
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const uploadDir = process.env.NODE_ENV === 'production' 
-    ? '/app/uploads/utensilios' 
-    : path.resolve(__dirname, '..', '..', 'uploads', 'utensilios');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`)
-});
-const upload = multer({ storage: storage });
+// --- Configuração do Multer para upload de arquivos de utensílios (agora para S3) ---
+const upload = s3Upload('utensilios');
 
 // GET /api/utensilios - Listar todos os utensílios
 router.get('/', async (req, res, next) => {
@@ -74,14 +57,13 @@ router.get('/manutencao', async (req, res, next) => {
 router.post('/', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFiscal', maxCount: 1 }]), async (req, res, next) => {
     try {
         const dados = { ...req.body };
-        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
 
         // Adiciona os caminhos dos arquivos ao objeto de dados, se existirem
         if (req.files && req.files.foto) {
-            dados.fotoUrl = `${backendUrl}/uploads/utensilios/${req.files.foto[0].filename}`;
+            dados.fotoUrl = req.files.foto[0].location;
         }
         if (req.files && req.files.notaFiscal) {
-            dados.notaFiscalUrl = `${backendUrl}/uploads/utensilios/${req.files.notaFiscal[0].filename}`;
+            dados.notaFiscalUrl = req.files.notaFiscal[0].location;
         }
 
         const novoUtensilio = new Utensilio(dados);
@@ -97,13 +79,46 @@ router.post('/', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFisc
 router.put('/:id', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFiscal', maxCount: 1 }]), async (req, res, next) => {
     try {
         const dados = { ...req.body };
-        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8080}`;
+        const existingUtensilio = await Utensilio.findById(req.params.id);
 
-        if (req.files && req.files.foto) {
-            dados.fotoUrl = `${backendUrl}/uploads/utensilios/${req.files.foto[0].filename}`;
+        if (!existingUtensilio) {
+            return res.status(404).json({ message: 'Utensílio não encontrado' });
         }
+
+        // Lidar com upload de nova foto e exclusão da antiga
+        if (req.files && req.files.foto) {
+            if (existingUtensilio.fotoUrl) {
+                const oldKey = getS3KeyFromUrl(existingUtensilio.fotoUrl);
+                if (oldKey) {
+                    await s3Delete(oldKey);
+                }
+            }
+            dados.fotoUrl = req.files.foto[0].location;
+        } else if (dados.fotoUrl === null && existingUtensilio.fotoUrl) {
+            // Se a foto foi explicitamente removida (frontend envia null)
+            const oldKey = getS3KeyFromUrl(existingUtensilio.fotoUrl);
+            if (oldKey) {
+                await s3Delete(oldKey);
+            }
+            dados.fotoUrl = null;
+        }
+
+        // Lidar com upload de nova nota fiscal e exclusão da antiga
         if (req.files && req.files.notaFiscal) {
-            dados.notaFiscalUrl = `${backendUrl}/uploads/utensilios/${req.files.notaFiscal[0].filename}`;
+            if (existingUtensilio.notaFiscalUrl) {
+                const oldKey = getS3KeyFromUrl(existingUtensilio.notaFiscalUrl);
+                if (oldKey) {
+                    await s3Delete(oldKey);
+                }
+            }
+            dados.notaFiscalUrl = req.files.notaFiscal[0].location;
+        } else if (dados.notaFiscalUrl === null && existingUtensilio.notaFiscalUrl) {
+            // Se a nota fiscal foi explicitamente removida (frontend envia null)
+            const oldKey = getS3KeyFromUrl(existingUtensilio.notaFiscalUrl);
+            if (oldKey) {
+                await s3Delete(oldKey);
+            }
+            dados.notaFiscalUrl = null;
         }
 
         const utensilio = await Utensilio.findByIdAndUpdate(req.params.id, dados, { new: true, runValidators: true });
@@ -118,8 +133,24 @@ router.put('/:id', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFi
 // DELETE /api/utensilios/:id - Excluir um utensílio
 router.delete('/:id', async (req, res, next) => {
     try {
-        const utensilio = await Utensilio.findByIdAndDelete(req.params.id);
+        const utensilio = await Utensilio.findById(req.params.id);
         if (!utensilio) return res.status(404).json({ message: 'Utensílio não encontrado' });
+
+        // Excluir foto e nota fiscal associadas do S3, se existirem
+        if (utensilio.fotoUrl) {
+            const oldKey = getS3KeyFromUrl(utensilio.fotoUrl);
+            if (oldKey) {
+                await s3Delete(oldKey);
+            }
+        }
+        if (utensilio.notaFiscalUrl) {
+            const oldKey = getS3KeyFromUrl(utensilio.notaFiscalUrl);
+            if (oldKey) {
+                await s3Delete(oldKey);
+            }
+        }
+
+        await Utensilio.findByIdAndDelete(req.params.id);
         await logActivity(req.user, 'DELETE_UTENSILIO', `Utensílio '${utensilio.nome}' foi excluído.`);
         res.status(204).send();
     } catch (error) {
