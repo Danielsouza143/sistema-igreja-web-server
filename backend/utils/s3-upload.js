@@ -24,6 +24,7 @@ const s3Upload = (folder) => multer({
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       cb(null, `${folder}/${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
     },
+    ACL: 'public-read',
   }),
 });
 
