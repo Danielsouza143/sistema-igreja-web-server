@@ -2,17 +2,38 @@ import express from 'express';
 import Utensilio from '../models/utensilio.model.js';
 import Emprestimo from '../models/emprestimo.model.js'; // Assumindo que o modelo se chama emprestimo.model.js
 import { logActivity } from '../utils/logActivity.js';
-import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
+import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
 
 const router = express.Router();
 
 // --- Configuração do Multer para upload de arquivos de utensílios (agora para S3) ---
-const upload = s3Upload('utensilios');
+const uploadPublic = s3Upload('utensilios', true); // Para fotos (públicas)
+const uploadPrivate = s3Upload('utensilios', false); // Para notas fiscais (privadas)
+
+// Middleware para lidar com uploads de múltiplos campos com diferentes configurações de privacidade
+const uploadFields = (req, res, next) => {
+    const publicUpload = uploadPublic.fields([{ name: 'foto', maxCount: 1 }]);
+    const privateUpload = uploadPrivate.fields([{ name: 'notaFiscal', maxCount: 1 }]);
+
+    publicUpload(req, res, (err) => {
+        if (err) return next(err);
+        privateUpload(req, res, next);
+    });
+};
 
 // GET /api/utensilios - Listar todos os utensílios
 router.get('/', async (req, res, next) => {
     try {
-        const utensilios = await Utensilio.find().sort({ nome: 1 });
+        const utensilios = await Utensilio.find().sort({ nome: 1 }).lean();
+
+        for (let utensilio of utensilios) {
+            if (utensilio.notaFiscalUrl) {
+                const s3Key = getS3KeyFromUrl(utensilio.notaFiscalUrl);
+                if (s3Key) {
+                    utensilio.notaFiscalUrl = await getSignedUrlForObject(s3Key);
+                }
+            }
+        }
         res.json(utensilios);
     } catch (error) {
         next(error);
@@ -23,7 +44,15 @@ router.get('/', async (req, res, next) => {
 // GET /api/utensilios/inventario - Listar todos os utensílios no inventário
 router.get('/inventario', async (req, res, next) => {
     try {
-        const utensilios = await Utensilio.find().sort({ nome: 1 });
+        const utensilios = await Utensilio.find().sort({ nome: 1 }).lean();
+        for (let utensilio of utensilios) {
+            if (utensilio.notaFiscalUrl) {
+                const s3Key = getS3KeyFromUrl(utensilio.notaFiscalUrl);
+                if (s3Key) {
+                    utensilio.notaFiscalUrl = await getSignedUrlForObject(s3Key);
+                }
+            }
+        }
         res.json(utensilios);
     } catch (error) {
         next(error);
@@ -35,7 +64,15 @@ router.get('/inventario', async (req, res, next) => {
 router.get('/emprestimos', async (req, res, next) => {
     try {
         // Popula os dados do utensílio e do membro para exibir os nomes na tabela
-        const emprestimos = await Emprestimo.find().populate('utensilioId').populate('membroId').sort({ dataEmprestimo: -1 });
+        const emprestimos = await Emprestimo.find().populate('utensilioId').populate('membroId').sort({ dataEmprestimo: -1 }).lean();
+        for (let emprestimo of emprestimos) {
+            if (emprestimo.utensilioId && emprestimo.utensilioId.notaFiscalUrl) {
+                const s3Key = getS3KeyFromUrl(emprestimo.utensilioId.notaFiscalUrl);
+                if (s3Key) {
+                    emprestimo.utensilioId.notaFiscalUrl = await getSignedUrlForObject(s3Key);
+                }
+            }
+        }
         res.json(emprestimos);
     } catch (error) {
         next(error);
@@ -45,24 +82,49 @@ router.get('/emprestimos', async (req, res, next) => {
 // GET /api/utensilios/manutencao - Listar todos os utensílios com status "Em Manutenção"
 router.get('/manutencao', async (req, res, next) => {
     try {
-        const itensEmManutencao = await Utensilio.find({ status: 'Em Manutenção' }).sort({ nome: 1 });
+        const itensEmManutencao = await Utensilio.find({ status: 'Em Manutenção' }).sort({ nome: 1 }).lean();
+        for (let utensilio of itensEmManutencao) {
+            if (utensilio.notaFiscalUrl) {
+                const s3Key = getS3KeyFromUrl(utensilio.notaFiscalUrl);
+                if (s3Key) {
+                    utensilio.notaFiscalUrl = await getSignedUrlForObject(s3Key);
+                }
+            }
+        }
         res.json(itensEmManutencao);
     } catch (error) {
         next(error);
     }
 });
 
+// GET /api/utensilios/:id - Obter um utensílio específico
+router.get('/:id', async (req, res, next) => {
+    try {
+        const utensilio = await Utensilio.findById(req.params.id).lean();
+        if (!utensilio) return res.status(404).json({ message: 'Utensílio não encontrado' });
+
+        if (utensilio.notaFiscalUrl) {
+            const s3Key = getS3KeyFromUrl(utensilio.notaFiscalUrl);
+            if (s3Key) {
+                utensilio.notaFiscalUrl = await getSignedUrlForObject(s3Key);
+            }
+        }
+        res.json(utensilio);
+    } catch (error) {
+        next(error);
+    }
+});
 
 // POST /api/utensilios - Criar novo utensílio
-router.post('/', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFiscal', maxCount: 1 }]), async (req, res, next) => {
+router.post('/', uploadFields, async (req, res, next) => {
     try {
         const dados = { ...req.body };
 
         // Adiciona os caminhos dos arquivos ao objeto de dados, se existirem
-        if (req.files && req.files.foto) {
+        if (req.files && req.files.foto && req.files.foto[0]) {
             dados.fotoUrl = req.files.foto[0].location;
         }
-        if (req.files && req.files.notaFiscal) {
+        if (req.files && req.files.notaFiscal && req.files.notaFiscal[0]) {
             dados.notaFiscalUrl = req.files.notaFiscal[0].location;
         }
 
@@ -76,7 +138,7 @@ router.post('/', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFisc
 });
 
 // PUT /api/utensilios/:id - Atualizar um utensílio
-router.put('/:id', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFiscal', maxCount: 1 }]), async (req, res, next) => {
+router.put('/:id', uploadFields, async (req, res, next) => {
     try {
         const dados = { ...req.body };
         const existingUtensilio = await Utensilio.findById(req.params.id);
@@ -86,7 +148,7 @@ router.put('/:id', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFi
         }
 
         // Lidar com upload de nova foto e exclusão da antiga
-        if (req.files && req.files.foto) {
+        if (req.files && req.files.foto && req.files.foto[0]) {
             if (existingUtensilio.fotoUrl) {
                 const oldKey = getS3KeyFromUrl(existingUtensilio.fotoUrl);
                 if (oldKey) {
@@ -104,7 +166,7 @@ router.put('/:id', upload.fields([{ name: 'foto', maxCount: 1 }, { name: 'notaFi
         }
 
         // Lidar com upload de nova nota fiscal e exclusão da antiga
-        if (req.files && req.files.notaFiscal) {
+        if (req.files && req.files.notaFiscal && req.files.notaFiscal[0]) {
             if (existingUtensilio.notaFiscalUrl) {
                 const oldKey = getS3KeyFromUrl(existingUtensilio.notaFiscalUrl);
                 if (oldKey) {

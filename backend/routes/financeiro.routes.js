@@ -1,17 +1,27 @@
 import express from 'express';
 import Lancamento from '../models/lancamento.model.js';
-import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
+import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
 
 const router = express.Router();
 
-// --- Configuração do Multer para upload de comprovantes (agora para S3) ---
-const upload = s3Upload('comprovantes');
+// --- Configuração do Multer para upload de comprovantes (agora para S3 e privado) ---
+const upload = s3Upload('comprovantes', false); // isPublic = false para comprovantes
 
 // GET /api/financeiro/lancamentos - Listar todos os lançamentos
 router.get('/lancamentos', async (req, res) => {
     try {
         // Ordena por data, dos mais recentes para os mais antigos
-        const lancamentos = await Lancamento.find().sort({ data: -1 });
+        const lancamentos = await Lancamento.find().sort({ data: -1 }).lean(); // Usar .lean() para objetos JS puros
+
+        // Gerar URLs pré-assinadas para comprovantes privados
+        for (let lancamento of lancamentos) {
+            if (lancamento.comprovanteUrl) {
+                const s3Key = getS3KeyFromUrl(lancamento.comprovanteUrl);
+                if (s3Key) {
+                    lancamento.comprovanteUrl = await getSignedUrlForObject(s3Key);
+                }
+            }
+        }
         res.json(lancamentos);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar lançamentos financeiros.', error: error.message });
@@ -32,8 +42,16 @@ router.post('/lancamentos', async (req, res) => {
 // GET /api/financeiro/lancamentos/:id - Obter um lançamento específico
 router.get('/lancamentos/:id', async (req, res) => {
     try {
-        const lancamento = await Lancamento.findById(req.params.id);
+        const lancamento = await Lancamento.findById(req.params.id).lean();
         if (!lancamento) return res.status(404).json({ message: 'Lançamento não encontrado.' });
+
+        // Gerar URL pré-assinada para comprovante privado
+        if (lancamento.comprovanteUrl) {
+            const s3Key = getS3KeyFromUrl(lancamento.comprovanteUrl);
+            if (s3Key) {
+                lancamento.comprovanteUrl = await getSignedUrlForObject(s3Key);
+            }
+        }
         res.json(lancamento);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar lançamento.', error: error.message });

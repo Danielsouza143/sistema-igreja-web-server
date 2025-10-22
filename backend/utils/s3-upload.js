@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import dotenv from 'dotenv';
@@ -13,7 +14,7 @@ const s3 = new S3Client({
   },
 });
 
-const s3Upload = (folder) => multer({
+const s3Upload = (folder, isPublic = true) => multer({
   storage: multerS3({
     s3: s3,
     bucket: process.env.AWS_BUCKET_NAME,
@@ -24,7 +25,7 @@ const s3Upload = (folder) => multer({
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       cb(null, `${folder}/${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
     },
-    ACL: 'public-read',
+    ...(isPublic && { ACL: 'public-read' }), // Adiciona ACL apenas se isPublic for true
   }),
 });
 
@@ -36,6 +37,24 @@ const getS3KeyFromUrl = (url) => {
   } catch (error) {
     console.error("Erro ao extrair chave S3 da URL:", error);
     return null;
+  }
+};
+
+const getSignedUrlForObject = async (key, expiresIn = 3600) => { // expiresIn em segundos, padrão 1 hora
+  if (!key) {
+    console.warn("Tentativa de gerar URL pré-assinada com chave S3 vazia.");
+    return null;
+  }
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn });
+    return signedUrl;
+  } catch (error) {
+    console.error(`Erro ao gerar URL pré-assinada para ${key}:`, error);
+    throw error;
   }
 };
 
@@ -58,4 +77,4 @@ const s3Delete = async (key) => {
   }
 };
 
-export { s3Upload, s3Delete, s3, getS3KeyFromUrl };
+export { s3Upload, s3Delete, s3, getS3KeyFromUrl, getSignedUrlForObject };
