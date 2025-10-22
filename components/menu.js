@@ -25,9 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const menuChurchName = document.getElementById('menu-church-name');
             if (menuLogo) {
                 menuLogo.src = window.api.getImageUrl(logoUrl) || '/pages/logo.tab.png';
+            } else {
+                console.warn('Elemento #menu-logo-img não encontrado no menu.');
             }
             if (menuChurchName) {
                 menuChurchName.textContent = nomeIgreja || 'Sistema Igreja';
+            } else {
+                console.warn('Elemento #menu-church-name não encontrado no menu.');
             }
         }
 

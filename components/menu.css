@@ -47,8 +47,27 @@
 .sidebar-links details ul a { font-weight: normal; font-size: 0.95rem; padding: 10px 20px 10px 30px; }
 .sidebar-links summary { cursor: pointer; position: relative; }
 .sidebar-links summary::after { content: '›'; position: absolute; right: 20px; font-size: 1.5rem; transition: transform 0.3s; } 
-.sidebar-links details[open] > summary::after { transform: rotate(90deg); }
+.sidebar-links details[open] > summary::after { transform: rotate(90deg); } 
 .sidebar-links hr { border: none; border-top: 1px solid var(--cor-secundaria, #0033a0); margin: 15px 20px; }
 .sidebar-sobre { padding: 10px 20px 10px 30px; font-size: 0.9rem; color: #ccc; }
 .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 3000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; }
 .sidebar-overlay.active { opacity: 1; visibility: visible; }
+
+/* Estilos para o menu-header */
+.menu-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.menu-header h1 {
+    font-size: 1.2em;
+    margin: 0;
+}
