@@ -35,17 +35,29 @@ router.get('/', async (req, res) => {
 // POST /api/eventos - Criar um novo evento (com upload de cartaz)
 router.post('/', upload.single('cartaz'), async (req, res) => {
     try {
-        const eventoData = { ...req.body };
+        // Desestruturação explícita para maior controle
+        const {
+            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
+            local, responsavelId, descricao, cor, financeiro
+        } = req.body;
+
+        const eventoData = {
+            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
+            local, responsavelId, descricao, cor
+        };
+
         if (req.file) {
             eventoData.cartazUrl = req.file.location;
         }
+        
         // Lógica para converter dados financeiros que chegam como string
-        if (eventoData.financeiro) {
-            eventoData.financeiro = JSON.parse(eventoData.financeiro);
+        if (financeiro) {
+            const parsedFinanceiro = JSON.parse(financeiro);
             // CORREÇÃO: FormData envia booleans como string, converter de volta
-            if (typeof eventoData.financeiro.envolveFundos === 'string') {
-                eventoData.financeiro.envolveFundos = eventoData.financeiro.envolveFundos === 'true';
+            if (typeof parsedFinanceiro.envolveFundos === 'string') {
+                parsedFinanceiro.envolveFundos = parsedFinanceiro.envolveFundos === 'true';
             }
+            eventoData.financeiro = parsedFinanceiro;
         }
 
         const novoEvento = new Evento(eventoData);
@@ -59,34 +71,38 @@ router.post('/', upload.single('cartaz'), async (req, res) => {
 // PUT /api/eventos/:id - Atualizar um evento (com upload de cartaz)
 router.put('/:id', upload.single('cartaz'), async (req, res) => {
     try {
-        const eventoData = { ...req.body };
-        const existingEvento = await Evento.findById(req.params.id);
+        const { 
+            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
+            local, responsavelId, descricao, cor, financeiro, cartazUrl
+        } = req.body;
 
+        const updateData = {
+            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
+            local, responsavelId, descricao, cor, cartazUrl
+        };
+
+        const existingEvento = await Evento.findById(req.params.id);
         if (!existingEvento) {
             return res.status(404).json({ message: 'Evento não encontrado' });
         }
 
         if (req.file) {
-            // Se um novo cartaz foi enviado, exclua o antigo do S3, se existir
             if (existingEvento.cartazUrl) {
                 const oldKey = getS3KeyFromUrl(existingEvento.cartazUrl);
-                if (oldKey) {
-                    await s3Delete(oldKey);
-                }
+                if (oldKey) await s3Delete(oldKey);
             }
-            eventoData.cartazUrl = req.file.location;
+            updateData.cartazUrl = req.file.location;
         }
 
-        // Lógica para converter dados financeiros que chegam como string
-        if (eventoData.financeiro) {
-            eventoData.financeiro = JSON.parse(eventoData.financeiro);
-            // CORREÇÃO: FormData envia booleans como string, converter de volta
-            if (typeof eventoData.financeiro.envolveFundos === 'string') {
-                eventoData.financeiro.envolveFundos = eventoData.financeiro.envolveFundos === 'true';
+        if (financeiro) {
+            const parsedFinanceiro = JSON.parse(financeiro);
+            if (typeof parsedFinanceiro.envolveFundos === 'string') {
+                parsedFinanceiro.envolveFundos = parsedFinanceiro.envolveFundos === 'true';
             }
+            updateData.financeiro = parsedFinanceiro;
         }
 
-        const eventoAtualizado = await Evento.findByIdAndUpdate(req.params.id, eventoData, { new: true });
+        const eventoAtualizado = await Evento.findByIdAndUpdate(req.params.id, updateData, { new: true });
         res.json(eventoAtualizado);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao atualizar evento', error: error.message });

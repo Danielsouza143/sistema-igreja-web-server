@@ -12,66 +12,12 @@
     <script src="/auth-guard.js"></script>
     <link rel="stylesheet" href="../styles/global.css">
     <link rel="stylesheet" href="../../components/menu.css">
+    <link rel="stylesheet" href="/components/notifications.css">
     <link rel="stylesheet" href="analise.membros.css">
 </head>
 <body>
 
-    <header id="menu-placeholder">
-    <nav class="menu">
-        <div class="menu-lado-esquerdo">
-            <div class="hamburger-menu hamburger-mobile" id="hamburger-btn-mobile"><i class='bx bx-menu'></i></div>
-            <img src="/pages/logo.tab.png" alt="logo-tab" width="65" class="menu-logo" />
-            <h3>ADTC - Tabernáculo Celeste</h3>
-        </div>
-        <div class="menu-acoes">
-            <div class="notificacao-container" id="notificacao-container"><i class='bx bxs-bell'></i><span class="notificacao-contador" id="notificacao-contador"></span></div>
-            <div class="conta-area"><a href="#" class="link-conta">Minha Conta</a><i class='bx bx-user-circle'></i></div>
-        </div>
-    </nav>
-    <aside class="sub-menu">
-        <div class="hamburger-menu hamburger-desktop" id="hamburger-btn-desktop"><i class='bx bx-menu'></i></div>
-        <div class="menu-categorias">
-            <a href="/pages/dashboard/dashboard.html" class="sub-menu-link">Dashboard</a>
-            <a href="/pages/cadastro.page/cadastro.html" class="sub-menu-link">Cadastro</a>
-            <a href="/pages/financeiro.page/financeiro.html" class="sub-menu-link">Financeiro</a>
-            <a href="/pages/utensilios/utensilios.html" class="sub-menu-link">Utensílios</a>
-            <a href="/pages/agenda/agenda.html" class="sub-menu-link">Agenda</a>
-        </div>
-    </aside>
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
-    <nav id="sidebar-menu" class="sidebar">
-        <div class="sidebar-header">
-            <h4>Navegação Principal</h4>
-            <i class='bx bx-x' id="sidebar-close-btn"></i>
-        </div>
-        <ul class="sidebar-links">
-            <li><a href="/pages/dashboard/dashboard.html"><i class='bx bxs-dashboard'></i> Dashboard</a></li>
-            <li><a href="/pages/cadastro.page/cadastro.html"><i class='bx bxs-user-plus'></i> Cadastro</a></li>
-            <li>
-                <details><summary><i class='bx bxs-dollar-circle'></i> Financeiro</summary>
-                    <ul><li><a href="/pages/financeiro.page/financeiro.html#lancamentos">- Lançamentos</a></li><li><a href="/pages/financeiro.page/financeiro.html#dizimos">- Dízimos e Ofertas</a></li></ul>
-                </details>
-            </li>
-            <li>
-                <details><summary><i class='bx bxs-box'></i> Utensílios</summary>
-                    <ul><li><a href="/pages/utensilios/utensilios.html#inventario">- Inventário</a></li><li><a href="/pages/utensilios/utensilios.html#emprestimos">- Empréstimos</a></li><li><a href="/pages/utensilios/utensilios.html#manutencao">- Manutenção</a></li></ul>
-                </details>
-            </li>
-            <li>
-                <details><summary><i class='bx bxs-calendar-event'></i> Agenda</summary>
-                    <ul><li><a href="/pages/agenda/agenda.html">- Calendário e Eventos</a></li></ul>
-                </details>
-            </li>
-            <hr>
-            <li><a href="#"><i class='bx bxs-cog'></i> Configurações</a></li>
-            <li>
-                <details><summary><i class='bx bxs-info-circle'></i> Sobre</summary>
-                    <div class="sidebar-sobre"><p><strong>Versão:</strong> 1.0.0</p><a href="#" target="_blank">Site do Desenvolvedor</a></div>
-                </details>
-            </li>
-        </ul>
-    </nav>
-</header>
+    <header id="menu-placeholder"></header>
 
     <main class="conteudo">
         <h1 class="title-page">Análise de Membros</h1>
@@ -168,7 +114,7 @@
         </section>
 
     </main>
+    <script src="/js/global-loader.js" defer></script>
     <script src="/pages/config.js"></script>
-    <script src="../../components/menu.js"></script>
     <script src="analise.membros.js"></script> </body>
 </html>

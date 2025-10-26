@@ -103,6 +103,8 @@ body {
 
 .pequenos-grupos {
   background: linear-gradient(135deg, #8e44ad, #9b59b6);
+  width: 450px;
+  padding: 70px;
 }
 
 .analise {
@@ -121,6 +123,7 @@ body {
 
 .analise {
   background-color: #fcff2d;
+  width: 450px;
 }
 
 /* Hover */
@@ -193,13 +196,18 @@ body {
   }
   .cadastrar-membros,
   .lista-membros,
-  .analise,
   .visitantes,
   .pequenos-grupos {
     height: 180px; /* Altura um pouco menor para celular */
     padding: 30px;
     font-size: 1.5rem;
     
+  }
+  .analise {
+    height: 180px;
+    width: 358px;
+    padding: 30px;
+    font-size: 1.5rem;
   }
   .icone-fundo {
     font-size: clamp(6rem, 40vw, 12rem);

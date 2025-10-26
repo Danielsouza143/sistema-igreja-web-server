@@ -287,10 +287,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         const nomeCompleto = perfilNomeCompletoInput.value;
         try {
-            await window.api.put(`/api/users/${userInfo.id}`, { name: nomeCompleto });
-            userInfo.name = nomeCompleto;
-            localStorage.setItem('userInfo', JSON.stringify(userInfo));
-            window.updateUserDisplay();
+            const updatedUser = await window.api.put(`/api/users/${userInfo.id}`, { name: nomeCompleto });
+
+            // Atualiza o localStorage com os dados retornados pelo servidor
+            const currentUserInfo = JSON.parse(localStorage.getItem('userInfo'));
+            // Mescla os dados, garantindo que o token e outras infos não se percam
+            const newUserInfo = { ...currentUserInfo, ...updatedUser };
+            localStorage.setItem('userInfo', JSON.stringify(newUserInfo));
+            
+            window.updateUserDisplay(); // Atualiza o nome no menu
             alert('Nome atualizado com sucesso!');
         } catch (error) {
             alert(`Erro ao atualizar o nome: ${error.message}`);

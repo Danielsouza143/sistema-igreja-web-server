@@ -1,10 +1,11 @@
+<!-- Estrutura Completa e Centralizada do Menu -->
 <nav class="menu">
     <div class="menu-lado-esquerdo">
         <div class="hamburger-menu hamburger-mobile" id="hamburger-btn-mobile">
             <i class='bx bx-menu'></i>
         </div>
         <div class="menu-header">
-            <img id="menu-logo-img" src="/pages/logo.tab.png" alt="Logo da Igreja">
+            <img id="menu-logo-img" src="/assets/placeholder-image.png" alt="Logo da Igreja">
             <h1 id="menu-church-name">Sistema Igreja</h1>
         </div>
     </div>
@@ -13,9 +14,9 @@
             <i class='bx bxs-bell'></i>
             <span class="notificacao-contador" id="notificacao-contador"></span>
         </div>
-        <div class="conta-area">
+        <div id="conta-area-trigger" class="conta-area">
+            <div id="user-avatar" class="user-avatar">?</div>
             <a href="#" class="link-conta">Minha Conta</a>
-            <i class='bx bx-user-circle'></i>
         </div>
     </div>
 </nav>
@@ -27,6 +28,7 @@
     <div class="menu-categorias">
         <a href="/pages/dashboard/dashboard.html" class="sub-menu-link">Dashboard</a>
         <a href="/pages/cadastro.page/cadastro.html" class="sub-menu-link">Cadastro</a>
+        <a href="/pages/pequenos-grupos/pequenos-grupos.html" class="sub-menu-link">Pequenos Grupos</a>
         <a href="/pages/financeiro.page/financeiro.html" class="sub-menu-link">Financeiro</a>
         <a href="/pages/utensilios/utensilios.html" class="sub-menu-link">Utensílios</a>
         <a href="/pages/agenda/agenda.html" class="sub-menu-link">Agenda</a>
@@ -34,6 +36,7 @@
 </aside>
 
 <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
 <nav id="sidebar-menu" class="sidebar">
     <div class="sidebar-header">
         <h4>Navegação Principal</h4>
@@ -42,6 +45,7 @@
     <ul class="sidebar-links">
         <li><a href="/pages/dashboard/dashboard.html"><i class='bx bxs-dashboard'></i> Dashboard</a></li>
         <li><a href="/pages/cadastro.page/cadastro.html"><i class='bx bxs-user-plus'></i> Cadastro</a></li>
+        <li><a href="/pages/pequenos-grupos/pequenos-grupos.html"><i class='bx bxs-group'></i> Pequenos Grupos</a></li>
         <li>
             <details><summary><i class='bx bxs-dollar-circle'></i> Financeiro</summary>
                 <ul><li><a href="/pages/financeiro.page/financeiro.html#lancamentos">- Lançamentos</a></li><li><a href="/pages/financeiro.page/financeiro.html#dizimos">- Dízimos e Ofertas</a></li></ul>
@@ -70,4 +74,34 @@
         </li>
     </ul>
 </nav>
-<script src="/components/menu.js"></script>
+
+<div id="notification-panel" class="notification-panel">
+    <div class="panel-header">
+        <h3>Notificações</h3>
+        <i class='bx bx-x' id="notification-panel-close-btn"></i>
+    </div>
+    <div id="notification-list" class="panel-body">
+        <p class="empty-message">Nenhuma notificação nova.</p>
+    </div>
+    <div class="panel-footer">
+        <a href="#" id="mark-all-as-read">Marcar todas como lidas</a>
+    </div>
+</div>
+
+<div id="modal-conta-usuario" class="modal-overlay" style="display: none;">
+    <div class="modal-content modal-sm">
+        <div class="modal-header">
+            <h2>Minha Conta</h2>
+            <button class="modal-close" data-close-modal="modal-conta-usuario">&times;</button>
+        </div>
+        <div class="modal-body modal-conta-body">
+            <div id="conta-modal-avatar" class="user-avatar large">?</div>
+            <h3 id="conta-modal-nome">Nome do Usuário</h3>
+            <p id="conta-modal-email">email@example.com</p>
+            <span id="conta-modal-role" class="badge evento">Admin</span>
+        </div>
+        <div class="modal-actions">
+            <button id="btn-modal-logout" class="btn btn-perigo">Sair (Logout)</button>
+        </div>
+    </div>
+</div>

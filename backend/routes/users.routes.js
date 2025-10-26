@@ -58,31 +58,40 @@ router.get('/', async (req, res, next) => {
 // @route   PUT /api/users/:id
 router.put('/:id', async (req, res, next) => {
     try {
-        const user = await User.findById(req.params.id);
+        const { name, role, username, password } = req.body;
 
+        const user = await User.findById(req.params.id).select('+password');
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
 
-        user.name = req.body.name || user.name;
-        user.role = req.body.role || user.role;
-        
-        // Permite a atualização do username, verificando se já não está em uso por outro usuário
-        if (req.body.username && req.body.username.toLowerCase() !== user.username) {
-            const existingUser = await User.findOne({ username: req.body.username.toLowerCase() });
+        // Atualiza os campos que foram passados no body
+        if (name) user.name = name;
+        if (role) user.role = role;
+
+        if (username && username.toLowerCase() !== user.username) {
+            const existingUser = await User.findOne({ username: username.toLowerCase() });
             if (existingUser) {
                 return res.status(409).json({ message: 'Este nome de usuário já está em uso.' });
             }
-            user.username = req.body.username.toLowerCase();
+            user.username = username.toLowerCase();
         }
 
-        if (req.body.password) {
-            user.password = req.body.password; // O hook pre-save irá hashear
+        if (password) {
+            user.password = password; // O hook pre-save irá hashear
         }
 
         const updatedUser = await user.save();
+        
         await logActivity(req.user, 'UPDATE_USER', `Usuário '${updatedUser.username}' foi atualizado.`);
-        res.status(200).json({ message: 'Usuário atualizado com sucesso!' });
+
+        // Retorna o usuário atualizado (sem a senha)
+        res.status(200).json({
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            name: updatedUser.name,
+            role: updatedUser.role,
+        });
     } catch (error) {
         next(error);
     }

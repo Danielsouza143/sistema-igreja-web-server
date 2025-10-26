@@ -149,12 +149,12 @@ app.use('/api/presencas-visitantes', protect, presencasVisitantesRoutes);
 app.use('/api/presencas-membros', protect, presencasMembrosRoutes); // Adicionado
 app.use('/api/financeiro', protect, financeiroRoutes);
 app.use('/api/eventos', protect, eventosRoutes);
+app.use('/api/lembretes', protect, lembretesRoutes); // MOVIDO E CORRIGIDO
 
 // Rotas de Admin (requerem login e permissão de admin)
 app.use('/api/configs', protect, isAdmin, configsRoutes);
 app.use('/api/users', protect, isAdmin, usersRoutes);
 app.use('/api/logs', protect, isAdmin, logsRoutes);
-app.use('/api/lembretes', protect, isAdmin, lembretesRoutes);
 app.use('/api/utensilios', protect, utensiliosRoutes); // CORRIGIDO: Acessível por usuários logados
 app.use('/api/emprestimos', protect, emprestimosRoutes); // CORRIGIDO: Acessível por usuários logados
 

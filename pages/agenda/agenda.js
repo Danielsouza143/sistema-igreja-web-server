@@ -12,9 +12,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnZoomIn = document.getElementById('btn-zoom-in');
     const btnZoomOut = document.getElementById('btn-zoom-out');
 
+    // --- Elementos do Modal de Detalhes ---
+    const detalhesModal = document.getElementById('detalhes-evento-modal');
+    const detalhesCloseBtn = document.getElementById('detalhes-modal-close');
+    const detalhesFecharBtn = document.getElementById('btn-fechar-detalhes');
+    const btnEditarEvento = document.getElementById('btn-editar-evento');
+    const btnExcluirEvento = document.getElementById('btn-excluir-evento');
+    const btnExportarIcs = document.getElementById('btn-exportar-ics');
+    const btnLembrete = document.getElementById('btn-lembrete'); // NOVO
+    let currentEventId = null; // Guarda o ID do evento atualmente em visualização
+
+
     // --- Estado da Aplicação ---
     let calendar;
     let todosEventos = [];
+    let todosMembros = []; // NOVO: Para guardar os membros
     const calendarAspectRatio = {
         steps: [1.35, 1.5, 1.8, 2.2, 2.5], // De mais alto para mais baixo
         current: 2, // Começa no meio (1.8)
@@ -29,6 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     configurarFormulario();
     configurarZoomCalendario();
 
+    // Chamar a configuração do novo modal na inicialização
+    configurarDetalhesModal();
+
     // --- FUNÇÕES DE LÓGICA ---
 
     async function carregarDadosIniciais() {
@@ -37,15 +52,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             // CORREÇÃO: Usar o window.api para as chamadas de API
-            const [eventosData, membros, configs] = await Promise.all([
+            const [eventosData, membrosData, configs] = await Promise.all([
                 window.api.get('/api/eventos'),
                 window.api.get('/api/membros'),
                 window.api.get('/api/eventos/configs')
             ]);
 
             todosEventos = eventosData;
+            todosMembros = membrosData; // Armazena os membros
 
-            popularSelect(selectResponsaveis, membros, 'nome', '_id', 'Nenhum membro encontrado');
+            popularSelect(selectResponsaveis, todosMembros, 'nome', '_id', 'Nenhum membro encontrado');
             popularSelect(selectCategorias, configs.eventos_categorias.map(c => ({ name: c })), 'name', 'name', 'Nenhuma categoria encontrada');
 
         } catch (error) {
@@ -69,20 +85,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             locale: 'pt-br',
             buttonText: { today: 'Hoje', month: 'Mês', week: 'Semana', list: 'Lista' },
+            dayMaxEventRows: true, // NOVO: Permite que o dia cresça para mostrar todos os eventos
             events: formatarEventosParaCalendario(todosEventos),
-            eventClick: (info) => abrirModalParaEdicao(info.event.id),
+            eventClick: (info) => abrirDetalhesEvento(info.event.id),
             dateClick: (info) => abrirModalParaCriacao(info.dateStr),
             // NOVO: Hook para customizar a aparência do evento
             eventContent: function(arg) {
+                const evento = arg.event.extendedProps;
                 let iconHtml = '';
-                if (arg.event.extendedProps.tipo === 'Programação') {
+                let cartazHtml = '';
+                let titleHtml = `<span class="fc-event-title-text">${arg.event.title}</span>`;
+
+                if (evento.tipo === 'Programação') {
                     iconHtml = '<i class="bx bx-sync event-icon"></i>';
-                } else {
-                    iconHtml = '<i class="bx bx-star event-icon"></i>';
                 }
+
+                if (evento.cartazUrl) {
+                    cartazHtml = `<img src="${evento.cartazUrl}" class="fc-event-cartaz-thumb" alt="Cartaz">`;
+                }
+
                 return {
-                    html: `${iconHtml}<span class="fc-event-title-text">${arg.event.title}</span>`
-                }
+                    html: `<div class="fc-event-main-custom">${cartazHtml}${iconHtml}${titleHtml}</div>`
+                };
             }
         });
         calendar.render();
@@ -133,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             formData.append('local', document.getElementById('evento-local').value);
             formData.append('responsavelId', document.getElementById('evento-responsavel').value);
             formData.append('descricao', document.getElementById('evento-descricao').value);
+            formData.append('cor', document.getElementById('evento-cor').value); // NOVO
             
             // Adicionar a URL do cartaz existente (se houver) para não perdê-la na edição
             formData.append('cartazUrl', document.getElementById('evento-cartaz-url').value);
@@ -281,9 +306,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('evento-local').value = evento.local;
 
-            document.getElementById('evento-responsavel').value = evento.responsavelId;
+                        document.getElementById('evento-responsavel').value = evento.responsavelId;
 
-            document.getElementById('evento-descricao').value = evento.descricao || '';
+                        document.getElementById('evento-descricao').value = evento.descricao || '';
+
+                        document.getElementById('evento-cor').value = evento.cor || (evento.tipo === 'Evento' ? '#e36e00' : '#3a86ff'); // NOVO
+
+                        
 
             
 
@@ -356,16 +385,198 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function formatarEventosParaCalendario(eventos) {
         return eventos.map(evento => {
-            const tipo = evento.tipo || 'Evento'; // CORREÇÃO: Garante que tipo nunca seja undefined
+            const tipo = evento.tipo || 'Evento';
+            const corPadrao = tipo === 'Programação' ? '#3a86ff' : '#e36e00';
+            const corEvento = evento.cor || corPadrao;
+
+            // Lógica para garantir bom contraste no texto do evento
+            const corTexto = isColorLight(corEvento) ? '#212529' : '#ffffff';
+
             return {
                 id: evento._id,
                 title: evento.nome,
                 start: evento.dataInicio,
                 end: evento.dataFim,
-                color: tipo === 'Programação' ? 'var(--cor-acao)' : '#e36e00',
-                borderColor: tipo === 'Programação' ? 'var(--cor-secundaria)' : '#c05d00',
+                color: corEvento,
+                borderColor: corEvento, // Borda da mesma cor
+                textColor: corTexto, // Define a cor do texto
                 extendedProps: evento
             }
         });
     }
+
+    // --- FUNÇÃO UTILITÁRIA PARA CONTRASTE DE COR ---
+    function isColorLight(hexColor) {
+        if (!hexColor.startsWith('#')) return true; // Retorna true se não for um hex
+
+        const hex = hexColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        // Fórmula de luminosidade YIQ
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 150; // Cores com luminosidade >= 150 são consideradas claras
+    }
+
+    // --- FUNÇÕES DO MODAL DE DETALHES ---
+
+    function abrirDetalhesEvento(id) {
+        currentEventId = id;
+        const evento = todosEventos.find(e => e._id === id);
+        if (!evento) return;
+
+        // Preenche o título e o cartaz
+        document.getElementById('detalhes-modal-title').textContent = evento.nome;
+        const cartazImg = document.getElementById('detalhes-cartaz-img');
+        const cartazContainer = document.getElementById('detalhes-cartaz-container');
+        if (evento.cartazUrl) {
+            cartazImg.src = evento.cartazUrl;
+            cartazContainer.style.display = 'block';
+        } else {
+            cartazContainer.style.display = 'none';
+        }
+
+        // Preenche as informações
+        const dataInicio = new Date(evento.dataInicio);
+        const dataFim = new Date(evento.dataFim);
+        const formatoData = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        document.getElementById('detalhes-data').textContent = `${dataInicio.toLocaleDateString('pt-BR', formatoData)} - ${dataFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        document.getElementById('detalhes-local').textContent = evento.local;
+        
+        // Busca e exibe o nome do responsável
+        const responsavel = todosMembros.find(m => m._id === evento.responsavelId);
+        const responsavelEl = document.getElementById('detalhes-responsavel');
+        if (responsavel) {
+            responsavelEl.innerHTML = `<a href="/pages/lista.membros/detalhes_membro.html?id=${responsavel._id}" target="_blank">${responsavel.nome}</a>`;
+        } else {
+            responsavelEl.textContent = 'Não informado';
+        }
+
+        document.getElementById('detalhes-categoria').textContent = evento.categoria;
+        document.getElementById('detalhes-descricao').textContent = evento.descricao || 'Nenhuma descrição fornecida.';
+
+        // Recorrência
+        const recorrenciaP = document.getElementById('detalhes-recorrencia-p');
+        if (evento.recorrencia) {
+            document.getElementById('detalhes-recorrencia').textContent = evento.recorrencia;
+            recorrenciaP.style.display = 'block';
+        } else {
+            recorrenciaP.style.display = 'none';
+        }
+
+        // Detalhes Financeiros
+        const financeiroContainer = document.getElementById('detalhes-financeiro-container');
+        if (evento.tipo === 'Evento' && evento.financeiro && evento.financeiro.envolveFundos) {
+            document.getElementById('detalhes-meta').textContent = `R$ ${evento.financeiro.meta.toFixed(2)}`;
+            document.getElementById('detalhes-custo').textContent = `R$ ${evento.financeiro.custoEstimado.toFixed(2)}`;
+            financeiroContainer.style.display = 'block';
+        } else {
+            financeiroContainer.style.display = 'none';
+        }
+
+        detalhesModal.classList.add('active');
+    }
+
+    function configurarDetalhesModal() {
+        detalhesCloseBtn.addEventListener('click', () => detalhesModal.classList.remove('active'));
+        detalhesFecharBtn.addEventListener('click', () => detalhesModal.classList.remove('active'));
+
+        btnEditarEvento.addEventListener('click', () => {
+            detalhesModal.classList.remove('active');
+            abrirModalParaEdicao(currentEventId);
+        });
+
+        btnExcluirEvento.addEventListener('click', async () => {
+            if (!currentEventId) return;
+
+            const confirmou = confirm('Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.');
+            if (confirmou) {
+                try {
+                    await window.api.delete(`/api/eventos/${currentEventId}`);
+                    detalhesModal.classList.remove('active');
+                    await carregarDadosIniciais(); // Recarrega tudo
+                    calendar.removeAllEvents();
+                    calendar.addEventSource(formatarEventosParaCalendario(todosEventos));
+                    renderizarLista();
+                } catch (error) {
+                    console.error('Erro ao excluir evento:', error);
+                    alert(`Não foi possível excluir o evento. ${error.message}`);
+                }
+            }
+        });
+
+        btnExportarIcs.addEventListener('click', () => {
+            if (!currentEventId) return;
+            const evento = todosEventos.find(e => e._id === currentEventId);
+            if (!evento) return;
+
+            const icsContent = gerarIcs(evento);
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${evento.nome.replace(/[^a-z0-9]/gi, '_')}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        btnLembrete.addEventListener('click', () => {
+            if (!currentEventId) return;
+            if (window.criarLembreteEvento) {
+                window.criarLembreteEvento(currentEventId);
+            } else {
+                alert('O sistema de notificações não está pronto.');
+            }
+        });
+
+        // NOVO E MELHORADO: Lógica para cartaz em tela cheia
+        const cartazImg = document.getElementById('detalhes-cartaz-img');
+        const fullscreenContainer = document.getElementById('fullscreen-container');
+        const fullscreenImage = document.getElementById('fullscreen-image');
+        const fullscreenClose = document.querySelector('.fullscreen-close');
+
+        cartazImg.addEventListener('click', () => {
+            if (!cartazImg.src || cartazImg.src.endsWith('placeholder-image.png')) return;
+            fullscreenImage.src = cartazImg.src;
+            fullscreenContainer.classList.add('active');
+        });
+
+        const fecharFullscreen = () => {
+            fullscreenContainer.classList.remove('active');
+        };
+
+        fullscreenContainer.addEventListener('click', fecharFullscreen);
+        fullscreenClose.addEventListener('click', fecharFullscreen);
+    }
+
+    function gerarIcs(evento) {
+        // Formata a data para o padrão UTC (YYYYMMDDTHHMMSSZ)
+        const toUtcString = (date) => {
+            return new Date(date).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+
+        const icsData = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//SistemaIgreja//Agenda//PT',
+            'BEGIN:VEVENT',
+            `UID:${evento._id}@sistemaigreja.com`,
+            `DTSTAMP:${toUtcString(new Date())}`,
+            `DTSTART:${toUtcString(evento.dataInicio)}`,
+            `DTEND:${toUtcString(evento.dataFim)}`,
+            `SUMMARY:${evento.nome}`,
+            `DESCRIPTION:${evento.descricao || ''}`,
+            `LOCATION:${evento.local || ''}`,
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+
+        return icsData;
+    }
+
+    // Chamar a configuração do novo modal na inicialização
+    configurarDetalhesModal();
+
 });

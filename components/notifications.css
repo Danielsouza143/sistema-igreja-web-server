@@ -1,0 +1,109 @@
+/* Arquivo: components/notifications.css */
+
+.notification-panel {
+    position: fixed;
+    top: 0;
+    right: -350px; /* Começa fora da tela */
+    width: 350px;
+    height: 100%;
+    background-color: var(--cor-fundo-card);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 3001; /* CORRIGIDO: Acima do overlay */
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s ease-in-out;
+}
+
+.notification-panel.active {
+    right: 0; /* Entra na tela */
+}
+
+.notification-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--cor-primaria);
+}
+
+.panel-header .bx-x {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--cor-texto-claro);
+    transition: color 0.2s ease;
+}
+
+.panel-header .bx-x:hover {
+    color: var(--cor-texto-escuro);
+}
+
+.notification-panel .panel-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.panel-body .empty-message {
+    text-align: center;
+    color: var(--cor-texto-claro);
+    margin-top: 30px;
+}
+
+.notification-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+    background-color: var(--cor-fundo);
+}
+
+.notification-item.unread {
+    background-color: #f0f5ff;
+}
+
+.notification-item .icon-container {
+    font-size: 1.5rem;
+    color: var(--cor-acao);
+    margin-top: 3px;
+}
+
+.notification-item .content-container p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--cor-texto-escuro);
+}
+
+.notification-item .content-container .timestamp {
+    font-size: 0.75rem;
+    color: var(--cor-texto-claro);
+    margin-top: 4px;
+}
+
+.notification-panel .panel-footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--cor-borda);
+    text-align: center;
+}
+
+.panel-footer a {
+    font-size: 0.85rem;
+    color: var(--cor-acao);
+    text-decoration: none;
+}
+
+.panel-footer a:hover {
+    text-decoration: underline;
+}

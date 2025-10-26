@@ -32,6 +32,7 @@ const eventoSchema = new mongoose.Schema({
     },
     recorrencia: { type: String, default: '' }, // Ex: "Toda terça-feira às 20h"
     cartazUrl: { type: String, default: '' },
+    cor: { type: String, default: '' }, // NOVO: Para a cor do evento no calendário
 
     financeiro: {
         envolveFundos: { type: Boolean, default: false },

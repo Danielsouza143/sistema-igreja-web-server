@@ -23,10 +23,10 @@
 .sub-menu-link.active { background-color: var(--cor-secundaria, #0033a0);}
 
 /* --- Botão Hamburger (Menu Lateral) --- */
-.hamburger-menu { display: flex; font-size: 28px; color: white; cursor: pointer; padding: 5px; border-radius: 5px; background-color: var(--cor-acao, #4d50ff);}
+.hamburger-menu { display: flex; font-size: 28px; color: white; cursor: pointer; padding: 5px; border-radius: 5px; background-color: transparent; transition: background-color 0.2s;}
 .hamburger-menu:hover { background-color: var(--cor-secundaria, #0033a0); }
 .hamburger-mobile { display: none; }
-.hamburger-desktop { display: flex; }
+.hamburger-desktop { display: flex; background-color: var(--cor-acao, #4d50ff); }
 @media (min-width: 992px) { .menu .menu-logo { display: block; } .link-conta { display: inline; } }
 @media (max-width: 991px) { .sub-menu { display: none; } .hamburger-mobile { display: flex; } .hamburger-desktop { display: none; } }
 
@@ -61,8 +61,8 @@
 }
 
 .menu-header img {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     object-fit: cover;
 }

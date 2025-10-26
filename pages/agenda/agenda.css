@@ -14,9 +14,29 @@
 
 /* --- Estilos para o FullCalendar (Polimento) --- */
 
+/* Garante que o container de eventos dentro de um dia seja um flex container */
+.fc-daygrid-day-events {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ocupa toda a altura disponível do dia */
+    overflow: hidden; /* Esconde qualquer overflow */
+}
+
+/* Estilo base para cada evento dentro do dia */
+.fc-daygrid-event {
+    flex-grow: 1; /* Permite que os eventos cresçam e ocupem o espaço */
+    margin-bottom: 1px; /* Pequeno espaçamento entre eventos */
+    min-height: 18px; /* Altura mínima para eventos */
+}
+
+.fc-daygrid-event .fc-event-main {
+    height: 100%; /* Garante que o conteúdo do evento ocupe toda a altura */
+}
+
+
 :root {
     --fc-border-color: var(--cor-borda);
-    --fc-today-bg-color: #eef2f5; /* Um pouco mais sutil que o padrão */
+    --fc-today-bg-color: #eef2f5;
     --fc-event-border-radius: 4px;
     --fc-event-font-size: 0.8rem;
     --fc-event-font-weight: 600;
@@ -53,26 +73,45 @@
 /* Estilo dos Eventos no Calendário */
 .fc-event {
     cursor: pointer;
-    padding: 4px 6px;
+    padding: 2px;
     border: 1px solid rgba(0,0,0,0.1);
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    overflow: hidden;
+    /* O FullCalendar controla a cor de fundo, nós controlamos o conteúdo */
 }
 
 .fc-event .fc-event-main {
+    /* Resetamos o padding padrão para nosso custom caber */
+    padding: 0;
+}
+
+.fc-event-main-custom {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--cor-branco);
+    padding: 2px 4px;
+    width: 100%;
+    height: 100%;
+    color: var(--cor-branco); /* Cor do texto padrão para eventos */
 }
 
-.fc-event .event-icon {
+.fc-event-cartaz-thumb {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0; /* Impede que a imagem encolha */
+}
+
+.fc-event-main-custom .event-icon {
     font-size: 1.1em;
 }
 
-.fc-event .fc-event-title-text {
+.fc-event-main-custom .fc-event-title-text {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-grow: 1; /* Permite que o título ocupe o espaço restante */
 }
 
 
@@ -161,7 +200,7 @@
     background-color: var(--cor-acao); /* Azul */
 }
 
-/* Ajustes no Modal */
+/* Ajustes no Modal de Edição */
 #cartaz-preview {
     width: 100%;
     max-height: 200px;
@@ -169,4 +208,193 @@
     border-radius: var(--border-radius-padrao);
     border: 1px solid var(--cor-borda);
     margin-top: 15px;
+}
+
+.input-cor {
+    width: 100%;
+    height: 40px;
+    padding: 5px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--border-radius-padrao);
+    cursor: pointer;
+}
+
+/* --- Estilos para o Modal de Detalhes do Evento --- */
+/* --- Estilos para o Modal de Detalhes do Evento --- */
+.modal-content.modal-detalhes {
+    max-width: 1100px; /* Aumenta um pouco a largura máxima */
+    width: 100%; /* Usa a largura da viewport */
+    box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura */
+}
+
+.modal-content.modal-detalhes .modal-body {
+    padding: 20px 25px;
+    display: grid;
+    grid-template-columns: 300px calc(100% - 325px); /* Ajusta a proporção */
+    grid-template-rows: auto;
+    gap: 25px;
+   /* flex-grow: 1; */ /* Permite que o body ocupe o espaço restante */
+    box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura */
+
+}
+
+/* Media query para telas menores */
+@media (max-width: 900px) {
+    .modal-content.modal-detalhes .modal-body {
+        grid-template-columns: 1fr; /* Coluna única em telas menores */
+    }
+    .detalhes-cartaz-container {
+        aspect-ratio: 16 / 9; /* Proporção mais horizontal para o cartaz em telas menores */
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-detalhes .modal-content {
+        width: 100%;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+    .modal-detalhes .modal-body,
+    .modal-actions {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    .modal-actions-right {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    .modal-actions-right .btn {
+        width: 100%;
+    }
+}
+
+#detalhes-cartaz-container {
+    width: 100%;
+    border-radius: var(--border-radius-padrao);
+    overflow: hidden;
+    background-color: var(--cor-fundo);
+}
+
+#detalhes-cartaz-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#detalhes-info-container {
+    word-break: break-word;
+    min-width: 0;
+}
+
+
+
+#detalhes-info-container p {
+    margin: 0 0 12px 0;
+    color: var(--cor-texto-claro);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#detalhes-info-container p strong {
+    color: var(--cor-texto-escuro);
+}
+
+#detalhes-info-container i {
+    font-size: 1.3em;
+    color: var(--cor-acao);
+}
+
+#detalhes-info-container a {
+    color: var(--cor-acao);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#detalhes-info-container a:hover {
+    text-decoration: underline;
+}
+
+#detalhes-descricao-container {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--cor-borda-fraca);
+}
+
+#detalhes-descricao-container h4 {
+    margin: 0 0 10px 0;
+    color: var(--cor-primaria);
+}
+
+#detalhes-descricao-container p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    gap: 0;
+}
+
+#detalhes-financeiro-container {
+    background-color: #f7f9fc;
+    padding: 15px;
+    border-radius: var(--border-radius-padrao);
+    margin-top: 20px;
+}
+
+.modal-content.modal-detalhes .modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-content.modal-detalhes .modal-actions > div {
+    display: flex;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.modal-content.modal-detalhes .modal-actions > div .btn {
+    width: 100%;
+    justify-content: center; /* Centraliza o texto e ícone no botão */
+}
+
+/* Estilos para o Cartaz em Tela Cheia (NOVO E MELHORADO) */
+.fullscreen-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: none; /* Começa escondido */
+    justify-content: center;
+    align-items: center;
+    z-index: 1001; /* Acima do modal */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.fullscreen-container.active {
+    display: flex;
+    opacity: 1;
+}
+
+.fullscreen-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 3rem;
+    color: white;
+    cursor: pointer;
+    line-height: 1;
+}
+
+#fullscreen-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
 }
