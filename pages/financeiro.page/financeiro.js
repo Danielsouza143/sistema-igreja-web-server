@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let graficoContribuicoesMembro = null;
     let membroEmVisualizacaoId = null; // Variável para guardar o membro em visualização na aba de dízimos
 
+    // Nova: armazena nome e logo da identidade da igreja vindos das configs
+    let identidadeConfig = { nome: '', logoUrl: '' };
+
     // --- Seletores do DOM ---
     const modalLancamento = document.getElementById('modal-lancamento');
     const formLancamento = document.getElementById('form-lancamento');
@@ -52,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${l.comprovanteUrl ? `<a href="${l.comprovanteUrl}" target="_blank" title="Ver Comprovante"><i class='bx bx-paperclip anexo-icon'></i></a>` : ''}
                 </td>
                 <td data-label="Categoria">${l.categoria}</td>
-                <td data-label="Valor" class="celula-editavel ${l.tipo === 'entrada' ? 'valor-entrada' : 'valor-saida'}" contenteditable="true" data-id="${l._id}" data-field="valor">${formatarMoeda(l.valor)}</td>
+                <td data-label="Valor" class="celula-editavel ${l.tipo === 'entrada' ? 'valor-entrada' : 'valor-saida'}" contenteditable="true" data-id="${l._id}" data-field="valor">${formatarMoeda(l.[...]
                 <td class="acoes-item">
                     <i class='bx bxs-edit' data-id="${l._id}" title="Editar"></i>
                     <i class='bx bxs-copy' data-id="${l._id}" title="Duplicar"></i>
@@ -439,6 +442,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('recibo-descricao').textContent = lancamento.descricao;
         document.getElementById('recibo-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         document.getElementById('recibo-categoria').textContent = lancamento.categoria;
+
+        // NOVO: injetar nome e logo da identidade da igreja (fallback para valores estáticos)
+        const nomeIgrejaEl = document.getElementById('recibo-nome-igreja');
+        const logoEl = document.getElementById('recibo-logo');
+        if (nomeIgrejaEl) {
+            nomeIgrejaEl.textContent = identidadeConfig.nome || nomeIgrejaEl.textContent || 'Nome da Igreja';
+        }
+        if (logoEl) {
+            if (identidadeConfig.logoUrl) {
+                logoEl.src = identidadeConfig.logoUrl;
+                logoEl.style.display = '';
+            } else {
+                // se não houver logo configurada, esconde o elemento para não exibir a imagem estática
+                logoEl.style.display = 'none';
+            }
+        }
     };
 
     const gerarReciboPDF = async (lancamento) => {
@@ -674,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rightClickedRowId) return;
         const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
         if (lancamento) {
-            const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
+            const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.desc[...]
             navigator.clipboard.writeText(texto).then(() => {
                 alert('Dados do lançamento copiados para a área de transferência!');
             }).catch(err => {
@@ -853,6 +872,9 @@ document.addEventListener('DOMContentLoaded', () => {
             todosLancamentos = resLancamentos;
             todosMembros = resMembros;
             categoriasConfig = resConfig.financeiro_categorias;
+
+            // NOVO: tentar popular identidade da igreja a partir das configs (vários fallbacks)
+            identidadeConfig = resConfig.identidade || resConfig.identidade_igreja || resConfig.igreja || resConfig.institucional || resConfig.site_identidade || {};
 
             popularFiltros();
             aplicarFiltros();
