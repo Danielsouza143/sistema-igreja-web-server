@@ -3,231 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações - Gestão ADTC</title>
-    <script src="/auth-guard.js"></script> <!-- GUARDA DE ROTA -->
+    <script src="/auth-guard.js"></script>
+    <title>Controle Financeiro</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
-    <link rel="stylesheet" href="configuracoes.css">
+    <link rel="stylesheet" href="/pages/financeiro.page/financeiro.css">
     <link rel="stylesheet" href="/pages/styles/global.css"> 
     <link rel="stylesheet" href="/components/menu.css">
     <link rel="stylesheet" href="/components/notifications.css">
-
-    <!-- Cropper.js for logo cropping -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/auth-guard.js"></script>
 </head>
 <body data-theme="light">
-    <header id="menu-placeholder"></header>
+<header id="menu-placeholder"></header>
 
-    <main class="conteudo">
-        <div class="config-container">
-            <aside class="config-nav">
-                <ul>
-                    <li><a href="#perfil" class="config-nav-link active"><i class='bx bxs-user-circle'></i> Meu Perfil</a></li>
-                    <li><a href="#aparencia" class="config-nav-link"><i class='bx bxs-palette'></i> Aparência</a></li>
-                    <li><a href="#identidade" class="config-nav-link"><i class='bx bxs-church'></i> Identidade da Igreja</a></li>
-                    <li><a href="#usuarios" class="config-nav-link"><i class='bx bxs-user-account'></i> Gerenciar Usuários</a></li>
-                    <li><a href="#categorias" class="config-nav-link"><i class='bx bxs-category'></i> Categorias</a></li>
-                    <li><a href="#backup" class="config-nav-link"><i class='bx bxs-data'></i> Backup e Restauração</a></li>
-                    <li><a href="#logs" class="config-nav-link"><i class='bx bx-history'></i> Logs do Sistema</a></li>
-                </ul>
-            </aside>
+<main class="conteudo">
+    <h1 class="title-page">Painel Financeiro</h1>
 
-            <div class="config-content">
-                <!-- Seção: Meu Perfil -->
-                <section id="perfil" class="config-section active">
-                    <h1 class="title-page">Meu Perfil</h1>
-                    <form id="form-perfil">
-                        <div class="config-card">
-                            <h3><i class='bx bx-user-circle'></i> Informações do Usuário</h3>
-                            <div class="form-group">
-                                <label for="perfil-nome-completo">Nome Completo</label>
-                                <input type="text" id="perfil-nome-completo">
-                            </div>
-                            <div class="form-group">
-                                <label for="perfil-username">Nome de Usuário (Login)</label>
-                                <input type="text" id="perfil-username" readonly>
-                            </div>
-                            <button type="submit" class="btn-principal" id="btn-salvar-perfil">Salvar Nome</button>
-                        </div>
-                        <div class="config-card">
-                            <h3><i class='bx bx-key'></i> Alterar Senha</h3>
-                            <div class="form-group"><label for="perfil-senha-atual">Senha Atual</label><input type="password" id="perfil-senha-atual" placeholder="••••••••"></div>
-                            <div class="form-group"><label for="perfil-nova-senha">Nova Senha</label><input type="password" id="perfil-nova-senha" placeholder="••••••••"></div>
-                            <div class="form-group"><label for="perfil-confirmar-senha">Confirmar Nova Senha</label><input type="password" id="perfil-confirmar-senha" placeholder="••••••••"></div>
-                            <button type="button" id="btn-salvar-senha" class="btn-principal">Salvar Nova Senha</button>
-                        </div>
-                    </form>
-                </section>
+    <div class="abas-financeiro">
+        <button class="aba-link active" data-aba="lancamentos">Lançamentos</button>
+        <button class="aba-link" data-aba="dizimos">Dízimos e Ofertas</button>
+    </div>
 
-                <!-- Seção: Aparência -->
-                <section id="aparencia" class="config-section">
-                    <h1 class="title-page">Aparência</h1>
-                    <div class="config-card">
-                        <h3><i class='bx bx-palette'></i> Personalização da Interface</h3>
-                        <div class="form-group">
-                            <label>Tema da Interface</label>
-                            <div class="theme-switcher">
-                                <button data-theme="light" class="theme-btn active">Claro</button>
-                                <button data-theme="dark" class="theme-btn">Escuro</button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="cor-principal">Cor Principal</label>
-                            <input type="color" id="cor-principal" value="#001f5d">
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Seção: Identidade da Igreja -->
-                <section id="identidade" class="config-section">
-                    <h1 class="title-page">Identidade da Igreja</h1>
-                    <div class="config-card">
-                        <h3><i class='bx bxs-church'></i> Nome e Logo</h3>
-                        <div class="form-group">
-                            <label for="config-nome-igreja">Nome da Igreja</label>
-                            <input type="text" id="config-nome-igreja" placeholder="Nome completo da sua igreja">
-                        </div>
-                        <div class="form-group">
-                            <label>Logo da Igreja</label>
-                            <div class="logo-preview-container">
-                                <img id="logo-preview" src="/pages/logo.tab.png" alt="Pré-visualização do logo">
-                            </div>
-                            <input type="file" id="logo-upload-input" accept="image/png, image/jpeg" style="display: none;">
-                            <div class="logo-actions">
-                                <button type="button" id="btn-trocar-logo" class="btn btn-secundario">Trocar Logo</button>
-                                <button type="button" id="btn-salvar-identidade" class="btn btn-principal">Salvar Identidade</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Seção: Gerenciar Usuários -->
-                <section id="usuarios" class="config-section">
-                    <h1 class="title-page">Gerenciamento de Usuários</h1>
-                    <div class="config-card full-width">
-                        <p>Adicione, edite ou remova usuários que podem acessar o sistema.</p>
-                        <div class="header-actions">
-                            <button id="btn-novo-usuario" class="btn-principal"><i class='bx bx-plus'></i> Adicionar Usuário</button>
-                        </div>
-                        <ul id="lista-usuarios" class="lista-configs"></ul>
-                    </div>
-                </section>
-
-                <!-- Seção: Categorias -->
-                <section id="categorias" class="config-section">
-                    <h1 class="title-page">Central de Categorias</h1>
-                    <div id="categorias-container" class="config-card full-width">
-                        <div class="categorias-container">
-                            <div class="categoria-coluna">
-                                <h4><i class='bx bxs-coffee-togo'></i> Utensílios</h4>
-                                <ul id="lista-cat-utensilios" class="lista-configs"></ul>
-                                <div class="add-config-form"><input type="text" id="nova-cat-utensilios_categorias" placeholder="Nova categoria"><button data-tipo="utensilios_categorias" class="btn-add-categoria btn-principal">Adicionar</button></div>
-                            </div>
-                            <div class="categoria-coluna">
-                                <h4><i class='bx bxs-calendar-event'></i> Eventos</h4>
-                                <ul id="lista-cat-eventos" class="lista-configs"></ul>
-                                <div class="add-config-form"><input type="text" id="nova-cat-eventos_categorias" placeholder="Nova categoria"><button data-tipo="eventos_categorias" class="btn-add-categoria btn-principal">Adicionar</button></div>
-                            </div>
-                            <div class="categoria-coluna">
-                                <h4><i class='bx bxs-dollar-circle'></i> Financeiro (Entradas)</h4>
-                                <ul id="lista-cat-entradas" class="lista-configs"></ul>
-                                <div class="add-config-form"><input type="text" id="nova-cat-entradas" placeholder="Nova categoria"><button data-tipo="financeiro_categorias" data-subtipo="entradas" class="btn-add-categoria btn-principal">Adicionar</button></div>
-                            </div>
-                            <div class="categoria-coluna">
-                                <h4><i class='bx bxs-dollar-circle'></i> Financeiro (Saídas)</h4>
-                                <ul id="lista-cat-saidas" class="lista-configs"></ul>
-                                <div class="add-config-form"><input type="text" id="nova-cat-saidas" placeholder="Nova categoria"><button data-tipo="financeiro_categorias" data-subtipo="saidas" class="btn-add-categoria btn-principal">Adicionar</button></div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Seção: Backup e Restauração -->
-                <section id="backup" class="config-section">
-                    <h1 class="title-page">Backup e Restauração</h1>
-                    <div class="config-card">
-                        <h3><i class='bx bx-data'></i> Cópia de Segurança</h3>
-                        <p>Salve todos os dados do sistema em um arquivo seguro ou restaure a partir de um backup anterior.</p>
-                        <div class="backup-actions">
-                            <button id="btn-exportar-dados" class="btn-principal">Exportar Dados (Backup)</button>
-                            <button id="btn-importar-dados" class="btn-secundario">Importar Dados (Restaurar)</button>
-                            <input type="file" id="import-file-input" style="display: none;" accept=".json">
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Seção: Logs do Sistema -->
-                <section id="logs" class="config-section">
-                    <h1 class="title-page">Log de Atividades do Sistema</h1>
-                    <div class="config-card full-width">
-                        <p>Últimas 200 ações realizadas no sistema. Apenas administradores podem ver esta seção.</p>
-                        <div id="log-container">
-                            <ul id="lista-logs" class="lista-configs">
-                                <li class="mensagem-vazio">Carregando logs...</li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal para Usuários -->
-    <div id="modal-usuario" class="modal-overlay">
-        <div class="modal-content">
-            <form id="form-usuario">
-                <h2 id="modal-usuario-titulo">Adicionar Usuário</h2>
-                <input type="hidden" id="usuario-id">
-                <div class="form-group"><label for="usuario-nome-completo">Nome Completo</label><input type="text" id="usuario-nome-completo"></div>
-                <div class="form-group"><label for="usuario-username">Nome de Usuário</label><input type="text" id="usuario-username" required></div>
-                <div class="form-group"><label for="usuario-password">Senha</label><input type="password" id="usuario-password" placeholder="Deixe em branco para não alterar"></div>
-                <div class="form-group"><label for="usuario-role">Permissão</label>
-                    <select id="usuario-role" required><option value="operador">Operador</option><option value="admin">Administrador</option></select>
+    <div id="lancamentos" class="aba-conteudo active">
+        <section class="dashboard-financeiro">
+            <div class="card-dashboard" id="card-receitas"><p>Receitas (Período)</p><h2 id="total-receitas">R$ 0,00</h2></div>
+            <div class="card-dashboard" id="card-despesas"><p>Despesas (Período)</p><h2 id="total-despesas">R$ 0,00</h2></div>
+            <div class="card-dashboard" id="card-saldo"><p>Balanço (Período)</p><h2 id="balanco-mensal">R$ 0,00</h2></div>
+        </section>
+        
+        <div class="analises-container">
+            <section class="grafico-container">
+                <div class="grafico-header">
+                    <h3>Resumo Anual (<span id="grafico-ano-titulo"></span>)</h3>
                 </div>
-                <div class="modal-actions"><button type="button" class="btn-secundario" data-close-modal="modal-usuario">Cancelar</button><button type="submit" class="btn-principal">Salvar</button></div>
-            </form>
+                <div id="grafico-body" class="grafico-body">
+                    <canvas id="grafico-mensal"></canvas>
+                </div>
+            </section>
+            <section class="grafico-container">
+                <div class="grafico-header">
+                    <h3>Despesas por Categoria (Período)</h3>
+                </div>
+                <div class="grafico-body" id="grafico-pizza-container"><canvas id="grafico-despesas-pizza"></canvas></div>
+            </section>
         </div>
+
+        <section class="lancamentos-container">
+            <div class="lancamentos-header">
+                <h2>Extrato de Lançamentos</h2>
+                <div class="header-actions">
+                    <button id="btn-excluir-selecionados" class="btn-perigo hidden"><i class='bx bxs-trash'></i> Excluir Selecionados</button>
+                    <button id="btn-exportar-pdf" class="btn-secundario"><i class='bx bxs-file-pdf'></i> Exportar PDF</button>
+                    <button id="btn-novo-lancamento" class="btn-principal">+ Novo Lançamento</button>
+                </div>
+            </div>
+            
+            <div class="filtros-container">
+                <label for="filtro-ano">Ano:</label>
+                <select id="filtro-ano"></select>
+                <label for="filtro-mes">Mês:</label>
+                <select id="filtro-mes"></select>
+                <label for="filtro-categoria">Categoria:</label>
+                <select id="filtro-categoria"></select>
+                <label for="filtro-tipo">Tipo:</label>
+                <select id="filtro-tipo">
+                    <option value="todos">Todos</option>
+                    <option value="entrada">Entradas</option>
+                    <option value="saida">Saídas</option>
+                </select>
+            </div>
+
+            <table class="tabela-lancamentos">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selecionar-todos-lancamentos" title="Selecionar Todos"></th>
+                        <th>Data</th><th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr></thead>
+                <tbody id="tabela-lancamentos-corpo"></tbody>
+            </table>
+        </section>
     </div>
 
-    <!-- Modal da Conta do Usuário (para ser usado em todas as páginas) -->
-    <div id="modal-conta-usuario" class="modal-overlay">
-        <div class="modal-content modal-sm">
-            <button class="modal-close" data-close-modal="modal-conta-usuario">&times;</button>
-            <div class="conta-modal-header">
-                <div id="conta-modal-avatar" class="user-avatar-large">U</div>
-                <h3 id="conta-modal-nome">Nome do Usuário</h3>
-                <p id="conta-modal-email">email@exemplo.com</p>
-                <span id="conta-modal-role" class="badge">Administrador</span>
+    <div id="dizimos" class="aba-conteudo">
+    <section class="dizimos-busca-container">
+        <h2>Controle de Contribuições por Membro</h2>
+        <p>Busque um membro pelo nome para visualizar ou registrar dízimos e ofertas.</p>
+        <div class="form-group">
+            <input type="text" id="busca-membro-input" placeholder="Digite o nome do membro..." autocomplete="off">
+            <div id="busca-membro-resultados"></div>
+        </div>
+    </section>
+
+    <section id="historico-membro-container" class="hidden">
+        <div class="historico-header">
+            <div>
+                <p class="historico-subtitulo">Histórico de Contribuições de:</p>
+                <h3 id="historico-membro-nome"></h3>
             </div>
-            <div class="conta-modal-body">
-                <a href="/pages/configuracoes/configuracoes.html#perfil" class="btn-modal-conta"><i class='bx bxs-user-cog'></i> Gerenciar Perfil</a>
-                <a href="#" id="btn-modal-logout" class="btn-modal-conta btn-perigo"><i class='bx bx-log-out'></i> Sair</a>
+            <div class="header-actions">
+                <button id="btn-imprimir-relatorio-membro" class="btn-secundario"><i class='bx bxs-printer'></i> Imprimir Relatório</button>
+                <button id="btn-novo-dizimo-membro" class="btn-principal">+ Nova Contribuição</button>
+            </div>
+        </div>
+
+        <div class="dashboard-financeiro-membro">
+             <div class="card-dashboard" id="card-total-anual">
+                 <p>Total Contribuído (<span id="ano-corrente-historico"></span>)</p>
+                 <h2 id="total-anual-membro">R$ 0,00</h2>
+             </div>
+        </div>
+
+        <table class="tabela-lancamentos">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-historico-corpo">
+                </tbody>
+             <tfoot>
+                <tr>
+                    <td colspan="3">Total Geral do Histórico</td>
+                    <td id="total-geral-historico">R$ 0,00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <section class="grafico-container-membro">
+            <div class="grafico-header">
+                <h3>Contribuições Mensais (<span id="grafico-ano-membro"></span>)</h3>
+            </div>
+            <div id="grafico-contribuicoes-container" class="grafico-body"></div>
+        </section>
+        
+        <div id="aviso-sem-historico" class="aviso-historico hidden">
+            <p>Nenhuma contribuição encontrada para este membro.</p>
+        </div>
+    </section>
+    
+    <section id="aviso-inicial-dizimos" class="aviso-historico">
+        <i class='bx bx-search-alt' style="font-size: 4rem; color: #ccc;"></i>
+        <p>Utilize a busca acima para encontrar um membro.</p>
+    </section>
+</div>
+</main>
+    
+<div id="modal-lancamento" class="modal-overlay">
+    <div class="modal-content">
+        <form id="form-lancamento">
+            <h2 id="modal-titulo">Novo Lançamento</h2>
+            <div class="form-group"><label for="tipo">Tipo de Lançamento</label><select id="tipo" required><option value="entrada">Entrada (Receita)</option><option value="saida">Saída (Despesa)</option></select></div>
+            <div class="form-group"><label for="data">Data</label><input type="date" id="data" required></div>
+            <div class="form-group"><label for="valor">Valor (R$)</label><input type="number" step="0.01" min="0" id="valor" placeholder="Ex: 150.00" required></div>
+            <div class="form-group"><label for="categoria">Categoria</label><select id="categoria" required></select></div>
+            <div class="form-group hidden" id="grupo-membro">
+                <label for="busca-membro-modal">Membro</label>
+                <div class="input-wrapper">
+                    <input type="text" id="busca-membro-modal" placeholder="Busque por nome ou CPF..." autocomplete="off">
+                    <button type="button" id="clear-membro-btn" class="btn-clear hidden" title="Limpar seleção">&times;</button>
+                </div>
+                <input type="hidden" id="membroId-hidden">
+                <div id="busca-membro-resultados-modal" class="busca-resultados-modal"></div>
+                <p class="form-text-helper">Deixe em branco para registrar como contribuição anônima.</p>
+            </div>
+            <div class="form-group"><label for="descricao">Descrição</label><input type="text" id="descricao" placeholder="Ex: Dízimo do membro, Conta de Luz" required></div>
+            <div class="form-group"><label for="comprovante">Anexar Comprovante (Opcional)</label><input type="file" id="comprovante" accept="image/*,application/pdf"></div>
+            <div id="comprovante-atual-container" class="form-group hidden"><p>Comprovante Atual: <a id="comprovante-atual-link" href="#" target="_blank"></a></p></div>
+            <div class="modal-actions"><button type="button" class="btn-secundario" data-close>Cancelar</button><button type="submit" class="btn-principal">Salvar</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast/Snackbar para Desfazer Exclusão -->
+<div id="toast-desfazer" class="toast">
+    <span id="toast-mensagem"></span>
+    <button id="btn-desfazer" class="btn-toast">Desfazer</button>
+</div>
+
+<!-- Modelo do Recibo para Geração de Imagem/PDF -->
+<div id="recibo-container" style="position: absolute; left: -9999px; width: 800px; padding: 20px; background-color: white;">
+    <div id="recibo-template" style="border: 1px solid #ccc; padding: 0; font-family: 'Helvetica', sans-serif; color: #333;">
+        <div style="background-color: #001f5d; color: white; padding: 15px 25px; display: flex; align-items: center; justify-content: flex-start;">
+            <div style="display: flex; align-items: center;">
+                <alt="Logo da Igreja" style="width: 50px; height: auto; margin-right: 15px;">
+                <h2 style="margin: 0; font-size: 20px; color: white; font-weight: 600;">Ministério de Tesouraria</h2>
+            </div>
+        </div>
+        <div style="padding: 40px;">
+            <h3 style="text-align: center; margin-top: 0; margin-bottom: 30px; font-size: 22px; color: #333; font-weight: 600;">Recibo de Contribuição</h3>
+            <div style="font-size: 16px; line-height: 1.6;">
+                <p>Recebemos de <strong id="recibo-nome-membro"></strong>, o valor de <strong id="recibo-valor"></strong>, referente a <strong id="recibo-descricao"></strong>.</p>
+                <p><strong>Data da Contribuição:</strong> <span id="recibo-data"></span></p>
+                <p><strong>Categoria:</strong> <span id="recibo-categoria"></span></p>
+            </div>
+            <div style="margin-top: 40px; text-align: center; font-style: italic; color: #555;">
+                <p>"Agradecemos sua contribuição."</p>
+                <p style="font-size: 14px;">"Há quem dê generosamente, e vê aumentar suas riquezas; outros retêm o que deveriam dar, e caem na pobreza." (Provérbios 11:24)</p>
+            </div>
+            <div style="margin-top: 60px; text-align: center;">
+                <div style="display: inline-block; border-top: 1px solid #888; padding-top: 5px; width: 250px;">
+                    <p style="margin: 0; font-size: 14px;">Assinatura da Tesouraria</p>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="/js/global-loader.js" defer></script>
-    <script src="/pages/config.js"></script>
-    <script src="configuracoes.js"></script>
 
-    <!-- Modal para Cortar Logo -->
-    <div id="modal-crop-logo" class="modal-overlay">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h2>Cortar Logo</h2>
-                <button type="button" class="btn-fechar-modal" data-close-modal="modal-crop-logo">&times;</button>
-            </div>
-            <div class="crop-container">
-                <img id="image-to-crop" src="" alt="Imagem para cortar">
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secundario" data-close-modal="modal-crop-logo">Cancelar</button>
-                <button type="button" id="btn-confirmar-corte" class="btn btn-principal">Confirmar Corte</button>
+<!-- Modal de Detalhes do Lançamento -->
+<div id="modal-detalhes-lancamento" class="modal-overlay">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="detalhes-titulo">Detalhes do Lançamento</h2>
+            <button type="button" class="btn-close" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detalhes-grid">
+                <div class="detalhes-info">
+                    <p><strong>Data:</strong> <span id="detalhes-data"></span></p>
+                    <p><strong>Tipo:</strong> <span id="detalhes-tipo"></span></p>
+                    <p><strong>Valor:</strong> <span id="detalhes-valor"></span></p>
+                    <p><strong>Categoria:</strong> <span id="detalhes-categoria"></span></p>
+                    <p><strong>Descrição:</strong> <span id="detalhes-descricao"></span></p>
+                    <p id="detalhes-membro-container" class="hidden"><strong>Membro:</strong> <span id="detalhes-membro"></span></p>
+                </div>
+                <div class="detalhes-comprovante">
+                    <h4>Comprovante</h4>
+                    <div id="detalhes-comprovante-preview"></div>
+                </div>
             </div>
         </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-secundario" id="detalhes-btn-imprimir"><i class='bx bxs-printer'></i> Imprimir Recibo</button>
+            <button type="button" class="btn-principal" id="detalhes-btn-compartilhar"><i class='bx bxs-share-alt'></i> Compartilhar</button>
+            <button type="button" class="btn-secundario" data-close>Fechar</button>
+        </div>
     </div>
+</div>
+
+
+<!-- Bibliotecas para Geração de PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="/js/global-loader.js" defer></script>
+<script src="/pages/config.js"></script>
+<script src="/pages/financeiro.page/financeiro.js"></script>
+
+<!-- Menu de Contexto para a Tabela de Lançamentos -->
+<div id="context-menu" class="context-menu">
+    <ul>
+        <li id="context-selecionar"><i class='bx bx-check-square'></i> Selecionar</li>
+        <li id="context-editar"><i class='bx bxs-edit'></i> Editar</li>
+        <li id="context-excluir"><i class='bx bxs-trash'></i> Excluir</li>
+        <li id="context-copiar"><i class='bx bxs-copy'></i> Copiar Dados</li>
+        <li id="context-imprimir"><i class='bx bxs-printer'></i> Imprimir Comprovante</li>
+    </ul>
+</div>
+
 </body>
 </html>
