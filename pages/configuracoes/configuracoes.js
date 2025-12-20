@@ -48,13 +48,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
     window.addEventListener('hashchange', handleNavigation);
 
-    // --- LÓGICA PRINCIPAL DE CONFIGURAÇÕES ---
-    const salvarConfiguracao = async (key, value) => {
+    // --- HELPERS ---
+    const buildNestedPayload = (path, value) => {
+        // transforma 'a.b.c' + value => { a: { b: { c: value } } }
+        if (!path || typeof path !== 'string') return value;
+        const keys = path.split('.');
+        return keys.reduceRight((acc, key) => ({ [key]: acc }), value);
+    };
+
+    const getAuthHeader = () => {
         try {
-            await window.api.request('/api/configs', 'PATCH', { [key]: value });
+            const ui = JSON.parse(localStorage.getItem('userInfo') || 'null');
+            if (ui && ui.token) return { 'Authorization': `Bearer ${ui.token}` };
+        } catch (e) { /* ignore */ }
+        return {};
+    };
+
+    // --- LÓGICA PRINCIPAL DE CONFIGURAÇÕES ---
+    const salvarConfiguracao = async (path, value) => {
+        try {
+            const payload = buildNestedPayload(path, value);
+            console.log('[config] PATCH /api/configs', { path, value, payload });
+            await window.api.request('/api/configs', 'PATCH', payload);
         } catch (error) {
-            console.error(`Erro ao salvar a configuração '${key}':`, error);
-            alert(`Não foi possível salvar a configuração: ${error.message}`);
+            console.error(`Erro ao salvar a configuração '${path}':`, error);
+            alert(`Não foi possível salvar a configuração: ${error.message || error}`);
         }
     };
 
@@ -159,7 +177,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('nomeIgreja', nomeIgreja);
                 // O terceiro parâmetro define o nome do arquivo no backend
                 formData.append('logo', croppedLogoBlob, 'logo.png');
-                await window.api.post('/api/configs/upload-logo', formData);
+
+                try {
+                    // Tenta pelo wrapper (se suportar FormData)
+                    await window.api.post('/api/configs/upload-logo', formData);
+                } catch (err) {
+                    console.warn('[config] window.api.post falhou para FormData, tentando fetch direto', err);
+                    // Fallback: fetch direto (não setar Content-Type)
+                    const headers = getAuthHeader();
+                    await fetch('/api/configs/upload-logo', {
+                        method: 'POST',
+                        body: formData,
+                        headers: headers
+                    }).then(res => {
+                        if (!res.ok) throw new Error(`Upload falhou: ${res.status} ${res.statusText}`);
+                        return res.json().catch(()=>null);
+                    });
+                }
             } else {
                 // Se apenas o nome mudou, usa a rota de patch
                 await salvarConfiguracao('identidade.nomeIgreja', nomeIgreja);
@@ -175,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Identidade da igreja salva com sucesso!');
         } catch (error) {
             console.error('Erro ao salvar identidade:', error);
-            alert(`Falha ao salvar a identidade: ${error.message}`);
+            alert(`Falha ao salvar a identidade: ${error.message || error}`);
         } finally {
             btnSalvarIdentidade.disabled = false;
             btnSalvarIdentidade.textContent = 'Salvar Identidade';
@@ -268,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.reload();
             } catch (error) {
                 console.error('Erro ao importar configurações:', error);
-                alert(`Falha na importação: ${error.message}`);
+                alert(`Falha na importação: ${error.message || error}`);
             }
         };
         reader.readAsText(file);
@@ -298,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.updateUserDisplay(); // Atualiza o nome no menu
             alert('Nome atualizado com sucesso!');
         } catch (error) {
-            alert(`Erro ao atualizar o nome: ${error.message}`);
+            alert(`Erro ao atualizar o nome: ${error.message || error}`);
         }
     });
 
@@ -316,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('perfil-nova-senha').value = '';
             document.getElementById('perfil-confirmar-senha').value = '';
         } catch (error) {
-            alert(`Erro ao alterar a senha: ${error.message}`);
+            alert(`Erro ao alterar a senha: ${error.message || error}`);
         }
     });
 
@@ -352,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await window.api.delete(`/api/users/${id}`);
                     carregarUsuarios();
-                } catch (error) { alert(`Erro ao excluir usuário: ${error.message}`); }
+                } catch (error) { alert(`Erro ao excluir usuário: ${error.message || error}`); }
             }
         }
     });
@@ -401,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             carregarUsuarios();
             alert('Usuário salvo com sucesso!');
         } catch (error) {
-            alert(`Erro ao salvar usuário: ${error.message}`);
+            alert(`Erro ao salvar usuário: ${error.message || error}`);
         }
     });
 
