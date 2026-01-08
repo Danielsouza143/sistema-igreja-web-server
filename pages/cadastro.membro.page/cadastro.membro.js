@@ -276,14 +276,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 filho[field] = value;
             } else if (key === 'dons') {
                 dons.push(value);
-            } else if ((key === 'grupoPequeno' || key === 'conjugeId') && value === '') {
-                dados[key] = null;
             } else {
                 if (key === 'buscaConjuge' && value === '') continue;
-                dados[key] = value;
+                
+                // CORREÇÃO: Converter strings vazias em null para evitar erro de Data no banco
+                if (value === '') {
+                    dados[key] = null;
+                } else {
+                    dados[key] = value;
+                }
             }
         }
-        dados.filhos = filhos.map(({id, ...rest}) => rest).filter(f => f.nome);
+
+        // CORREÇÃO: Remover formatação (pontos e traços) para salvar padrão no banco
+        if (dados.cpf) dados.cpf = dados.cpf.replace(/\D/g, '');
+        if (dados.telefone) dados.telefone = dados.telefone.replace(/\D/g, '');
+        if (dados.cep) dados.cep = dados.cep.replace(/\D/g, '');
+
+        dados.filhos = filhos.map(({id, ...rest}) => {
+            // Garante que datas de nascimento de filhos vazias também virem null
+            if (rest.dataNascimento === '') rest.dataNascimento = null;
+            return rest;
+        }).filter(f => f.nome);
+
         dados.dons = dons;
         
         try {

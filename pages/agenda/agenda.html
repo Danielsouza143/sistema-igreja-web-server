@@ -154,32 +154,37 @@
             <button id="detalhes-modal-close" class="modal-close">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="detalhes-cartaz-container">
-                <img id="detalhes-cartaz-img" src="" alt="Cartaz do Evento">
+            <div class="modal-body-content">
+                <div id="detalhes-cartaz-container">
+                    <img id="detalhes-cartaz-img" src="" alt="Cartaz do Evento">
+                </div>
+                <div id="detalhes-info-container">
+                    <div class="info-section">
+                        <p><strong><i class='bx bx-calendar'></i> Data e Hora:</strong> <span id="detalhes-data"></span></p>
+                        <p><strong><i class='bx bx-map'></i> Local:</strong> <span id="detalhes-local"></span></p>
+                        <p><strong><i class='bx bx-user'></i> Responsável:</strong> <span id="detalhes-responsavel"></span></p>
+                        <p><strong><i class='bx bx-info-circle'></i> Categoria:</strong> <span id="detalhes-categoria"></span></p>
+                        <p id="detalhes-recorrencia-p" style="display:none;"><strong><i class='bx bx-sync'></i> Recorrência:</strong> <span id="detalhes-recorrencia"></span></p>
+                    </div>
+                    <div id="detalhes-financeiro-container" style="display:none;">
+                        <h4><i class='bx bxs-dollar-circle'></i> Detalhes Financeiros</h4>
+                        <p><strong>Meta de Arrecadação:</strong> <span id="detalhes-meta"></span></p>
+                        <p><strong>Custo Estimado:</strong> <span id="detalhes-custo"></span></p>
+                    </div>
+                    <div id="detalhes-descricao-container">
+                        <h4>Descrição</h4>
+                        <p id="detalhes-descricao"></p>
+                    </div>
+                </div>
             </div>
-            <div id="detalhes-info-container">
-                <p><strong><i class='bx bx-calendar'></i> Data e Hora:</strong> <span id="detalhes-data"></span></p>
-                <p><strong><i class='bx bx-map'></i> Local:</strong> <span id="detalhes-local"></span></p>
-                <p><strong><i class='bx bx-user'></i> Responsável:</strong> <span id="detalhes-responsavel"></span></p>
-                <p><strong><i class='bx bx-info-circle'></i> Categoria:</strong> <span id="detalhes-categoria"></span></p>
-                <p id="detalhes-recorrencia-p" style="display:none;"><strong><i class='bx bx-sync'></i> Recorrência:</strong> <span id="detalhes-recorrencia"></span></p>
-                <div id="detalhes-financeiro-container" style="display:none;">
-                    <h4><i class='bx bxs-dollar-circle'></i> Detalhes Financeiros</h4>
-                    <p><strong>Meta de Arrecadação:</strong> <span id="detalhes-meta"></span></p>
-                    <p><strong>Custo Estimado:</strong> <span id="detalhes-custo"></span></p>
-                </div>
-                <div id="detalhes-descricao-container">
-                    <h4>Descrição</h4>
-                    <p id="detalhes-descricao"></p>
-                </div>
         </div>
         <div class="modal-actions">
-            <button id="btn-excluir-evento" class="btn btn-perigo">Excluir</button>
-            <div>
-                <button id="btn-exportar-ics" class="btn btn-secundario"><i class='bx bx-calendar-plus'></i> Adicionar ao Calendário</button>
-                <button id="btn-lembrete" class="btn btn-secundario"><i class='bx bx-bell-plus'></i> Me Lembre</button>
-                <button id="btn-editar-evento" class="btn btn-secundario">Editar</button>
-                <button id="btn-fechar-detalhes" class="btn btn-principal">Fechar</button>
+            <button id="btn-excluir-evento" class="btn btn-perigo btn-detalhes-excluir">Excluir</button>
+            <div class="modal-secondary-actions">
+                <button id="btn-exportar-ics" class="btn btn-secundario btn-detalhes-ics"><i class='bx bx-calendar-plus'></i> Adicionar ao Calendário</button>
+                <button id="btn-lembrete" class="btn btn-secundario btn-detalhes-lembrete"><i class='bx bx-bell-plus'></i> Me Lembre</button>
+                <button id="btn-editar-evento" class="btn btn-secundario btn-detalhes-editar">Editar</button>
+                <button id="btn-fechar-detalhes" class="btn btn-principal btn-detalhes-fechar">Fechar</button>
             </div>
         </div>
     </div>
@@ -189,9 +194,8 @@
 <!-- Scripts no final do body -->
 <script src="/js/global-loader.js" defer></script>
 <script src="/components/notifications.js" defer></script>
-    <script src="/pages/config.js"></script>
-    <script src="agenda.js"></script>
-
+<script src="/js/api.js"></script>
+<script src="agenda.js"></script>
     <!-- NOVO: Container para o cartaz em tela cheia -->
     <div id="fullscreen-container" class="fullscreen-container">
         <span class="fullscreen-close">&times;</span>

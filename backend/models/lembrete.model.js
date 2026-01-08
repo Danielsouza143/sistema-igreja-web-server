@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
 const lembreteSchema = new Schema({
+    tenantId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     user: { 
         type: Schema.Types.ObjectId, 
         ref: 'User', 

@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.dataset.id = membro._id;
 
             // Célula da Foto
-            const fotoHtml = membro.foto
-                ? `<img src="${window.api.getImageUrl(membro.foto)}" alt="${membro.nome}" class="membro-foto-lista">`
+            const fotoHtml = membro.fotoUrl
+                ? `<img src="${membro.fotoUrl}" alt="${membro.nome}" class="membro-foto-lista">`
                 : `<div class="membro-foto-placeholder"><i class='bx bx-user'></i></div>`;
 
             // Célula do Status
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 excluirMembro(membroId);
             }
         } else if (target.classList.contains('bxs-printer')) {
-            alert('Impressão de cartão em desenvolvimento.');
+            window.location.href = `cartao_membro.html?id=${membroId}`;
         } else {
             window.location.href = `detalhes_membro.html?id=${membroId}`;
         }

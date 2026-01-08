@@ -1,5 +1,6 @@
 import express from 'express';
 import { s3Upload } from '../utils/s3-upload.js';
+import { protect } from '../middleware/auth.middleware.js';
 
 // Importando os novos controladores
 import {
@@ -18,22 +19,22 @@ const upload = s3Upload('logo');
 // --- ROTAS PRINCIPAIS ---
 
 // Rota para buscar TODAS as configurações
-router.get('/', getConfig);
+router.get('/', protect, getConfig);
 
 // Rota para ATUALIZAR uma ou mais configurações (aparência, categorias, etc.)
-router.patch('/', updateConfig);
+router.patch('/', protect, updateConfig);
 
 // Rota para fazer UPLOAD do logo e atualizar o nome da igreja
-router.post('/upload-logo', upload.single('logo'), uploadLogo);
+router.post('/upload-logo', protect, upload.single('logo'), uploadLogo);
 
 
 // --- ROTAS DE BACKUP E RESTAURAÇÃO ---
 
 // Rota para EXPORTAR as configurações
-router.get('/export', exportConfig);
+router.get('/export', protect, exportConfig);
 
 // Rota para IMPORTAR as configurações
-router.post('/import', importConfig);
+router.post('/import', protect, importConfig);
 
 
 export default router;

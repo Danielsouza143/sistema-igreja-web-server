@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let presets = {};
     let customBackgrounds = [];
     // A identidade agora será carregada do localStorage, que é mantido atualizado pelo menu.js
-    let churchIdentity = JSON.parse(localStorage.getItem('churchIdentity')) || { nomeIgreja: 'Igreja', logoUrl: '/pages/logo.tab.png' };
+    let churchIdentity = JSON.parse(localStorage.getItem('churchIdentity')) || { nomeIgreja: 'Igreja', logoUrl: '' };
     let cropper;
  
     const $ = (selector) => {
@@ -59,11 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CARD HTML GENERATION ---
     const createCardHTML = (membro, type, cardOptions) => {
         const fields = getMemberFields(membro);
-        const photoUrl = window.api.getImageUrl(membro.foto);
+        const photoUrl = membro.fotoUrl;
         const photoStyle = photoUrl ? `background-image: url(${photoUrl})` : '';
         const photoContent = !photoUrl ? `<i class='bx bxs-user'></i>` : '';
         const qrCodeId = `qr-code-${type}-${membro._id}`;
-        const logoFinalUrl = churchIdentity.logoIgrejaUrl || '/pages/logo.tab.png';
+        const logoFinalUrl = churchIdentity.logoIgrejaUrl || '';
         const congregationText = cardOptions?.congregationText || 'CONGREGAÇÃO SEDE';
 
         if (type === 'front') {
@@ -138,18 +138,23 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#member-birthdate-virtual').textContent = fields['member-birthdate'];
         $('#member-marital-status-virtual').textContent = fields['member-marital-status'];
         $('#card-validity-virtual').textContent = fields['card-validity'];
-        const photoUrl = window.api.getImageUrl(membro.foto);
+        const photoUrl = membro.fotoUrl;
         const photoElVirtual = $('#member-photo-virtual');
         photoElVirtual.style.backgroundImage = photoUrl ? `url(${photoUrl})` : 'none';
         photoElVirtual.innerHTML = !photoUrl ? `<i class='bx bxs-user'></i>` : '';
         const virtualCardUrl = `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${membro._id}`;
         generateQRCode(virtualCardUrl, $(`#qr-code-back-${membro._id}`));
         generateQRCode(virtualCardUrl, $('#qr-code-virtual'));
-        // Atualiza o cabeçalho do cartão virtual também
-        const virtualHeaderLogo = $('#virtual-card .virtual-card-header .logo');
-        const virtualHeaderName = $('#virtual-card .virtual-card-header h3');
-        if(virtualHeaderLogo) virtualHeaderLogo.src = churchIdentity.logoIgrejaUrl || '/pages/logo.tab.png';
-        if(virtualHeaderName) virtualHeaderName.textContent = churchIdentity.nomeIgreja;
+        
+        // Atualiza o cabeçalho do cartão virtual dinamicamente
+        const virtualHeader = $('#virtual-card .virtual-card-header');
+        if (virtualHeader) {
+            const logoEl = churchIdentity.logoIgrejaUrl 
+                ? `<img src="${churchIdentity.logoIgrejaUrl}" class="logo" alt="Logo" style="height: 50px; width: 50px; border-radius: 50%; object-fit: cover;">`
+                : `<i class='bx bx-church logo' style="font-size: 50px; color: #fff;"></i>`;
+            
+            virtualHeader.innerHTML = `${logoEl}<h3>${churchIdentity.nomeIgreja || 'Igreja'}</h3>`;
+        }
     };
     
     const getMemberFields = (membro) => {

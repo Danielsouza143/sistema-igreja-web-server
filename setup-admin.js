@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await window.api.post('/api/auth/setup-admin', { username, password });
             localStorage.setItem('userToken', data.token);
             localStorage.setItem('userData', JSON.stringify(data.user));
-            window.location.href = '/pages/dashboard/dashboard.html';
+            window.location.href = '/pages/admin-panel/admin.html';
         } catch (error) {
             errorMessage.textContent = error.message || 'Falha ao criar administrador.';
         }

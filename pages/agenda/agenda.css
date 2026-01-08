@@ -1,400 +1,456 @@
-/* Arquivo: pages/agenda/agenda.css */
 
-/* --- Ajustes Específicos para a Página da Agenda --- */
-
-#calendar-zoom-controls {
-    display: flex;
-    gap: 5px;
+/* --- Estilos para a Pré-visualização de Eventos no Calendário (v3 - Isolado) --- */
+#calendario .fc-event-main-frame {
+    height: 100%; /* Garante que o frame do evento ocupe todo o espaço */
 }
 
-#calendar-zoom-controls .btn {
-    padding: 8px 12px;
-    font-size: 1rem;
+#calendario .fc-event-main {
+    padding: 0 !important; /* Remove padding padrão do FullCalendar */
+    height: 100%;
 }
 
-/* --- Estilos para o FullCalendar (Polimento) --- */
-
-/* Garante que o container de eventos dentro de um dia seja um flex container */
-.fc-daygrid-day-events {
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* Ocupa toda a altura disponível do dia */
-    overflow: hidden; /* Esconde qualquer overflow */
+#calendario .fc-event {
+    border: none !important; /* Remove borda padrão do FullCalendar */
+    background-color: transparent !important; /* Remove background padrão */
+    padding: 0 !important;
 }
 
-/* Estilo base para cada evento dentro do dia */
-.fc-daygrid-event {
-    flex-grow: 1; /* Permite que os eventos cresçam e ocupem o espaço */
-    margin-bottom: 1px; /* Pequeno espaçamento entre eventos */
-    min-height: 18px; /* Altura mínima para eventos */
-}
-
-.fc-daygrid-event .fc-event-main {
-    height: 100%; /* Garante que o conteúdo do evento ocupe toda a altura */
-}
-
-
-:root {
-    --fc-border-color: var(--cor-borda);
-    --fc-today-bg-color: #eef2f5;
-    --fc-event-border-radius: 4px;
-    --fc-event-font-size: 0.8rem;
-    --fc-event-font-weight: 600;
-}
-
-/* Botões do Header do Calendário */
-.fc .fc-button {
-    background-color: var(--cor-fundo-card);
-    color: var(--cor-texto-claro);
-    border: 1px solid var(--cor-borda);
-    padding: 8px 15px;
-    text-transform: capitalize;
-    box-shadow: none;
-    transition: all 0.2s ease;
-}
-
-.fc .fc-button:hover {
-    background-color: #e9ecef;
-    border-color: #ced4da;
-}
-
-.fc .fc-button-primary:not(:disabled).fc-button-active, 
-.fc .fc-button-primary:not(:disabled):active {
-    background-color: var(--cor-acao);
-    border-color: var(--cor-acao);
-    color: var(--cor-branco);
-}
-
-/* Células do Calendário */
-.fc .fc-daygrid-day:hover {
-    background-color: rgba(77, 80, 255, 0.05);
-}
-
-/* Estilo dos Eventos no Calendário */
-.fc-event {
-    cursor: pointer;
-    padding: 2px;
-    border: 1px solid rgba(0,0,0,0.1);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    overflow: hidden;
-    /* O FullCalendar controla a cor de fundo, nós controlamos o conteúdo */
-}
-
-.fc-event .fc-event-main {
-    /* Resetamos o padding padrão para nosso custom caber */
-    padding: 0;
-}
-
-.fc-event-main-custom {
+#calendario .fc-custom-preview-wrapper {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     padding: 2px 4px;
     width: 100%;
     height: 100%;
-    color: var(--cor-branco); /* Cor do texto padrão para eventos */
-}
-
-.fc-event-cartaz-thumb {
-    width: 20px;
-    height: 20px;
-    object-fit: cover;
-    border-radius: 3px;
-    flex-shrink: 0; /* Impede que a imagem encolha */
-}
-
-.fc-event-main-custom .event-icon {
-    font-size: 1.1em;
-}
-
-.fc-event-main-custom .fc-event-title-text {
-    white-space: nowrap;
+    box-sizing: border-box;
+    border-radius: var(--fc-event-border-radius);
     overflow: hidden;
-    text-overflow: ellipsis;
-    flex-grow: 1; /* Permite que o título ocupe o espaço restante */
+    position: relative;
+    /* A cor de fundo será definida pelo FullCalendar via `event.color` */
 }
 
-
-/* --- Estilos para a Visualização em Lista (Cards) --- */
-#lista-eventos-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+#calendario .fc-custom-preview-type-badge {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.5);
 }
 
-.evento-card {
-    background-color: var(--cor-fundo-card);
-    border-radius: var(--border-radius-padrao);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.evento-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--sombra-padrao);
-}
-
-.card-header {
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--cor-borda-fraca);
-}
-
-.card-header h4 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: var(--cor-primaria);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.card-body {
-    padding: 15px;
-    flex-grow: 1;
-    font-size: 0.9rem;
-}
-
-.card-body p {
-    margin: 0 0 10px 0;
-    color: var(--cor-texto-claro);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.card-body p:last-child {
-    margin-bottom: 0;
-}
-
-.card-body i {
-    font-size: 1.2em;
-    color: var(--cor-texto-claro);
-}
-
-.card-footer {
-    padding: 12px 15px;
-    background-color: #fcfcfc;
-    display: flex;
-    justify-content: flex-end;
-    border-top: 1px solid var(--cor-borda-fraca);
-}
-
-/* Estilos para os badges de tipo na lista */
-.badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: white;
-    text-transform: uppercase;
-}
-
-.badge.evento {
+#calendario .fc-custom-preview-type-badge.evento {
     background-color: #e36e00; /* Laranja */
 }
 
-.badge.programação {
+#calendario .fc-custom-preview-type-badge.programacao {
     background-color: var(--cor-acao); /* Azul */
 }
 
-/* Ajustes no Modal de Edição */
-#cartaz-preview {
-    width: 100%;
-    max-height: 200px;
+#calendario .fc-custom-preview-thumb {
+    width: 20px;
+    height: 20px;
     object-fit: cover;
-    border-radius: var(--border-radius-padrao);
-    border: 1px solid var(--cor-borda);
-    margin-top: 15px;
+    border-radius: 2px;
+    flex-shrink: 0;
 }
 
-.input-cor {
-    width: 100%;
-    height: 40px;
-    padding: 5px;
-    border: 1px solid var(--cor-borda);
-    border-radius: var(--border-radius-padrao);
-    cursor: pointer;
-}
-
-/* --- Estilos para o Modal de Detalhes do Evento --- */
-/* --- Estilos para o Modal de Detalhes do Evento --- */
-.modal-content.modal-detalhes {
-    max-width: 1100px; /* Aumenta um pouco a largura máxima */
-    width: 100%; /* Usa a largura da viewport */
-    box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura */
-}
-
-.modal-content.modal-detalhes .modal-body {
-    padding: 20px 25px;
-    display: grid;
-    grid-template-columns: 300px calc(100% - 325px); /* Ajusta a proporção */
-    grid-template-rows: auto;
-    gap: 25px;
-   /* flex-grow: 1; */ /* Permite que o body ocupe o espaço restante */
-    box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura */
-
-}
-
-/* Media query para telas menores */
-@media (max-width: 900px) {
-    .modal-content.modal-detalhes .modal-body {
-        grid-template-columns: 1fr; /* Coluna única em telas menores */
-    }
-    .detalhes-cartaz-container {
-        aspect-ratio: 16 / 9; /* Proporção mais horizontal para o cartaz em telas menores */
-    }
-}
-
-@media (max-width: 576px) {
-    .modal-detalhes .modal-content {
-        width: 100%;
-        border-radius: 0;
-        max-height: 100vh;
-    }
-    .modal-detalhes .modal-body,
-    .modal-actions {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    .modal-actions {
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
-    }
-    .modal-actions-right {
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
-    }
-    .modal-actions-right .btn {
-        width: 100%;
-    }
-}
-
-#detalhes-cartaz-container {
-    width: 100%;
-    border-radius: var(--border-radius-padrao);
+#calendario .fc-custom-preview-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
     overflow: hidden;
-    background-color: var(--cor-fundo);
+    line-height: 1.2;
 }
 
-#detalhes-cartaz-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+#calendario .fc-custom-preview-time {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.9;
+    color: inherit; /* Herda a cor do texto do evento */
 }
 
-#detalhes-info-container {
-    word-break: break-word;
-    min-width: 0;
-}
-
-
-
-#detalhes-info-container p {
-    margin: 0 0 12px 0;
-    color: var(--cor-texto-claro);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#detalhes-info-container p strong {
-    color: var(--cor-texto-escuro);
-}
-
-#detalhes-info-container i {
-    font-size: 1.3em;
-    color: var(--cor-acao);
-}
-
-#detalhes-info-container a {
-    color: var(--cor-acao);
-    text-decoration: none;
+#calendario .fc-custom-preview-title {
+    font-size: 0.8rem;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: inherit; /* Herda a cor do texto do evento */
 }
 
-#detalhes-info-container a:hover {
-    text-decoration: underline;
+/* Ajustes para a visualização de lista (listWeek) */
+#calendario .fc-list-event-graphic {
+    display: none; /* Esconde o ícone padrão na lista */
 }
 
-#detalhes-descricao-container {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--cor-borda-fraca);
-}
-
-#detalhes-descricao-container h4 {
-    margin: 0 0 10px 0;
-    color: var(--cor-primaria);
-}
-
-#detalhes-descricao-container p {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    gap: 0;
-}
-
-#detalhes-financeiro-container {
-    background-color: #f7f9fc;
-    padding: 15px;
-    border-radius: var(--border-radius-padrao);
-    margin-top: 20px;
-}
-
-.modal-content.modal-detalhes .modal-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-content.modal-detalhes .modal-actions > div {
-    display: flex;
-    gap: 10px;
+#calendario .fc-list-event-title {
     flex-grow: 1;
 }
 
-.modal-content.modal-detalhes .modal-actions > div .btn {
-    width: 100%;
-    justify-content: center; /* Centraliza o texto e ícone no botão */
+#calendario .fc-list-event-title a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-/* Estilos para o Cartaz em Tela Cheia (NOVO E MELHORADO) */
-.fullscreen-container {
+#calendario .fc-list-event-title .fc-custom-preview-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+#calendario .fc-list-event-title .fc-custom-preview-type-badge {
+    width: 8px;
+    height: 8px;
+}
+
+#calendario .fc-list-event-title .fc-custom-preview-title {
+    font-size: 0.9rem;
+}
+
+#calendario .fc-list-event-time {
+    font-size: 0.8rem;
+    color: var(--cor-texto-claro);
+}
+
+/* --- MODAIS ESPECÍFICOS PARA AGENDA --- */
+#detalhes-evento-modal.modal-overlay {
+    display: none !important;               /* Esconde por padrão */
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    display: none; /* Começa escondido */
+    background: rgba(0,0,0,0.6);
     justify-content: center;
     align-items: center;
-    z-index: 1001; /* Acima do modal */
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    z-index: 2000 !important; /* Ajustado para 2000 para garantir visibilidade */
 }
 
-.fullscreen-container.active {
+#detalhes-evento-modal.modal-overlay.active {
+    display: flex !important;
+}
+
+#detalhes-evento-modal .modal-content {
+    background: #fff !important;
+    padding: 20px !important;
+    border-radius: var(--border-radius-padrao) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    max-width: 1531px !important;
+    max-height: 633px !important;
+    width: 100% !important;
     display: flex;
-    opacity: 1;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease !important;
 }
 
-.fullscreen-close {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    font-size: 3rem;
-    color: white;
-    cursor: pointer;
-    line-height: 1;
+#detalhes-evento-modal .modal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 20px; /* Add some space above buttons */
 }
 
-#fullscreen-image {
-    max-width: 90%;
-    max-height: 90%;
+#detalhes-evento-modal .modal-body-content {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    height: 100%;
+}
+
+#detalhes-evento-modal #detalhes-cartaz-container {
+    flex: 1;
+    min-width: 250px; /* Slightly reduced min-width */
+    max-width: 30%; /* Decreased max-width */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align image to top */
+    overflow: hidden;
+}
+
+#detalhes-evento-modal #detalhes-cartaz-img {
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
+    border-radius: var(--border-radius-padrao);
+    box-shadow: var(--sombra-padrao);
+}
+
+#detalhes-evento-modal #detalhes-info-container {
+    flex: 1;
+    min-width: 350px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #detalhes-evento-modal .modal-body-content {
+        flex-direction: column;
+    }
+    #detalhes-evento-modal #detalhes-cartaz-container {
+        max-width: 100%;
+        min-width: unset;
+        height: auto;
+
+
+#detalhes-evento-modal .modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px; /* Spacing between button groups */
+    margin-top: 20px;
+}
+
+#detalhes-evento-modal .modal-secondary-actions {
+    display: flex;
+    gap: 10px; /* Spacing between individual buttons */
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* Responsive adjustments for buttons */
+@media (max-width: 600px) {
+    #detalhes-evento-modal .modal-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #detalhes-evento-modal .modal-secondary-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #detalhes-evento-modal .modal-actions button,
+    #detalhes-evento-modal .modal-secondary-actions button {
+        width: 100%;
+    }
+}
+
+/* --- Estilos Específicos para Botões do Modal de Detalhes do Evento --- */
+#detalhes-evento-modal .btn-detalhes-excluir {
+    background-color: var(--cor-perigo) !important;
+    color: white !important;
+    border: none !important;
+}
+
+#detalhes-evento-modal .btn-detalhes-excluir:hover {
+    background-color: #c82333 !important; /* Darker red */
+}
+
+#detalhes-evento-modal .btn-detalhes-ics,
+#detalhes-evento-modal .btn-detalhes-lembrete,
+#detalhes-evento-modal .btn-detalhes-editar {
+    background-color: var(--cor-secundaria) !important;
+    color: white !important;
+    border: none !important;
+}
+
+#detalhes-evento-modal .btn-detalhes-ics:hover,
+#detalhes-evento-modal .btn-detalhes-lembrete:hover,
+#detalhes-evento-modal .btn-detalhes-editar:hover {
+    background-color: #0056b3 !important; /* Darker blue */
+}
+
+#detalhes-evento-modal .btn-detalhes-fechar {
+    background-color: var(--cor-acao) !important;
+    color: white !important;
+    border: none !important;
+}
+
+#detalhes-evento-modal .btn-detalhes-fechar:hover {
+    background-color: #0069d9 !important; /* Darker action color */
+}
+
+/* Ensure icons are styled correctly within these buttons */
+#detalhes-evento-modal .modal-actions button i {
+    margin-right: 5px;
+}
+
+#detalhes-evento-modal #detalhes-info-container {
+    flex: 1;
+    min-width: 350px;
+    padding: 20px;
+    background-color: var(--cor-fundo-card);
+    border-radius: var(--border-radius-padrao);
+    box-shadow: var(--sombra-padrao);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#detalhes-evento-modal .info-section {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+}
+
+#detalhes-evento-modal .info-section:last-of-type {
+    border-bottom: none;
+}
+
+#detalhes-evento-modal #detalhes-info-container p {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#detalhes-evento-modal #detalhes-info-container p:last-child {
+    margin-bottom: 0;
+}
+
+#detalhes-evento-modal #detalhes-info-container p strong {
+    color: var(--cor-primaria);
+    min-width: 130px;
+    margin-right: 15px;
+    font-weight: 700;
+}
+
+#detalhes-evento-modal #detalhes-info-container p i {
+    font-size: 1.2rem;
+    color: var(--cor-acao);
+}
+
+#detalhes-evento-modal #detalhes-info-container h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--cor-secundaria);
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--cor-borda-fraca);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    padding: 15px;
+    background-color: var(--cor-fundo);
+    border-radius: var(--border-radius-padrao);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: var(--cor-primaria);
+    border-bottom: 1px solid var(--cor-borda-fraca);
+    padding-bottom: 5px;
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container p {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container p strong {
+    color: var(--cor-secundaria);
+    min-width: 100px;
+    margin-right: 10px;
+}
+
+#detalhes-evento-modal #detalhes-descricao-container {
+    margin-top: 0;
+    padding: 15px;
+    background-color: var(--cor-fundo);
+    border-radius: var(--border-radius-padrao);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#detalhes-evento-modal #detalhes-descricao-container h4 {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 10px;
+    color: var(--cor-primaria);
+}
+
+#detalhes-evento-modal #detalhes-descricao-container p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--cor-texto-claro);
+}
+
+/* Responsive adjustments for info container */
+@media (max-width: 768px) {
+    #detalhes-evento-modal #detalhes-info-container {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 20px;
+        border-top: 1px solid var(--cor-borda-fraca);
+    }
+}
+
+#detalhes-evento-modal #detalhes-descricao-container {
+    background-color: var(--cor-fundo);
+    padding: 15px;
+    border-radius: var(--border-radius-padrao);
+    margin-top: 15px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#detalhes-evento-modal #detalhes-descricao-container p {
+    font-size: 0.9rem;
+    color: var(--cor-texto);
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+/* Responsive adjustments for info container */
+@media (max-width: 768px) {
+    #detalhes-evento-modal #detalhes-info-container {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 20px;
+        border-top: 1px solid var(--cor-borda-fraca);
+    }
+}
+
+#detalhes-evento-modal #detalhes-info-container p span {
+    color: var(--cor-texto);
+    font-weight: 500;
+    flex-grow: 1; /* Allow span to take remaining space */
+}
+
+#detalhes-evento-modal #detalhes-info-container p strong {
+    font-weight: 600;
+    color: var(--cor-primaria);
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--cor-borda-fraca);
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container p {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+#detalhes-evento-modal #detalhes-financeiro-container p strong {
+    color: var(--cor-secundaria);
+}
+
+#detalhes-evento-modal #detalhes-descricao-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--cor-fundo);
+    border-radius: var(--border-radius-padrao);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#detalhes-evento-modal #detalhes-descricao-container h4 {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 10px;
+    color: var(--cor-primaria);
+}
+
+#detalhes-evento-modal #detalhes-descricao-container p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--cor-texto-claro);
 }

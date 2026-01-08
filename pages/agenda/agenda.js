@@ -92,20 +92,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             // NOVO: Hook para customizar a aparência do evento
             eventContent: function(arg) {
                 const evento = arg.event.extendedProps;
-                let iconHtml = '';
+                const isProgramacao = evento.tipo === 'Programação';
+                const startTime = new Date(arg.event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 let cartazHtml = '';
-                let titleHtml = `<span class="fc-event-title-text">${arg.event.title}</span>`;
-
-                if (evento.tipo === 'Programação') {
-                    iconHtml = '<i class="bx bx-sync event-icon"></i>';
-                }
 
                 if (evento.cartazUrl) {
-                    cartazHtml = `<img src="${evento.cartazUrl}" class="fc-event-cartaz-thumb" alt="Cartaz">`;
+                    cartazHtml = `<img src="${evento.cartazUrl}" class="fc-custom-preview-thumb" alt="Cartaz">`;
                 }
 
                 return {
-                    html: `<div class="fc-event-main-custom">${cartazHtml}${iconHtml}${titleHtml}</div>`
+                    html: `
+                        <div class="fc-custom-preview-wrapper">
+                            <span class="fc-custom-preview-type-badge ${isProgramacao ? 'programacao' : 'evento'}"></span>
+                            ${cartazHtml}
+                            <div class="fc-custom-preview-content">
+                                <span class="fc-custom-preview-time">${startTime}</span>
+                                <span class="fc-custom-preview-title">${arg.event.title}</span>
+                            </div>
+                        </div>
+                    `
                 };
             }
         });

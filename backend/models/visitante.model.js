@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 
 const visitanteSchema = new mongoose.Schema({
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     nome: { type: String, required: true },
     telefone: { type: String },
     dataNascimento: { type: Date },

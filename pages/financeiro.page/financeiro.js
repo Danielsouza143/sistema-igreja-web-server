@@ -774,7 +774,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnExcluirSelecionados.addEventListener('click', async () => {
             if (confirm(`Tem certeza que deseja excluir os ${lancamentosSelecionados.size} lançamentos selecionados?`)) {
                 try {
-                    await window.api.request('/api/financeiro/lancamentos/lote', 'DELETE', { ids: [...lancamentosSelecionados] });
+                    // CORREÇÃO: Usar o método .delete que existe no objeto window.api
+                    await window.api.delete('/api/financeiro/lancamentos/lote', { ids: [...lancamentosSelecionados] });
                     lancamentosSelecionados.clear();
                     atualizarEstadoExclusaoLote();
                     await carregarDados();

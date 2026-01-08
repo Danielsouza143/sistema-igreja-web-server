@@ -19,10 +19,15 @@ const userSchema = new mongoose.Schema({
         minlength: 6,
         select: false // Não retorna a senha em queries por padrão
     },
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        default: null // Super admins não têm tenantId
+    },
     role: {
         type: String,
-        enum: ['user', 'admin'],
-        default: 'user'
+        enum: ['super_admin', 'admin', 'operador'],
+        default: 'operador'
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,

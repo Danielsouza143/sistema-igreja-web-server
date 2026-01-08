@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Sede</title>
+    
+    <script src="/auth-guard.js" defer></script>
+    <script src="/js/global-loader.js" defer></script> 
+    <script src="/js/api.js"></script>
+        <link rel="stylesheet" href="/pages/styles/global.css">
+    <link rel="stylesheet" href="sede.css">
+</head>
+<body>
+    <div class="sede-panel-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 id="tenant-name-placeholder">Carregando...</h2>
+                <p>Painel da Sede</p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="dashboard">Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-target="filiais">Gestão de Filiais</a></li>
+                    <li><a href="#" class="nav-link" data-target="relatorios">Relatórios</a></li>
+                    <li><a href="#" class="nav-link" data-target="configuracoes">Configurações</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="/login.html" id="logout-button">Sair</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- Seção do Dashboard -->
+            <section id="dashboard-section" class="panel-section active">
+                <header>
+                    <h1>Dashboard Consolidado</h1>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total de Filiais</h3>
+                        <p id="total-filiais">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total de Membros</h3>
+                        <p id="total-membros">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Entradas (Consolidado)</h3>
+                        <p id="total-entradas">R$ --</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Saídas (Consolidado)</h3>
+                        <p id="total-saidas">R$ --</p>
+                    </div>
+                </div>
+                <div class="dashboard-container">
+                    <h2>Comparativo de Filiais</h2>
+                    <div class="table-container">
+                        <table id="comparativo-table">
+                            <thead>
+                                <tr>
+                                    <th>Posição</th>
+                                    <th>Nome da Filial</th>
+                                    <th>Nº de Membros</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparativo-tbody">
+                                <!-- Dados do comparativo aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção de Gestão de Filiais -->
+            <section id="filiais-section" class="panel-section">
+                <header class="section-header">
+                    <h1>Gestão de Filiais</h1>
+                    <button id="add-filial-btn" class="btn-primary">Adicionar Nova Filial</button>
+                </header>
+                <div class="table-container">
+                    <table id="filiais-table">
+                        <thead>
+                            <tr>
+                                <th>Nome da Filial</th>
+                                <th>Endereço</th>
+                                <th>CNPJ</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Linhas da tabela serão inseridas aqui pelo JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Modal para Adicionar/Editar Filial -->
+            <div id="filial-modal" class="modal">
+                <div class="modal-content">
+                    <header class="modal-header">
+                        <h2 id="modal-title">Adicionar Nova Filial</h2>
+                        <button id="close-modal-btn" class="close-btn">&times;</button>
+                    </header>
+                    <form id="filial-form">
+                        <input type="hidden" id="filial-id" name="filialId">
+                        <div class="form-group">
+                            <label for="filial-name">Nome da Filial</label>
+                            <input type="text" id="filial-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="filial-cnpj">CNPJ</label>
+                            <input type="text" id="filial-cnpj">
+                        </div>
+                        <div class="form-group">
+                            <label for="filial-address">Endereço</label>
+                            <input type="text" id="filial-address">
+                        </div>
+
+                        <hr id="admin-fields-divider">
+
+                        <div id="admin-fields">
+                            <h3>Dados do Administrador da Filial</h3>
+                            <div class="form-group">
+                                <label for="admin-username">Usuário do Admin (para login)</label>
+                                <input type="text" id="admin-username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-name">Nome Completo do Admin</label>
+                                <input type="text" id="admin-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-password">Senha do Admin</label>
+                                <input type="password" id="admin-password" required>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="save-filial-btn" class="btn-primary">Salvar</button>
+                        </div>
+                        <p id="modal-error-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Seção de Relatórios -->
+            <section id="relatorios-section" class="panel-section">
+                <header>
+                    <h1>Relatórios Unificados</h1>
+                </header>
+                <p>Conteúdo dos Relatórios aqui...</p>
+            </section>
+
+            <!-- Seção de Configurações -->
+            <section id="configuracoes-section" class="panel-section">
+                <header>
+                    <h1>Configurações da Sede</h1>
+                </header>
+                <div class="form-container">
+                    <form id="settings-form">
+                        <h3>Dados da Igreja</h3>
+                        <div class="form-group">
+                            <label for="settings-name">Nome da Igreja (Sede)</label>
+                            <input type="text" id="settings-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-cnpj">CNPJ</label>
+                            <input type="text" id="settings-cnpj">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-address">Endereço Completo</label>
+                            <input type="text" id="settings-address" required>
+                        </div>
+
+                        <hr>
+
+                        <h3>Aparência do Sistema</h3>
+                        <div class="form-group">
+                            <label for="settings-primaryColor">Cor Primária</label>
+                            <input type="color" id="settings-primaryColor">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-secondaryColor">Cor Secundária</label>
+                            <input type="color" id="settings-secondaryColor">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-logoUrl">Logo da Igreja (URL)</label>
+                            <input type="text" id="settings-logoUrl">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" id="save-settings-btn" class="btn-primary">Salvar Alterações</button>
+                        </div>
+                        <p id="settings-success-message" class="success-message"></p>
+                        <p id="settings-error-message" class="error-message"></p>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="sede.js"></script>
+</body>
+</html>

@@ -36,7 +36,7 @@
     </div>
 
     <script src="/js/global-loader.js" defer></script>
-    <script src="/pages/config.js?v=TIMESTAMP"></script>
+    <script src="/js/api.js"></script>
     <script>
         function imprimirComprovante(lancamento) {
             const conteudo = `
@@ -107,8 +107,8 @@
                     // --- Renderização do HTML ---
                     const headerHTML = `
                         <div class="detalhes-header">
-                            ${membro.foto ? `<img src="${window.api.getImageUrl(membro.foto)}" alt="Foto de ${membro.nome}" class="detalhe-foto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
-                            <div class="detalhe-foto-placeholder" style="${membro.foto ? 'display:none;' : 'display:flex;'}"><i class='bx bx-user-circle'></i></div>
+                            ${membro.fotoUrl ? `<img src="${membro.fotoUrl}" alt="Foto de ${membro.nome}" class="detalhe-foto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                            <div class="detalhe-foto-placeholder" style="${membro.fotoUrl ? 'display:none;' : 'display:flex;'}"><i class='bx bx-user-circle'></i></div>
                             <div class="membro-titulo-info">
                                 <h2>${membro.nome}</h2>
                                 <p>${capitalizar(membro.cargoEclesiastico) || 'Não definido'}</p>

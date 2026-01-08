@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 
 const emprestimoSchema = new mongoose.Schema({
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     utensilioId: { type: mongoose.Schema.Types.ObjectId, ref: 'Utensilio', required: true },
     membroId: { type: mongoose.Schema.Types.ObjectId, ref: 'Membro', required: true },
     quantidade: { type: Number, required: true, min: 1 },

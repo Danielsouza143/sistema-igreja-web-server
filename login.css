@@ -3,7 +3,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f0f2f5;
+    background-color: #0e0066;
     margin: 0;
     font-family: 'Montserrat', sans-serif;
 }
@@ -101,7 +101,7 @@ body {
     margin-top: 1rem;
     border: 1px solid #007bff;
     border-radius: 4px;
-    background-color: #fff;
+    background-color: #ffffff;
     color: #007bff;
     font-weight: bold;
     text-decoration: none;

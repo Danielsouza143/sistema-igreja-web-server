@@ -71,3 +71,21 @@
     font-size: 1.2em;
     margin: 0;
 }
+
+.menu-logo-wrapper {
+    position: relative;
+    /* Este width reserva espaço no menu para que os ícones não fiquem embaixo da logo */
+    width: 200px; 
+    height: 60px; /* Alinha com a altura aproximada do menu */
+}
+
+.menu-conekta-logo {
+    position: absolute;
+    height: 125px; /* Altura desejada pelo usuário */
+    width: auto;
+    /* Posiciona a logo no meio do wrapper e a centraliza verticalmente */
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 10; /* Garante que a logo fique sobre outros elementos se necessário */
+}

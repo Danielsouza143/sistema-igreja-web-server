@@ -1,11 +1,16 @@
-// Arquivo: backend/models/avaria.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const avariaSchema = new mongoose.Schema({
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Utensilio', required: true },
     data: { type: Date, required: true },
     descricao: { type: String, required: true },
     status: { type: String, required: true, default: 'Aberto' },
 });
 
-module.exports = mongoose.model('Avaria', avariaSchema);
+export default mongoose.model('Avaria', avariaSchema);

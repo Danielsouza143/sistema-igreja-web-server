@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, getSetupStatus } from '../controllers/auth.controller.js';
+import { login, getSetupStatus, setupSuperAdmin } from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
@@ -12,5 +12,6 @@ router.post('/login', login);
 // @desc    Verifica se o sistema já tem um administrador configurado
 // @access  Public
 router.get('/setup-status', getSetupStatus);
+router.post('/setup-admin', setupSuperAdmin); // Rota para criar o primeiro super admin
 
 export default router;

@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="/pages/styles/global.css">
     <style>
         .hidden { display: none !important; }
-        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f7f9; }
-        .login-container { background-color: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        .logo-wrapper { width: 100px; height: 100px; background-color: var(--cor-primaria, #001f5d); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; }
-        .login-logo { width: 60px; height: 60px; object-fit: contain; }
-        .login-container h1 { font-size: 1.8rem; margin-bottom: 10px; color: #333; }
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #001f5d; }
+        .login-container { background-color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .logo-wrapper { width: auto; height: 150px; margin: 0 0 0px 0;}
+        .login-conekta-logo { height: 0px; }
+        .login-container h1 { font-size: 1.8rem;margin-top: 10px; margin-bottom: 10px; color: #333; }
         .login-container p { color: #777; margin-bottom: 30px; }
         .form-group { text-align: left; margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
@@ -24,12 +24,13 @@
         .login-footer a:hover { text-decoration: underline; color: var(--cor-primaria, #001f5d); }
         .message { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; padding: 10px; border-radius: 8px; margin-top: 20px; display: none; }
         .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 8px; margin-top: 20px; display: none; }
+        .login-conekta-logo { height:200px; padding-bottom: 0%;}
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo-wrapper">
-            <img src="/pages/logo.tab.png" alt="Logo da Igreja" class="login-logo">
+            <img src="/conekta-logo.png" alt="Conekta Logo" class="login-conekta-logo">
         </div>
         <h1>Bem-vindo!</h1>
         <p id="login-subtitle">Faça login para acessar o sistema.</p>
@@ -71,236 +72,7 @@
         <div id="error-message" class="error-message"></div>
     </div>
 
-    <script src="/pages/config.js"></script>
-    <script>
-        // Polyfill para window.api para ambiente de navegador
-        if (!window.api) {
-            console.log("Creating window.api polyfill for browser environment.");
-            window.api = {
-                get: async (url) => {
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                },
-                post: async (url, data) => {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data),
-                    });
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                }
-            };
-        }
-    </script>
-    <script>
-        const formLogin = document.getElementById('form-login');
-        const formForgotPassword = document.getElementById('form-forgot-password');
-        const toggleLink = document.getElementById('toggle-link');
-        const subtitle = document.getElementById('login-subtitle');
-        const messageEl = document.getElementById('message');
-        const errorEl = document.getElementById('error-message');
-
-        const usernameInput = document.getElementById('username');
-        const passwordGroup = document.getElementById('password-group');
-        const passwordInput = document.getElementById('password');
-        const passwordLabel = passwordGroup.querySelector('label');
-        const btnLoginSubmit = document.getElementById('btn-login-submit');
-        const mfaMessageEl = document.getElementById('mfa-message');
-        const mfaCountdownEl = document.getElementById('mfa-countdown');
-
-        let isLoginView = true;
-        let usernameForMfa = '';
-        let mfaRequiredForUser = false;
-        let countdownInterval;
-        let countdownTime = 60;
-
-        // --- Funções de UI --- //
-        const resetLoginForm = () => {
-            passwordGroup.classList.remove('hidden');
-            passwordLabel.textContent = 'Senha';
-            passwordInput.type = 'password';
-            passwordInput.placeholder = '';
-            passwordInput.value = '';
-            btnLoginSubmit.textContent = 'Entrar';
-            mfaMessageEl.style.display = 'none';
-            mfaCountdownEl.style.display = 'none';
-            clearInterval(countdownInterval);
-            countdownTime = 60;
-            btnLoginSubmit.disabled = false;
-            toggleLink.style.display = 'block';
-            subtitle.textContent = 'Faça login para acessar o sistema.';
-            formLogin.classList.remove('hidden');
-            formForgotPassword.classList.add('hidden');
-        };
-
-        const showMfaForm = (message) => {
-            mfaRequiredForUser = true;
-            usernameForMfa = usernameInput.value;
-
-            passwordLabel.textContent = 'Código de 6 dígitos';
-            passwordInput.type = 'text';
-            passwordInput.placeholder = 'Insira o código';
-            passwordInput.maxLength = 6;
-            passwordInput.pattern = '\d{6}';
-            passwordInput.value = '';
-            passwordGroup.classList.remove('hidden');
-
-            btnLoginSubmit.textContent = 'Verificar Código';
-            btnLoginSubmit.disabled = false;
-
-            mfaMessageEl.textContent = message;
-            mfaMessageEl.style.display = 'block';
-            mfaCountdownEl.style.display = 'block';
-            toggleLink.style.display = 'none';
-            subtitle.textContent = 'Verificação de Segurança';
-
-            startCountdown();
-        };
-
-        const startCountdown = () => {
-            clearInterval(countdownInterval);
-            countdownTime = 60;
-            btnLoginSubmit.disabled = true; // Desabilita o botão enquanto o código é válido
-            mfaCountdownEl.textContent = `Reenviar código em ${countdownTime} segundos.`;
-
-            countdownInterval = setInterval(() => {
-                countdownTime--;
-                if (countdownTime > 0) {
-                    mfaCountdownEl.textContent = `Reenviar código em ${countdownTime} segundos.`;
-                } else {
-                    clearInterval(countdownInterval);
-                    mfaCountdownEl.textContent = 'Código expirado. Clique para reenviar.';
-                    btnLoginSubmit.textContent = 'Reenviar Código';
-                    btnLoginSubmit.disabled = false; // Habilita o botão para reenviar
-                }
-            }, 1000);
-        };
-
-        // --- Event Listeners --- //
-        toggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (mfaRequiredForUser) return; // Não permite alternar se MFA está ativo
-
-            isLoginView = !isLoginView;
-            formLogin.classList.toggle('hidden', !isLoginView);
-            formForgotPassword.classList.toggle('hidden', isLoginView);
-            
-            if (isLoginView) {
-                subtitle.textContent = 'Faça login para acessar o sistema.';
-                toggleLink.textContent = 'Esqueci minha senha';
-            } else {
-                subtitle.textContent = 'Insira seu usuário para recuperar a senha.';
-                toggleLink.textContent = 'Voltar para o Login';
-            }
-            messageEl.style.display = 'none';
-            errorEl.style.display = 'none';
-        });
-
-        usernameInput.addEventListener('input', async () => {
-            const username = usernameInput.value.trim();
-            if (username.length > 5 && username.includes('@')) { // Validação básica de e-mail
-                try {
-                    const response = await window.api.get(`/api/auth/mfa-status?username=${username}`);
-                    if (response.mfaRequired) {
-                        showMfaForm('Enviamos um código de verificação para o seu e-mail. Por favor, insira-o abaixo.');
-                    } else {
-                        resetLoginForm();
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar status de MFA:', error);
-                    resetLoginForm(); // Em caso de erro, volta para o login normal
-                }
-            } else {
-                resetLoginForm();
-            }
-        });
-
-        formLogin.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = usernameInput.value;
-            const password = passwordInput.value;
-            errorEl.style.display = 'none';
-            messageEl.style.display = 'none';
-
-            if (mfaRequiredForUser) {
-                // Se o botão é para reenviar código
-                if (btnLoginSubmit.textContent === 'Enviar código por e-mail' || btnLoginSubmit.textContent === 'Reenviar Código') {
-                    try {
-                        // Chamar o endpoint de login novamente para reenviar o código
-                        const response = await window.api.post('/api/auth/login', { username: usernameInput.value, password: '' }); // Senha vazia, pois não é um login normal
-                        if (response.mfaRequired) {
-                            mfaMessageEl.textContent = response.message;
-                            mfaMessageEl.style.display = 'block';
-                            startCountdown();
-                            btnLoginSubmit.textContent = 'Verificar Código'; // Muda o texto do botão após enviar
-                        } else {
-                            resetLoginForm();
-                            errorEl.textContent = 'Erro inesperado ao reenviar código.';
-                            errorEl.style.display = 'block';
-                        }
-                    } catch (error) {
-                        errorEl.textContent = error.message || 'Erro ao reenviar código.';
-                        errorEl.style.display = 'block';
-                    }
-                    return;
-                }
-
-                // Se o botão é para verificar código MFA
-                try {
-                    const response = await window.api.post('/api/auth/verify-mfa', { username: usernameForMfa, mfaCode: password });
-                    
-                    if (response.token) {
-                        localStorage.setItem('userToken', response.token);
-                        localStorage.setItem('userInfo', JSON.stringify(response.user));
-                        window.location.href = '/pages/dashboard/dashboard.html';
-                    }
-                } catch (error) {
-                    errorEl.textContent = error.message || 'Falha na verificação do código.';
-                    errorEl.style.display = 'block';
-                }
-            } else {
-                // Login normal
-                try {
-                    const response = await window.api.post('/api/auth/login', { username, password });
-                    
-                    if (response.mfaRequired) {
-                        showMfaForm(response.message);
-                    } else if (response.token) {
-                        localStorage.setItem('userToken', response.token);
-                        localStorage.setItem('userInfo', JSON.stringify(response.user));
-                        window.location.href = '/pages/dashboard/dashboard.html';
-                    }
-                } catch (error) {
-                    errorEl.textContent = error.message || 'Erro ao tentar fazer login.';
-                    errorEl.style.display = 'block';
-                }
-            }
-        });
-
-        formForgotPassword.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('forgot-username').value;
-            try {
-                const response = await window.api.post('/api/auth/forgot-password', { username });
-                messageEl.textContent = response.message;
-                messageEl.style.display = 'block';
-                errorEl.style.display = 'none';
-            } catch (error) {
-                errorEl.textContent = error.message || 'Erro ao solicitar recuperação.';
-                errorEl.style.display = 'block';
-                messageEl.style.display = 'none';
-            }
-        });
-    </script>
+    <script src="/js/global-loader.js" defer></script>
+    <script src="login.js"></script>
 </body>
 </html>

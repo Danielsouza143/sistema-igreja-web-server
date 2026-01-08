@@ -1,36 +1,35 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js';
 
+/**
+ * Middleware principal de autenticação.
+ * Verifica o JWT, extrai as informações do payload e anexa ao objeto `req`.
+ * Este middleware deve ser o primeiro em qualquer rota protegida.
+ */
 export const protect = async (req, res, next) => {
     let token;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // Get token from header
+            // 1. Extrair token do header
             token = req.headers.authorization.split(' ')[1];
 
-            // Verify token
+            // 2. Verificar e decodificar o token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Get user from the token
-            req.user = await User.findById(decoded.id).select('-password');
+            // 3. Anexar informações de usuário e tenant ao `req`
+            // Não há necessidade de consultar o banco de dados a cada requisição.
+            // A informação no JWT é considerada confiável após a verificação.
+            req.user = { id: decoded.id, role: decoded.role };
+            req.tenant = { id: decoded.tenantId, type: decoded.tenantType };
 
             next();
         } catch (error) {
-            console.error('Token verification failed:', error);
-            return res.status(401).json({ message: 'Não autorizado, token falhou.' });
+            console.error('Falha na verificação do token:', error.message);
+            return res.status(401).json({ message: 'Não autorizado, token inválido ou expirado.' });
         }
     }
 
     if (!token) {
-        return res.status(401).json({ message: 'Não autorizado, nenhum token.' });
-    }
-};
-
-export const isAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        return res.status(403).json({ message: 'Não autorizado, apenas administradores podem acessar.' });
+        return res.status(401).json({ message: 'Não autorizado, nenhum token fornecido.' });
     }
 };

@@ -1,124 +1,127 @@
+import Tenant from '../models/tenant.model.js';
 import Config from '../models/config.js';
-import mongoose from 'mongoose';
 import { s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
 
 /**
- * Busca a configuração única do sistema.
+ * Busca a configuração combinada para o tenant do usuário.
+ * Mescla a configuração global com a configuração específica do tenant.
  */
 export const getConfig = async (req, res, next) => {
     try {
-        let config = await Config.findOne({ singleton: 'main' });
-        if (!config) {
-            config = new Config();
-            await config.save();
+        const tenantPromise = Tenant.findById(req.tenant.id).select('config name').lean();
+        const globalConfigPromise = Config.findOne({ singleton: 'main' }).lean();
+
+        const [tenant, globalConfig] = await Promise.all([tenantPromise, globalConfigPromise]);
+
+        if (!tenant) {
+            return res.status(404).json({ message: 'Tenant não encontrado.' });
         }
-        res.status(200).json(config);
+
+        // Define a aparência padrão para evitar erros se não estiver configurada
+        const defaultConfig = {
+            aparencia: { theme: 'light', corPrimaria: '#001f5d', corSecundaria: '#0033a0' },
+            logoUrl: ''
+        };
+
+        // Mescla a configuração do tenant com o padrão
+        const tenantConfig = { ...defaultConfig, ...(tenant.config || {}) };
+        tenantConfig.aparencia = { ...defaultConfig.aparencia, ...(tenantConfig.aparencia || {}) };
+
+        // Combina as configurações: começa com a global e sobrescreve com a do tenant.
+        const finalConfig = { 
+            ...(globalConfig || {}), 
+            ...tenantConfig,
+            identidade: {
+                nomeIgreja: tenant.name,
+                logoIgrejaUrl: tenantConfig.logoUrl
+            },
+            // CORREÇÃO: Lê do local correto (tenant.config.aparencia)
+            aparencia: tenantConfig.aparencia
+        };
+
+        res.status(200).json(finalConfig);
     } catch (error) {
         next(error);
     }
 };
 
 /**
- * Atualiza uma ou mais configurações de forma atômica.
- * Recebe um corpo como { "chave.aninhada": "valor" }
+ * Atualiza as configurações do tenant.
+ * Recebe um corpo como { "config.theme.primaryColor": "#valor" }
  */
 export const updateConfig = async (req, res, next) => {
     try {
-        const updatedConfig = await Config.findOneAndUpdate(
-            { singleton: 'main' },
-            { $set: req.body },
-            { new: true, upsert: true, runValidators: true }
-        );
-        res.status(200).json(updatedConfig);
+        const updateData = {};
+        // Mapeia o corpo da requisição para o formato $set do MongoDB
+        for (const key in req.body) {
+            updateData[`config.${key}`] = req.body[key];
+        }
+
+        const tenant = await Tenant.findByIdAndUpdate(
+            req.tenant.id,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        ).select('config name');
+
+        if (!tenant) {
+            return res.status(404).json({ message: 'Tenant não encontrado.' });
+        }
+
+        res.status(200).json(tenant.config);
     } catch (error) {
         next(error);
     }
 };
 
 /**
- * Lida com o upload do logo e a atualização do nome da igreja.
+ * Lida com o upload do logo do tenant.
  */
 export const uploadLogo = async (req, res, next) => {
     const { nomeIgreja } = req.body;
-    const updateData = {};
-
+    
     try {
-        const currentConfig = await Config.findOne({ singleton: 'main' });
-        const oldLogoUrl = currentConfig?.identidade?.logoIgrejaUrl;
+        const tenant = await Tenant.findById(req.tenant.id);
+        if (!tenant) {
+            return res.status(404).json({ message: 'Tenant não encontrado.' });
+        }
+
+        const oldLogoUrl = tenant.config.logoUrl;
 
         if (req.file) {
-            // Se houver um logo antigo e um novo foi enviado, exclua o antigo do S3
             if (oldLogoUrl) {
                 const oldKey = getS3KeyFromUrl(oldLogoUrl);
-                if (oldKey) {
-                    await s3Delete(oldKey);
-                }
+                if (oldKey) await s3Delete(oldKey);
             }
-            // Usa a URL do S3 fornecida pelo multer-s3
-            updateData['identidade.logoIgrejaUrl'] = req.file.location;
-        }
-        if (nomeIgreja || nomeIgreja === '') { // Permite definir um nome vazio
-            updateData['identidade.nomeIgreja'] = nomeIgreja;
+            tenant.config.logoUrl = req.file.location;
         }
 
-        // Só atualiza se houver dados para mudar
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({ message: 'Nenhum dado para atualizar.' });
+        if (nomeIgreja || nomeIgreja === '') {
+            tenant.name = nomeIgreja;
         }
 
-        const updatedConfig = await Config.findOneAndUpdate(
-            { singleton: 'main' },
-            { $set: updateData },
-            { new: true, upsert: true }
-        );
+        await tenant.save();
 
         res.status(200).json({ 
             message: 'Identidade atualizada com sucesso!', 
-            identidade: updatedConfig.identidade 
+            identidade: {
+                nomeIgreja: tenant.name,
+                logoIgrejaUrl: tenant.config.logoUrl
+            }
         });
     } catch (error) {
         next(error);
     }
 };
 
-/**
- * Exporta todas as configurações como um arquivo JSON.
- */
+
+// As funções de export/import operavam no config global e não fazem sentido
+// no contexto de um único tenant desta forma. Elas precisariam ser repensadas
+// para um admin do sistema. Por enquanto, retornam um erro.
+
 export const exportConfig = async (req, res, next) => {
-    try {
-        const config = await Config.findOne({ singleton: 'main' }).lean();
-        if (!config) {
-            return res.status(404).json({ message: "Nenhuma configuração para exportar." });
-        }
-        res.setHeader('Content-Disposition', 'attachment; filename=config-backup.json');
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).send(JSON.stringify(config, null, 4));
-    } catch (error) {
-        next(error);
-    }
+    res.status(501).json({ message: 'Funcionalidade não implementada para tenants.' });
 };
 
-/**
- * Importa configurações de um arquivo JSON.
- * ATENÇÃO: Isso sobrescreve as configurações existentes.
- */
 export const importConfig = async (req, res, next) => {
-    const { _id, singleton, ...importData } = req.body;
-
-    if (!importData) {
-        return res.status(400).json({ message: "Nenhum dado de configuração fornecido." });
-    }
-
-    try {
-        // Encontra o config existente e o substitui pelos dados importados,
-        // mantendo o _id e o singleton originais.
-        const updatedConfig = await Config.findOneAndUpdate(
-            { singleton: 'main' },
-            { ...importData, singleton: 'main' }, // Garante que o singleton seja mantido
-            { new: true, upsert: true, runValidators: true }
-        );
-        res.status(200).json({ message: "Configurações importadas com sucesso!", config: updatedConfig });
-    } catch (error) {
-        next(error);
-    }
+    res.status(501).json({ message: 'Funcionalidade não implementada para tenants.' });
 };

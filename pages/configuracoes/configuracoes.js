@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SELETORES DO DOM ---
     const navLinks = document.querySelectorAll('.config-nav-link');
     const sections = document.querySelectorAll('.config-section');
-    const themeButtons = document.querySelectorAll('.theme-btn');
     const corPrincipalInput = document.getElementById('cor-principal');
+    const corSecundariaInput = document.getElementById('cor-secundaria');
     const perfilNomeCompletoInput = document.getElementById('perfil-nome-completo');
     const perfilUsernameInput = document.getElementById('perfil-username');
     const btnSalvarPerfil = document.getElementById('btn-salvar-perfil');
@@ -19,9 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoUploadInput = document.getElementById('logo-upload-input');
     const btnSalvarIdentidade = document.getElementById('btn-salvar-identidade');
     const categoriasContainer = document.getElementById('categorias-container');
-    const btnExportar = document.getElementById('btn-exportar-dados');
-    const btnImportar = document.getElementById('btn-importar-dados');
-    const importFileInput = document.getElementById('import-file-input');
     const listaUsuarios = document.getElementById('lista-usuarios');
     const btnNovoUsuario = document.getElementById('btn-novo-usuario');
     const modalUsuario = document.getElementById('modal-usuario');
@@ -30,8 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const usuarioIdInput = document.getElementById('usuario-id');
     const usuarioNomeCompletoInput = document.getElementById('usuario-nome-completo');
     const listaLogs = document.getElementById('lista-logs');
-
-    // Seletores do Modal de Corte
     const modalCropLogo = document.getElementById('modal-crop-logo');
     const imageToCrop = document.getElementById('image-to-crop');
     const btnConfirmarCorte = document.getElementById('btn-confirmar-corte');
@@ -51,58 +46,66 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA PRINCIPAL DE CONFIGURAÇÕES ---
     const salvarConfiguracao = async (key, value) => {
         try {
-            await window.api.request('/api/configs', 'PATCH', { [key]: value });
+            await window.api.patch('/api/configs', { [key]: value });
         } catch (error) {
             console.error(`Erro ao salvar a configuração '${key}':`, error);
             alert(`Não foi possível salvar a configuração: ${error.message}`);
         }
     };
 
-    const carregarConfigs = async () => {
-        try {
-            const serverConfigs = await window.api.get('/api/configs') || {};
-            configs = serverConfigs;
-            carregarAparencia();
-            carregarIdentidade();
-            renderizarCategorias();
-        } catch (error) {
-            console.error('Erro fatal ao carregar configurações:', error);
-            alert('Não foi possível carregar as configurações do servidor. A página pode não funcionar corretamente.');
-        }
-    };
-
-    // --- SEÇÃO: APARÊNCIA ---
+    // --- SEÇÃO: APARÊNCIA (Simplificada) ---
     const carregarAparencia = () => {
         const { aparencia } = configs;
         if (!aparencia) return;
-        document.body.dataset.theme = aparencia.theme;
         document.documentElement.style.setProperty('--cor-primaria', aparencia.corPrimaria);
-        themeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === aparencia.theme));
+        document.documentElement.style.setProperty('--cor-secundaria', aparencia.corSecundaria);
         corPrincipalInput.value = aparencia.corPrimaria;
+        corSecundariaInput.value = aparencia.corSecundaria;
     };
 
-    themeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const newTheme = btn.dataset.theme;
-            document.body.dataset.theme = newTheme;
-            themeButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            salvarConfiguracao('aparencia.theme', newTheme);
-        });
-    });
+    const salvarAparencia = () => {
+        const aparencia = {
+            theme: 'light', // Hardcoded
+            corPrimaria: corPrincipalInput.value,
+            corSecundaria: corSecundariaInput.value
+        };
+        salvarConfiguracao('aparencia', aparencia);
+    };
 
     corPrincipalInput.addEventListener('change', (e) => {
-        const newColor = e.target.value;
-        document.documentElement.style.setProperty('--cor-primaria', newColor);
-        salvarConfiguracao('aparencia.corPrimaria', newColor);
+        document.documentElement.style.setProperty('--cor-primaria', e.target.value);
+        salvarAparencia();
     });
 
-    // --- SEÇÃO: IDENTIDADE DA IGREJA (COM MODAL DE CORTE) ---
+    corSecundariaInput.addEventListener('change', (e) => {
+        document.documentElement.style.setProperty('--cor-secundaria', e.target.value);
+        salvarAparencia();
+    });
+
+    // --- SEÇÃO: IDENTIDADE DA IGREJA ---
     const carregarIdentidade = () => {
         const { identidade } = configs;
         if (!identidade) return;
         nomeIgrejaInput.value = identidade.nomeIgreja;
-        logoPreview.src = window.api.getImageUrl(identidade.logoIgrejaUrl) || '/pages/logo.tab.png';
+        
+        // Dynamic logo/icon display
+        logoPreview.innerHTML = ''; // Clear existing content
+        if (identidade.logoIgrejaUrl) {
+            const img = document.createElement('img');
+            img.src = identidade.logoIgrejaUrl;
+            img.alt = "Logo da Igreja";
+            img.style.width = '100px';
+            img.style.height = '100px';
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            logoPreview.appendChild(img);
+        } else {
+            const icon = document.createElement('i');
+            icon.className = 'bx bx-church';
+            icon.style.fontSize = '100px';
+            icon.style.color = 'var(--cor-primaria)'; // Use primary color for the icon
+            logoPreview.appendChild(icon);
+        }
     };
 
     btnTrocarLogo.addEventListener('click', () => logoUploadInput.click());
@@ -110,30 +113,21 @@ document.addEventListener('DOMContentLoaded', () => {
     logoUploadInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (event) => {
             imageToCrop.src = event.target.result;
             modalCropLogo.style.display = 'flex';
-            cropper = new Cropper(imageToCrop, {
-                aspectRatio: 1 / 1,
-                viewMode: 1,
-                background: false,
-            });
+            cropper = new Cropper(imageToCrop, { aspectRatio: 1, viewMode: 1, background: false });
         };
         reader.readAsDataURL(file);
-        logoUploadInput.value = ''; // Limpa o input para permitir selecionar o mesmo arquivo novamente
+        logoUploadInput.value = '';
     });
 
     btnConfirmarCorte.addEventListener('click', () => {
         if (!cropper) return;
-        cropper.getCroppedCanvas({
-            width: 512,
-            height: 512,
-            imageSmoothingQuality: 'high',
-        }).toBlob((blob) => {
+        cropper.getCroppedCanvas({ width: 512, height: 512 }).toBlob((blob) => {
             croppedLogoBlob = blob;
-            logoPreview.src = URL.createObjectURL(blob);
+            logoPreview.innerHTML = `<img src="${URL.createObjectURL(blob)}" style="width:100px; height:100px; border-radius:50%; object-fit:cover;">`;
             modalCropLogo.style.display = 'none';
             cropper.destroy();
         }, 'image/png');
@@ -149,29 +143,19 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSalvarIdentidade.addEventListener('click', async () => {
         btnSalvarIdentidade.disabled = true;
         btnSalvarIdentidade.textContent = 'Salvando...';
-
         const nomeIgreja = nomeIgrejaInput.value.trim();
-
         try {
-            // Se um novo logo foi cortado, usa a rota de upload
             if (croppedLogoBlob) {
                 const formData = new FormData();
                 formData.append('nomeIgreja', nomeIgreja);
-                // O terceiro parâmetro define o nome do arquivo no backend
                 formData.append('logo', croppedLogoBlob, 'logo.png');
                 await window.api.post('/api/configs/upload-logo', formData);
             } else {
-                // Se apenas o nome mudou, usa a rota de patch
                 await salvarConfiguracao('identidade.nomeIgreja', nomeIgreja);
             }
-
-            croppedLogoBlob = null; // Limpa o blob após o envio
+            croppedLogoBlob = null;
             await carregarConfigs();
-
-            window.dispatchEvent(new CustomEvent('churchIdentityUpdated', {
-                detail: { ...configs.identidade }
-            }));
-
+            window.dispatchEvent(new CustomEvent('churchIdentityUpdated', { detail: { ...configs.identidade } }));
             alert('Identidade da igreja salva com sucesso!');
         } catch (error) {
             console.error('Erro ao salvar identidade:', error);
@@ -196,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 listaEl.appendChild(li);
             });
         };
-
         renderLista(document.getElementById('lista-cat-utensilios'), configs.utensilios_categorias, 'utensilios_categorias');
         renderLista(document.getElementById('lista-cat-eventos'), configs.eventos_categorias, 'eventos_categorias');
         if (configs.financeiro_categorias) {
@@ -211,28 +194,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const subtipo = e.target.dataset.subtipo;
             const input = e.target.previousElementSibling;
             const novaCategoria = input.value.trim();
-
             if (novaCategoria) {
                 const path = subtipo ? `${tipo}.${subtipo}` : tipo;
                 const listaAtual = subtipo ? configs[tipo][subtipo] : configs[tipo];
-                
                 if (listaAtual && !listaAtual.includes(novaCategoria)) {
                     const novaLista = [...listaAtual, novaCategoria];
                     await salvarConfiguracao(path, novaLista);
                     if (subtipo) configs[tipo][subtipo] = novaLista; else configs[tipo] = novaLista;
                     renderizarCategorias();
                     input.value = '';
-                } else {
-                    alert('Esta categoria já existe.');
-                }
+                } else { alert('Esta categoria já existe.'); }
             }
         }
-
         if (e.target.matches('.bxs-trash')) {
             const categoria = e.target.dataset.categoria;
             const tipo = e.target.dataset.tipo;
             const subtipo = e.target.dataset.subtipo;
-
             if (confirm(`Tem certeza que deseja remover a categoria "${categoria}"?`)) {
                 const path = subtipo ? `${tipo}.${subtipo}` : tipo;
                 const listaAtual = subtipo ? configs[tipo][subtipo] : configs[tipo];
@@ -244,37 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- SEÇÃO: BACKUP E RESTAURAÇÃO ---
-    btnExportar.addEventListener('click', () => {
-        window.open('/api/configs/export', '_blank');
-    });
 
-    btnImportar.addEventListener('click', () => importFileInput.click());
 
-    importFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (!confirm("ATENÇÃO: Importar um backup substituirá TODAS as configurações atuais. Deseja continuar?")) {
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const importData = JSON.parse(event.target.result);
-                await window.api.post('/api/configs/import', importData);
-                alert('Configurações importadas com sucesso! A página será recarregada para aplicar as alterações.');
-                window.location.reload();
-            } catch (error) {
-                console.error('Erro ao importar configurações:', error);
-                alert(`Falha na importação: ${error.message}`);
-            }
-        };
-        reader.readAsText(file);
-    });
-
-    // --- SEÇÕES QUE JÁ FUNCIONAVAM (Lógica mantida) ---
+    // --- SEÇÕES DE PERFIL E USUÁRIOS ---
     const carregarPerfil = async () => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (!userInfo) return;
@@ -288,18 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const nomeCompleto = perfilNomeCompletoInput.value;
         try {
             const updatedUser = await window.api.put(`/api/users/${userInfo.id}`, { name: nomeCompleto });
-
-            // Atualiza o localStorage com os dados retornados pelo servidor
             const currentUserInfo = JSON.parse(localStorage.getItem('userInfo'));
-            // Mescla os dados, garantindo que o token e outras infos não se percam
             const newUserInfo = { ...currentUserInfo, ...updatedUser };
             localStorage.setItem('userInfo', JSON.stringify(newUserInfo));
-            
-            window.updateUserDisplay(); // Atualiza o nome no menu
+            window.updateUserDisplay();
             alert('Nome atualizado com sucesso!');
-        } catch (error) {
-            alert(`Erro ao atualizar o nome: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao atualizar o nome: ${error.message}`); }
     });
 
     btnSalvarSenha.addEventListener('click', async () => {
@@ -315,9 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('perfil-senha-atual').value = '';
             document.getElementById('perfil-nova-senha').value = '';
             document.getElementById('perfil-confirmar-senha').value = '';
-        } catch (error) {
-            alert(`Erro ao alterar a senha: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao alterar a senha: ${error.message}`); }
     });
 
     const carregarUsuarios = async () => {
@@ -330,32 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             usuarios.forEach(user => {
                 const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="membro-info"><strong>${user.name || user.username}</strong><span class="membro-funcao">${user.role === 'admin' ? 'Administrador' : 'Operador'}</span></div>
-                    <div class="acoes-item"><i class='bx bxs-edit' data-id="${user._id}"></i><i class='bx bxs-trash' data-id="${user._id}"></i></div>
-                `;
+                li.innerHTML = `<div class="membro-info"><strong>${user.name || user.username}</strong><span class="membro-funcao">${user.role === 'admin' ? 'Administrador' : 'Operador'}</span></div><div class="acoes-item"><i class='bx bxs-edit' data-id="${user._id}"></i><i class='bx bxs-trash' data-id="${user._id}"></i></div>`;
                 listaUsuarios.appendChild(li);
             });
-        } catch (error) {
-            listaUsuarios.innerHTML = '<li class="mensagem-vazio">Falha ao carregar usuários.</li>';
-        }
+        } catch (error) { listaUsuarios.innerHTML = '<li class="mensagem-vazio">Falha ao carregar usuários.</li>'; }
     };
-
-    listaUsuarios.addEventListener('click', async (e) => {
-        const id = e.target.dataset.id;
-        if (e.target.matches('.bxs-edit')) {
-            const usuarios = await window.api.get('/api/users');
-            const usuario = usuarios.find(u => u._id === id);
-            abrirModalUsuario(usuario);
-        } else if (e.target.matches('.bxs-trash')) {
-            if (confirm('Tem certeza que deseja excluir este usuário?')) {
-                try {
-                    await window.api.delete(`/api/users/${id}`);
-                    carregarUsuarios();
-                } catch (error) { alert(`Erro ao excluir usuário: ${error.message}`); }
-            }
-        }
-    });
 
     const abrirModalUsuario = (usuario = null) => {
         formUsuario.reset();
@@ -377,6 +297,22 @@ document.addEventListener('DOMContentLoaded', () => {
         modalUsuario.style.display = 'flex';
     };
 
+    listaUsuarios.addEventListener('click', async (e) => {
+        const id = e.target.dataset.id;
+        if (e.target.matches('.bxs-edit')) {
+            const usuarios = await window.api.get('/api/users');
+            const usuario = usuarios.find(u => u._id === id);
+            abrirModalUsuario(usuario);
+        } else if (e.target.matches('.bxs-trash')) {
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
+                try {
+                    await window.api.delete(`/api/users/${id}`);
+                    carregarUsuarios();
+                } catch (error) { alert(`Erro ao excluir usuário: ${error.message}`); }
+            }
+        }
+    });
+
     btnNovoUsuario.addEventListener('click', () => abrirModalUsuario());
     modalUsuario.addEventListener('click', (e) => {
         if (e.target.matches('.modal-overlay') || e.target.closest('[data-close-modal="modal-usuario"]')) {
@@ -387,22 +323,15 @@ document.addEventListener('DOMContentLoaded', () => {
     formUsuario.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = usuarioIdInput.value;
-        const dados = {
-            name: usuarioNomeCompletoInput.value,
-            username: document.getElementById('usuario-username').value,
-            password: document.getElementById('usuario-password').value,
-            role: document.getElementById('usuario-role').value,
-        };
+        const dados = { name: usuarioNomeCompletoInput.value, username: document.getElementById('usuario-username').value, password: document.getElementById('usuario-password').value, role: document.getElementById('usuario-role').value };
         if (id && !dados.password) delete dados.password;
         try {
             const url = id ? `/api/users/${id}` : '/api/users';
-            await window.api.request(url, id ? 'PUT' : 'POST', dados);
+            if (id) { await window.api.put(url, dados); } else { await window.api.post(url, dados); }
             modalUsuario.style.display = 'none';
             carregarUsuarios();
             alert('Usuário salvo com sucesso!');
-        } catch (error) {
-            alert(`Erro ao salvar usuário: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao salvar usuário: ${error.message}`); }
     });
 
     const carregarLogs = async () => {
@@ -415,20 +344,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             logs.forEach(log => {
                 const li = document.createElement('li');
-                li.innerHTML = `
-                    <div>
-                        <div class="log-item-details"><strong>${log.username}</strong>: ${log.details}</div>
-                        <div class="log-item-meta"><span>${new Date(log.createdAt).toLocaleString('pt-BR')}</span><span>Ação: ${log.action}</span></div>
-                    </div>
-                `;
+                li.innerHTML = `<div><div class="log-item-details"><strong>${log.username}</strong>: ${log.details}</div><div class="log-item-meta"><span>${new Date(log.createdAt).toLocaleString('pt-BR')}</span><span>Ação: ${log.action}</span></div></div>`;
                 listaLogs.appendChild(li);
             });
-        } catch (error) {
-            listaLogs.innerHTML = '<li class="mensagem-vazio">Falha ao carregar o log de atividades.</li>';
-        }
+        } catch (error) { listaLogs.innerHTML = '<li class="mensagem-vazio">Falha ao carregar o log de atividades.</li>'; }
     };
 
     // --- INICIALIZAÇÃO ---
+    const carregarConfigs = async () => {
+        try {
+            const serverConfigs = await window.api.get('/api/configs') || {};
+            configs = serverConfigs;
+            carregarAparencia();
+            carregarIdentidade();
+            renderizarCategorias();
+        } catch (error) {
+            console.error('Erro fatal ao carregar configurações:', error);
+            alert('Não foi possível carregar as configurações do servidor. A página pode não funcionar corretamente.');
+        }
+    };
+
     const init = () => {
         carregarConfigs().then(() => {
             carregarPerfil();

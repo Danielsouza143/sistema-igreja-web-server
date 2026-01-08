@@ -5,7 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "create-user": "node create-user.js",
+    "create-tenant": "node create-tenant.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.592.0",

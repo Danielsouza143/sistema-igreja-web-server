@@ -1,19 +1,21 @@
 import express from 'express';
 import Evento from '../models/evento.js';
-import Config from '../models/config.js'; // Importar o modelo de Config
+import Config from '../models/config.js';
 import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
+import { protect } from '../middleware/auth.middleware.js';
 
 console.log('--- DEBUG: O arquivo eventos.routes.js foi carregado pelo servidor. ---');
 
 const router = express.Router();
-
-// --- Configuração do Multer para upload de cartazes (agora para S3) ---
 const upload = s3Upload('eventos');
 
-// GET /api/eventos/configs - Rota para buscar configurações de eventos (categorias, etc.)
+// Aplica o middleware de proteção a todas as rotas neste arquivo
+router.use(protect);
+
+// GET /api/eventos/configs - Rota para buscar configurações GLOBAIS de eventos (categorias)
 router.get('/configs', async (req, res) => {
     try {
-        const config = await Config.findOne();
+        const config = await Config.findOne({ singleton: 'main' });
         res.json({
             eventos_categorias: config ? config.eventos_categorias : []
         });
@@ -22,38 +24,27 @@ router.get('/configs', async (req, res) => {
     }
 });
 
-// GET /api/eventos - Listar todos os eventos
+// GET /api/eventos - Listar todos os eventos do tenant
 router.get('/', async (req, res) => {
     try {
-        const eventos = await Evento.find().sort({ dataInicio: -1 });
+        const eventos = await Evento.find({ tenantId: req.tenant.id }).sort({ dataInicio: -1 });
         res.json(eventos);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar eventos', error });
     }
 });
 
-// POST /api/eventos - Criar um novo evento (com upload de cartaz)
+// POST /api/eventos - Criar um novo evento para o tenant
 router.post('/', upload.single('cartaz'), async (req, res) => {
     try {
-        // Desestruturação explícita para maior controle
-        const {
-            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
-            local, responsavelId, descricao, cor, financeiro
-        } = req.body;
-
-        const eventoData = {
-            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
-            local, responsavelId, descricao, cor
-        };
+        const eventoData = { ...req.body, tenantId: req.tenant.id };
 
         if (req.file) {
             eventoData.cartazUrl = req.file.location;
         }
-        
-        // Lógica para converter dados financeiros que chegam como string
-        if (financeiro) {
-            const parsedFinanceiro = JSON.parse(financeiro);
-            // CORREÇÃO: FormData envia booleans como string, converter de volta
+
+        if (req.body.financeiro) {
+            const parsedFinanceiro = JSON.parse(req.body.financeiro);
             if (typeof parsedFinanceiro.envolveFundos === 'string') {
                 parsedFinanceiro.envolveFundos = parsedFinanceiro.envolveFundos === 'true';
             }
@@ -68,20 +59,12 @@ router.post('/', upload.single('cartaz'), async (req, res) => {
     }
 });
 
-// PUT /api/eventos/:id - Atualizar um evento (com upload de cartaz)
+// PUT /api/eventos/:id - Atualizar um evento do tenant
 router.put('/:id', upload.single('cartaz'), async (req, res) => {
     try {
-        const { 
-            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
-            local, responsavelId, descricao, cor, financeiro, cartazUrl
-        } = req.body;
+        const updateData = { ...req.body };
+        const existingEvento = await Evento.findOne({ _id: req.params.id, tenantId: req.tenant.id });
 
-        const updateData = {
-            tipo, nome, categoria, recorrencia, dataInicio, dataFim,
-            local, responsavelId, descricao, cor, cartazUrl
-        };
-
-        const existingEvento = await Evento.findById(req.params.id);
         if (!existingEvento) {
             return res.status(404).json({ message: 'Evento não encontrado' });
         }
@@ -94,27 +77,30 @@ router.put('/:id', upload.single('cartaz'), async (req, res) => {
             updateData.cartazUrl = req.file.location;
         }
 
-        if (financeiro) {
-            const parsedFinanceiro = JSON.parse(financeiro);
+        if (req.body.financeiro) {
+            const parsedFinanceiro = JSON.parse(req.body.financeiro);
             if (typeof parsedFinanceiro.envolveFundos === 'string') {
                 parsedFinanceiro.envolveFundos = parsedFinanceiro.envolveFundos === 'true';
             }
             updateData.financeiro = parsedFinanceiro;
         }
 
-        const eventoAtualizado = await Evento.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        const eventoAtualizado = await Evento.findOneAndUpdate(
+            { _id: req.params.id, tenantId: req.tenant.id },
+            updateData,
+            { new: true }
+        );
         res.json(eventoAtualizado);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao atualizar evento', error: error.message });
     }
 });
 
-// --- ROTAS DE SUB-DOCUMENTOS (TAREFAS E TRANSAÇÕES) ---
+// --- SUB-DOCUMENTOS (TAREFAS E TRANSAÇÕES) DENTRO DO TENANT ---
 
-// POST /api/eventos/:id/tarefas - Adicionar uma nova tarefa
 router.post('/:id/tarefas', async (req, res) => {
     try {
-        const evento = await Evento.findById(req.params.id);
+        const evento = await Evento.findOne({ _id: req.params.id, tenantId: req.tenant.id });
         if (!evento) return res.status(404).json({ message: 'Evento não encontrado' });
 
         evento.tarefas.push(req.body);
@@ -125,10 +111,9 @@ router.post('/:id/tarefas', async (req, res) => {
     }
 });
 
-// PUT /api/eventos/:id/tarefas/:tarefaId - Atualizar uma tarefa (ex: marcar como concluída)
 router.put('/:id/tarefas/:tarefaId', async (req, res) => {
     try {
-        const evento = await Evento.findById(req.params.id);
+        const evento = await Evento.findOne({ _id: req.params.id, tenantId: req.tenant.id });
         if (!evento) return res.status(404).json({ message: 'Evento não encontrado' });
 
         const tarefa = evento.tarefas.id(req.params.tarefaId);
@@ -142,13 +127,18 @@ router.put('/:id/tarefas/:tarefaId', async (req, res) => {
     }
 });
 
-// DELETE /api/eventos/:id/tarefas/:tarefaId - Excluir uma tarefa
 router.delete('/:id/tarefas/:tarefaId', async (req, res) => {
     try {
-        const evento = await Evento.findById(req.params.id);
+        const evento = await Evento.findOne({ _id: req.params.id, tenantId: req.tenant.id });
         if (!evento) return res.status(404).json({ message: 'Evento não encontrado' });
-
-        evento.tarefas.id(req.params.tarefaId).remove();
+        
+        const tarefa = evento.tarefas.id(req.params.tarefaId);
+        if (tarefa) {
+          tarefa.remove();
+        } else {
+          return res.status(404).json({ message: 'Tarefa não encontrada' });
+        }
+        
         await evento.save();
         res.json(evento);
     } catch (error) {
@@ -156,10 +146,9 @@ router.delete('/:id/tarefas/:tarefaId', async (req, res) => {
     }
 });
 
-// POST /api/eventos/:id/transacoes - Adicionar uma nova transação financeira
 router.post('/:id/transacoes', async (req, res) => {
     try {
-        const evento = await Evento.findById(req.params.id);
+        const evento = await Evento.findOne({ _id: req.params.id, tenantId: req.tenant.id });
         if (!evento) return res.status(404).json({ message: 'Evento não encontrado' });
 
         const { tipo, ...dadosTransacao } = req.body;
@@ -176,6 +165,21 @@ router.post('/:id/transacoes', async (req, res) => {
     }
 });
 
-// TODO: Implementar DELETE para transações se for necessário
+// DELETE /api/eventos/:id - Excluir um evento
+router.delete('/:id', async (req, res) => {
+    try {
+        const evento = await Evento.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
+        if (!evento) {
+            return res.status(404).json({ message: 'Evento não encontrado' });
+        }
+        if (evento.cartazUrl) {
+            const oldKey = getS3KeyFromUrl(evento.cartazUrl);
+            if (oldKey) await s3Delete(oldKey);
+        }
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao excluir evento', error });
+    }
+});
 
 export default router;

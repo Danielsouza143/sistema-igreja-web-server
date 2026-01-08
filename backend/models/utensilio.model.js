@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 
 const utensilioSchema = new mongoose.Schema({
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     nome: { type: String, required: true, trim: true },
     categoria: { type: String, required: true },
     quantidade: { type: Number, required: true, min: 0, default: 1 },

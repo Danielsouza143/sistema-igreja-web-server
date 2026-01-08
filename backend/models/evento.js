@@ -16,6 +16,12 @@ const tarefaSchema = new mongoose.Schema({
 });
 
 const eventoSchema = new mongoose.Schema({
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     nome: { type: String, required: true },
     categoria: { type: String, required: true },
     dataInicio: { type: Date, required: true },

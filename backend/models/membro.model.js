@@ -6,6 +6,12 @@ const filhoSchema = new mongoose.Schema({
 });
 
 const membroSchema = new mongoose.Schema({
+    tenantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     nome: { type: String, required: true },
     status: { 
         type: String, 

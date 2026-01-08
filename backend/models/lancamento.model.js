@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
 const lancamentoSchema = new Schema({
+    tenantId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     descricao: { type: String, required: true },
     valor: { type: Number, required: true },
     data: { type: Date, required: true },

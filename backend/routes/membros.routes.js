@@ -1,14 +1,16 @@
 import express from 'express';
 import Membro from '../models/membro.model.js';
 import Lancamento from '../models/lancamento.model.js';
-import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
-
-import { fileURLToPath } from 'url';
+import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
+import { protect } from '../middleware/auth.middleware.js';
 import { logActivity } from '../utils/logActivity.js';
 
 const router = express.Router();
 
 const upload = s3Upload('membros');
+
+// Todas as rotas de membros são protegidas
+router.use(protect);
 
 // Rota para fazer upload da foto do membro
 router.post('/upload-foto', upload.single('foto'), (req, res) => {
@@ -19,20 +21,33 @@ router.post('/upload-foto', upload.single('foto'), (req, res) => {
   res.status(200).json({ filePath: filePath });
 });
 
-// GET / - Listar todos os membros
+// GET / - Listar todos os membros do tenant
 router.get('/', async (req, res) => {
     try {
-        const membros = await Membro.find();
+        const membros = await Membro.find({ tenantId: req.tenant.id }).lean();
+        for (const membro of membros) {
+            if (membro.foto) {
+                const s3Key = getS3KeyFromUrl(membro.foto);
+                if (s3Key) {
+                    membro.fotoUrl = await getSignedUrlForObject(s3Key);
+                } else {
+                    membro.fotoUrl = membro.foto; // Fallback para URLs públicas
+                }
+            }
+        }
         res.json(membros);
     } catch (error) {
         res.status(500).json({ error: 'Erro ao buscar membros' });
     }
 });
 
-// POST / - Criar novo membro
+// POST / - Criar novo membro para o tenant
 router.post('/', async (req, res) => {
     try {
-        const novoMembro = new Membro(req.body);
+        const novoMembro = new Membro({
+            ...req.body,
+            tenantId: req.tenant.id
+        });
         await novoMembro.save();
         await logActivity(req.user, 'CREATE_MEMBER', `Cadastrou o membro '${novoMembro.nome}'.`, novoMembro._id);
         res.status(201).json(novoMembro);
@@ -41,68 +56,73 @@ router.post('/', async (req, res) => {
     }
 });
 
-// GET /:id - Obter um membro específico
+// GET /:id - Obter um membro específico do tenant
 router.get('/:id', async (req, res) => {
     try {
-        const membro = await Membro.findById(req.params.id);
+        const membro = await Membro.findOne({ _id: req.params.id, tenantId: req.tenant.id }).lean();
         if (!membro) return res.status(404).json({ message: 'Membro não encontrado' });
+
+        if (membro.foto) {
+            const s3Key = getS3KeyFromUrl(membro.foto);
+            if (s3Key) {
+                membro.fotoUrl = await getSignedUrlForObject(s3Key);
+            } else {
+                membro.fotoUrl = membro.foto;
+            }
+        }
+        
         res.json(membro);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar membro' });
     }
 });
 
-// PUT /:id - Atualizar um membro
+// PUT /:id - Atualizar um membro do tenant
 router.put('/:id', upload.single('foto'), async (req, res) => {
     try {
         const { fotoUrl, ...updateData } = req.body;
-        const existingMembro = await Membro.findById(req.params.id);
+        const existingMembro = await Membro.findOne({ _id: req.params.id, tenantId: req.tenant.id });
 
         if (!existingMembro) {
             return res.status(404).json({ message: 'Membro não encontrado' });
         }
 
         if (req.file) {
-            // Se uma nova foto foi enviada, exclua a antiga do S3, se existir
             if (existingMembro.fotoUrl) {
                 const oldKey = getS3KeyFromUrl(existingMembro.fotoUrl);
-                if (oldKey) {
-                    await s3Delete(oldKey);
-                }
+                if (oldKey) await s3Delete(oldKey);
             }
             updateData.fotoUrl = req.file.location;
         } else if (fotoUrl === null && existingMembro.fotoUrl) {
-            // Se a foto foi explicitamente removida (frontend envia null)
             const oldKey = getS3KeyFromUrl(existingMembro.fotoUrl);
-            if (oldKey) {
-                await s3Delete(oldKey);
-            }
+            if (oldKey) await s3Delete(oldKey);
             updateData.fotoUrl = null;
         }
 
-        const membroAtualizado = await Membro.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
-        if (!membroAtualizado) return res.status(404).json({ message: 'Membro não encontrado' });
+        const membroAtualizado = await Membro.findOneAndUpdate(
+            { _id: req.params.id, tenantId: req.tenant.id },
+            updateData,
+            { new: true, runValidators: true }
+        );
+        
         res.json(membroAtualizado);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao atualizar membro', error });
     }
 });
 
-// DELETE /:id - Excluir um membro
+// DELETE /:id - Excluir um membro do tenant
 router.delete('/:id', async (req, res) => {
     try {
-        const membroExcluido = await Membro.findById(req.params.id);
+        const membroExcluido = await Membro.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
+
         if (!membroExcluido) return res.status(404).json({ message: 'Membro não encontrado' });
 
-        // Excluir a foto associada do S3, se existir
         if (membroExcluido.fotoUrl) {
             const oldKey = getS3KeyFromUrl(membroExcluido.fotoUrl);
-            if (oldKey) {
-                await s3Delete(oldKey);
-            }
+            if (oldKey) await s3Delete(oldKey);
         }
 
-        await Membro.findByIdAndDelete(req.params.id);
         await logActivity(req.user, 'DELETE_MEMBER', `Excluiu o membro '${membroExcluido.nome}'.`, req.params.id);
         res.status(204).send();
     } catch (error) {
@@ -110,12 +130,17 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// GET /:id/contribuicoes - Obter histórico financeiro de um membro
+// GET /:id/contribuicoes - Obter histórico financeiro de um membro do tenant
 router.get('/:id/contribuicoes', async (req, res) => {
     try {
+        // Verifica primeiro se o membro pertence ao tenant
+        const membro = await Membro.findOne({ _id: req.params.id, tenantId: req.tenant.id });
+        if (!membro) return res.status(404).json({ message: 'Membro não encontrado' });
+
         const contribuicoes = await Lancamento.find({ 
             membroId: req.params.id,
-            tipo: 'entrada' 
+            tipo: 'entrada',
+            tenantId: req.tenant.id
         });
         res.json(contribuicoes);
     } catch (error) {
@@ -123,14 +148,12 @@ router.get('/:id/contribuicoes', async (req, res) => {
     }
 });
 
-// POST /presencas - Salvar presenças de membros para uma data
+// POST /presencas - Salvar presenças de membros para uma data no tenant
 router.post('/presencas', async (req, res) => {
     const { data, membros } = req.body; // data no formato 'YYYY-MM-DD', membros é um array de IDs
     try {
-        // Adiciona a data de presença para os membros selecionados
-        await Membro.updateMany({ _id: { $in: membros } }, { $addToSet: { presencas: data } });
-        // Remove a data de presença dos membros que não foram selecionados (caso de desmarcar)
-        await Membro.updateMany({ _id: { $nin: membros } }, { $pull: { presencas: data } });
+        await Membro.updateMany({ _id: { $in: membros }, tenantId: req.tenant.id }, { $addToSet: { presencas: data } });
+        await Membro.updateMany({ _id: { $nin: membros }, tenantId: req.tenant.id }, { $pull: { presencas: data } });
 
         res.status(200).json({ message: 'Presenças de membros atualizadas com sucesso.' });
     } catch (error) {

@@ -14,20 +14,37 @@ const s3 = new S3Client({
   },
 });
 
-const s3Upload = (folder, isPublic = true) => multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.AWS_BUCKET_NAME,
-    metadata: function (req, file, cb) {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, `${folder}/${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
-    },
-    ...(isPublic && { ACL: 'public-read' }), // Adiciona ACL apenas se isPublic for true
-  }),
-});
+const s3Upload = (folder, isPublic = true) => {
+  // Se o bucket não estiver configurado, retorna um middleware "dummy" que não faz nada.
+  if (!process.env.AWS_BUCKET_NAME) {
+    console.warn('\x1b[33m%s\x1b[0m', 'AVISO: Variáveis de ambiente do S3 não configuradas. O upload de arquivos está desativado.');
+    
+    const noOpMiddleware = (req, res, next) => next();
+    
+    // Retorna um objeto que simula a interface do multer
+    return {
+      single: () => noOpMiddleware,
+      array: () => noOpMiddleware,
+      fields: () => noOpMiddleware,
+      any: () => noOpMiddleware,
+    };
+  }
+
+  // Se estiver configurado, retorna o middleware do multer-s3 funcional.
+  return multer({
+    storage: multerS3({
+      s3: s3,
+      bucket: process.env.AWS_BUCKET_NAME,
+      metadata: function (req, file, cb) {
+        cb(null, { fieldName: file.fieldname });
+      },
+      key: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, `${folder}/${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
+      },
+    }),
+  });
+};
 
 const getS3KeyFromUrl = (url) => {
   try {
@@ -41,6 +58,12 @@ const getS3KeyFromUrl = (url) => {
 };
 
 const getSignedUrlForObject = async (key, expiresIn = 3600) => { // expiresIn em segundos, padrão 1 hora
+  // CORREÇÃO: Não tenta gerar URL se as credenciais forem mock ou o bucket não existir
+  if (!process.env.AWS_BUCKET_NAME || process.env.AWS_ACCESS_KEY_ID === 'mock_key') {
+    console.warn(`S3 não configurado, não é possível gerar URL assinada para a chave: ${key}`);
+    return null; // Retorna null para evitar quebrar a aplicação
+  }
+  
   if (!key) {
     console.warn("Tentativa de gerar URL pré-assinada com chave S3 vazia.");
     return null;

@@ -12,6 +12,12 @@ const encontroSchema = new Schema({
 });
 
 const pequenoGrupoSchema = new Schema({
+    tenantId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Tenant',
+        required: true,
+        index: true
+    },
     nome: { type: String, required: true, unique: true },
     lider: { type: Schema.Types.ObjectId, ref: 'Membro', required: true },
     anfitriao: { type: Schema.Types.ObjectId, ref: 'Membro' },

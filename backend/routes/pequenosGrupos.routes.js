@@ -1,13 +1,16 @@
 import express from 'express';
 import PequenoGrupo from '../models/pequenoGrupo.model.js';
+import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// GET / - Listar todos os pequenos grupos
+// Aplica proteção a todas as rotas
+router.use(protect);
+
+// GET / - Listar todos os pequenos grupos do tenant
 router.get('/', async (req, res) => {
     try {
-        // .populate() substitui os IDs de líder e anfitrião pelos documentos completos dos membros
-        const grupos = await PequenoGrupo.find()
+        const grupos = await PequenoGrupo.find({ tenantId: req.tenant.id })
             .populate('lider', 'nome')
             .populate('anfitriao', 'nome')
             .populate('membros', 'nome');
@@ -17,10 +20,10 @@ router.get('/', async (req, res) => {
     }
 });
 
-// GET /:id - Obter um pequeno grupo específico
+// GET /:id - Obter um pequeno grupo específico do tenant
 router.get('/:id', async (req, res) => {
     try {
-        const grupo = await PequenoGrupo.findById(req.params.id)
+        const grupo = await PequenoGrupo.findOne({ _id: req.params.id, tenantId: req.tenant.id })
             .populate('lider', 'nome foto')
             .populate('anfitriao', 'nome')
             .populate('membros', 'nome');
@@ -31,10 +34,13 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// POST / - Criar novo pequeno grupo
+// POST / - Criar novo pequeno grupo para o tenant
 router.post('/', async (req, res) => {
     try {
-        const novoGrupo = new PequenoGrupo(req.body);
+        const novoGrupo = new PequenoGrupo({
+            ...req.body,
+            tenantId: req.tenant.id
+        });
         await novoGrupo.save();
         res.status(201).json(novoGrupo);
     } catch (error) {
@@ -42,10 +48,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT /:id - Atualizar um pequeno grupo
+// PUT /:id - Atualizar um pequeno grupo do tenant
 router.put('/:id', async (req, res) => {
     try {
-        const grupo = await PequenoGrupo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const grupo = await PequenoGrupo.findOneAndUpdate(
+            { _id: req.params.id, tenantId: req.tenant.id },
+            req.body,
+            { new: true }
+        );
         if (!grupo) return res.status(404).json({ message: 'Grupo não encontrado' });
         res.json(grupo);
     } catch (error) {
@@ -53,10 +63,10 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE /:id - Excluir um pequeno grupo
+// DELETE /:id - Excluir um pequeno grupo do tenant
 router.delete('/:id', async (req, res) => {
     try {
-        const grupo = await PequenoGrupo.findByIdAndDelete(req.params.id);
+        const grupo = await PequenoGrupo.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
         if (!grupo) return res.status(404).json({ message: 'Grupo não encontrado' });
         res.status(204).send();
     } catch (error) {
@@ -64,10 +74,16 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// POST /:id/encontros - Adicionar um novo encontro a um grupo
+// POST /:id/encontros - Adicionar um novo encontro a um grupo do tenant
 router.post('/:id/encontros', async (req, res) => {
     try {
-        const grupo = await PequenoGrupo.findByIdAndUpdate(req.params.id, { $push: { encontros: req.body } }, { new: true });
+        // Encontra o grupo do tenant e adiciona o encontro
+        const grupo = await PequenoGrupo.findOneAndUpdate(
+            { _id: req.params.id, tenantId: req.tenant.id },
+            { $push: { encontros: req.body } },
+            { new: true }
+        );
+        if (!grupo) return res.status(404).json({ message: 'Grupo não encontrado' });
         res.status(201).json(grupo);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao registrar encontro', error: error.message });

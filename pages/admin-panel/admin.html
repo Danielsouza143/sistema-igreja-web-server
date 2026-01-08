@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Super Admin</title>
+    
+    <script src="/auth-guard.js" defer></script>
+    <script src="/js/global-loader.js" defer></script> 
+    <script src="/js/api.js"></script>
+
+    <link rel="stylesheet" href="/pages/styles/global.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="admin-panel-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Super Admin</h2>
+                <p>Controle Total do Sistema</p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="dashboard">Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-target="tenants">Gestão de Tenants</a></li>
+                    <li><a href="#" class="nav-link" data-target="users">Gestão de Usuários</a></li>
+                    <li><a href="#" class="nav-link" data-target="logs">Logs Globais</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="/login.html" id="logout-button">Sair</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- Seção do Dashboard -->
+            <section id="dashboard-section" class="panel-section active">
+                <header>
+                    <h1>Dashboard Global</h1>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total de Tenants</h3>
+                        <p id="stats-total-tenants">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total de Usuários</h3>
+                        <p id="stats-total-users">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Receita Total</h3>
+                        <p id="stats-total-entradas">R$ --</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Despesas Totais</h3>
+                        <p id="stats-total-saidas">R$ --</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção de Gestão de Tenants -->
+            <section id="tenants-section" class="panel-section">
+                <header class="section-header">
+                    <h1>Gestão de Tenants</h1>
+                    <div class="actions-group">
+                        <button id="add-sede-btn" class="btn-primary">Criar Nova Sede</button>
+                        <button id="add-filial-btn" class="btn-secondary" style="margin-left: 10px; background-color: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Criar Nova Filial</button>
+                    </div>
+                </header>
+                <div class="table-container">
+                    <table id="tenants-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Sede Principal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tenants-tbody">
+                            <!-- Tenant rows will be inserted here by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Modal para Criar Sede -->
+            <div id="sede-modal" class="modal">
+                <div class="modal-content">
+                    <header class="modal-header">
+                        <h2 id="modal-title-sede">Criar Nova Sede</h2>
+                        <button id="close-sede-modal-btn" class="close-btn">&times;</button>
+                    </header>
+                    <form id="sede-form">
+                        <h3>Dados da Sede</h3>
+                        <div class="form-group">
+                            <label for="sede-name">Nome da Sede</label>
+                            <input type="text" id="sede-name" required>
+                        </div>
+                        <hr>
+                        <h3>Dados do Administrador Principal</h3>
+                        <div class="form-group">
+                            <label for="sede-admin-username">Usuário do Admin (para login)</label>
+                            <input type="text" id="sede-admin-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sede-admin-name">Nome Completo do Admin</label>
+                            <input type="text" id="sede-admin-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sede-admin-password">Senha do Admin</label>
+                            <input type="password" id="sede-admin-password" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Salvar Sede</button>
+                        </div>
+                        <p id="sede-modal-error-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal para Criar Filial -->
+            <div id="filial-modal" class="modal">
+                <div class="modal-content">
+                    <header class="modal-header">
+                        <h2 id="modal-title-filial">Criar Nova Filial</h2>
+                        <button id="close-filial-modal-btn" class="close-btn">&times;</button>
+                    </header>
+                    <form id="filial-form">
+                        <h3>Dados da Filial</h3>
+                        <div class="form-group">
+                            <label for="filial-name">Nome da Filial</label>
+                            <input type="text" id="filial-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="filial-sede-select">Sede Responsável</label>
+                            <select id="filial-sede-select" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                                <option value="">Selecione a Sede...</option>
+                                <!-- Opções preenchidas via JS -->
+                            </select>
+                        </div>
+                        <hr>
+                        <h3>Dados do Administrador da Filial</h3>
+                        <div class="form-group">
+                            <label for="filial-admin-username">Usuário do Admin</label>
+                            <input type="text" id="filial-admin-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="filial-admin-name">Nome Completo</label>
+                            <input type="text" id="filial-admin-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="filial-admin-password">Senha</label>
+                            <input type="password" id="filial-admin-password" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Salvar Filial</button>
+                        </div>
+                        <p id="filial-modal-error-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Seção de Gestão de Usuários Globais -->
+            <section id="users-section" class="panel-section">
+                <header class="section-header">
+                    <h1>Gestão de Usuários Globais</h1>
+                    <button id="add-global-user-btn" class="btn-primary">Novo Usuário</button>
+                </header>
+                <div class="table-container">
+                    <table id="global-users-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Usuário</th>
+                                <th>Tenant (Igreja)</th>
+                                <th>Função</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="global-users-tbody">
+                            <!-- User rows inserted by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Modal de Usuário Global -->
+            <div id="global-user-modal" class="modal">
+                <div class="modal-content">
+                    <header class="modal-header">
+                        <h2 id="modal-title-global-user">Gerenciar Usuário</h2>
+                        <button id="close-global-user-modal-btn" class="close-btn">&times;</button>
+                    </header>
+                    <form id="global-user-form">
+                        <input type="hidden" id="global-user-id">
+                        <div class="form-group">
+                            <label for="global-user-name">Nome Completo</label>
+                            <input type="text" id="global-user-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="global-user-username">Usuário (Login)</label>
+                            <input type="text" id="global-user-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="global-user-password">Senha</label>
+                            <input type="password" id="global-user-password" placeholder="Deixe em branco para manter">
+                        </div>
+                        <div class="form-group">
+                            <label for="global-user-tenant">Associar a Tenant (Igreja)</label>
+                            <select id="global-user-tenant" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                                <option value="">Selecione...</option>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="global-user-role">Permissão</label>
+                            <select id="global-user-role" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                                <option value="admin">Administrador</option>
+                                <option value="operador">Operador</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Salvar Usuário</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Seção de Logs -->
+            <section id="logs-section" class="panel-section">
+                <header>
+                    <h1>Logs Globais</h1>
+                </header>
+                <div class="table-container">
+                    <table id="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Usuário</th>
+                                <th>Ação</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <!-- Log rows will be inserted here by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

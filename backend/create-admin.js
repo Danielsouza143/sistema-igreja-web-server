@@ -37,11 +37,12 @@ const createAdmin = async () => {
                     return;
                 }
 
-                // Criar o novo usuário com a role 'admin'
+                // Criar o novo usuário com a role 'super_admin'
                 const newUser = new User({
-                    username: username.toLowerCase(), // Padroniza o username para minúsculas
-                    password: password, // A senha será criptografada automaticamente pelo model
-                    role: 'admin'
+                    username: username.toLowerCase(),
+                    password: password,
+                    name: 'Super Admin', // Adiciona um nome padrão
+                    role: 'super_admin' // Define a role correta
                 });
 
                 await newUser.save();

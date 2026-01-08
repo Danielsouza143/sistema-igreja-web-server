@@ -10,7 +10,9 @@
 <body>
     <div class="login-container">
         <div class="login-box">
-            <img src="/pages/logo.tab.png" alt="Logo da Igreja" class="login-logo">
+        <div class="logo-wrapper">
+            <i class='bx bx-church' style="font-size: 60px; color: #fff;"></i>
+        </div>
             <h2>Cadastrar Novo Usuário</h2>
             <p>Crie uma nova conta de acesso ao sistema.</p>
             <form id="cadastro-usuario-form">
@@ -38,7 +40,7 @@
         </div>
     </div>
 
-    <script src="/pages/config.js"></script>
+    
     <script>
         // Script simples para este formulário
         document.getElementById('cadastro-usuario-form').addEventListener('submit', async (e) => {

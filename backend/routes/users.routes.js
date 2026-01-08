@@ -1,20 +1,24 @@
 import express from 'express';
 import User from '../models/user.model.js';
 import { logActivity } from '../utils/logActivity.js';
+import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// @desc    Criar um novo usuário
+// Protege todas as rotas de usuários
+router.use(protect);
+
+// @desc    Criar um novo usuário para o tenant
 // @route   POST /api/users
 router.post('/', async (req, res, next) => {
     try {
         const { username, password, role, name } = req.body;
+        const tenantId = req.tenant.id;
 
         if (!username || !password) {
             return res.status(400).json({ message: 'Nome de usuário e senha são obrigatórios.' });
         }
 
-        // Verificar se o usuário já existe
         const existingUser = await User.findOne({ username: username.toLowerCase() });
         if (existingUser) {
             return res.status(409).json({ message: 'Um usuário com este e-mail já está cadastrado.' });
@@ -22,16 +26,15 @@ router.post('/', async (req, res, next) => {
 
         const newUser = new User({
             username: username.toLowerCase(),
-            password, // A senha será criptografada automaticamente pelo hook 'pre-save' no model
+            password,
             role: role || 'operador',
-            name: name || username
+            name: name || username,
+            tenantId: tenantId
         });
 
         await newUser.save();
-        
         await logActivity(req.user, 'CREATE_USER', `Usuário '${newUser.username}' foi criado.`);
 
-        // Retorna o usuário criado (sem a senha)
         res.status(201).json({
             _id: newUser._id,
             username: newUser.username,
@@ -39,36 +42,35 @@ router.post('/', async (req, res, next) => {
             role: newUser.role,
         });
     } catch (error) {
-        next(error); // Passa o erro para o middleware de tratamento de erros global
+        next(error);
     }
 });
 
-// @desc    Obter todos os usuários
+// @desc    Obter todos os usuários do tenant
 // @route   GET /api/users
 router.get('/', async (req, res, next) => {
     try {
-        const users = await User.find({}).select('-password');
+        const users = await User.find({ tenantId: req.tenant.id }).select('-password');
         res.status(200).json(users);
     } catch (error) {
         next(error);
     }
 });
 
-// @desc    Atualizar um usuário
+// @desc    Atualizar um usuário do tenant
 // @route   PUT /api/users/:id
 router.put('/:id', async (req, res, next) => {
     try {
         const { name, role, username, password } = req.body;
 
-        const user = await User.findById(req.params.id).select('+password');
+        const user = await User.findOne({ _id: req.params.id, tenantId: req.tenant.id }).select('+password');
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
 
-        // Atualiza os campos que foram passados no body
         if (name) user.name = name;
         if (role) user.role = role;
-
+        
         if (username && username.toLowerCase() !== user.username) {
             const existingUser = await User.findOne({ username: username.toLowerCase() });
             if (existingUser) {
@@ -78,14 +80,12 @@ router.put('/:id', async (req, res, next) => {
         }
 
         if (password) {
-            user.password = password; // O hook pre-save irá hashear
+            user.password = password;
         }
 
         const updatedUser = await user.save();
-        
         await logActivity(req.user, 'UPDATE_USER', `Usuário '${updatedUser.username}' foi atualizado.`);
 
-        // Retorna o usuário atualizado (sem a senha)
         res.status(200).json({
             _id: updatedUser._id,
             username: updatedUser.username,
@@ -97,11 +97,11 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-// @desc    Deletar um usuário
+// @desc    Deletar um usuário do tenant
 // @route   DELETE /api/users/:id
 router.delete('/:id', async (req, res, next) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
+        const user = await User.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurações - Gestão ADTC</title>
     <script src="/auth-guard.js"></script> <!-- GUARDA DE ROTA -->
+    <script src="/js/api.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -30,7 +31,6 @@
                     <li><a href="#identidade" class="config-nav-link"><i class='bx bxs-church'></i> Identidade da Igreja</a></li>
                     <li><a href="#usuarios" class="config-nav-link"><i class='bx bxs-user-account'></i> Gerenciar Usuários</a></li>
                     <li><a href="#categorias" class="config-nav-link"><i class='bx bxs-category'></i> Categorias</a></li>
-                    <li><a href="#backup" class="config-nav-link"><i class='bx bxs-data'></i> Backup e Restauração</a></li>
                     <li><a href="#logs" class="config-nav-link"><i class='bx bx-history'></i> Logs do Sistema</a></li>
                 </ul>
             </aside>
@@ -68,15 +68,12 @@
                     <div class="config-card">
                         <h3><i class='bx bx-palette'></i> Personalização da Interface</h3>
                         <div class="form-group">
-                            <label>Tema da Interface</label>
-                            <div class="theme-switcher">
-                                <button data-theme="light" class="theme-btn active">Claro</button>
-                                <button data-theme="dark" class="theme-btn">Escuro</button>
-                            </div>
-                        </div>
-                        <div class="form-group">
                             <label for="cor-principal">Cor Principal</label>
                             <input type="color" id="cor-principal" value="#001f5d">
+                        </div>
+                        <div class="form-group">
+                            <label for="cor-secundaria">Cor Secundária</label>
+                            <input type="color" id="cor-secundaria" value="#0033a0">
                         </div>
                     </div>
                 </section>
@@ -92,8 +89,8 @@
                         </div>
                         <div class="form-group">
                             <label>Logo da Igreja</label>
-                            <div class="logo-preview-container">
-                                <img id="logo-preview" src="/pages/logo.tab.png" alt="Pré-visualização do logo">
+                            <div class="logo-preview-container" id="logo-preview">
+                                <!-- JS will dynamically add <img> or <i> here -->
                             </div>
                             <input type="file" id="logo-upload-input" accept="image/png, image/jpeg" style="display: none;">
                             <div class="logo-actions">
@@ -141,20 +138,6 @@
                                 <ul id="lista-cat-saidas" class="lista-configs"></ul>
                                 <div class="add-config-form"><input type="text" id="nova-cat-saidas" placeholder="Nova categoria"><button data-tipo="financeiro_categorias" data-subtipo="saidas" class="btn-add-categoria btn-principal">Adicionar</button></div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Seção: Backup e Restauração -->
-                <section id="backup" class="config-section">
-                    <h1 class="title-page">Backup e Restauração</h1>
-                    <div class="config-card">
-                        <h3><i class='bx bx-data'></i> Cópia de Segurança</h3>
-                        <p>Salve todos os dados do sistema em um arquivo seguro ou restaure a partir de um backup anterior.</p>
-                        <div class="backup-actions">
-                            <button id="btn-exportar-dados" class="btn-principal">Exportar Dados (Backup)</button>
-                            <button id="btn-importar-dados" class="btn-secundario">Importar Dados (Restaurar)</button>
-                            <input type="file" id="import-file-input" style="display: none;" accept=".json">
                         </div>
                     </div>
                 </section>
@@ -210,7 +193,7 @@
     </div>
 
     <script src="/js/global-loader.js" defer></script>
-    <script src="/pages/config.js"></script>
+    
     <script src="configuracoes.js"></script>
 
     <!-- Modal para Cortar Logo -->

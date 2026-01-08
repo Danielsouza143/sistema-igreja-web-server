@@ -3,16 +3,20 @@
 /* --- VARIÁVEIS DE DESIGN DO SISTEMA --- */
 :root {
     --cor-primaria: #001f5d;
-    --cor-secundaria: #0033a0;
+    --cor-secundaria: #0033a0; /* Adicionada para controle futuro */
     --cor-acao: #4d50ff;
+    
+    /* Tema Claro (Padrão) */
     --cor-fundo: #f4f7f9;
-    --cor-cinza-claro: #dee2e6;
-    --cor-branco: #ffffff;
     --cor-fundo-card: #ffffff;
-    --cor-texto: #333;
+    --cor-texto: #212529;
     --cor-texto-claro: #6c757d;
     --cor-borda: #dee2e6;
-    --cor-borda-fraca: #f0f0f0;
+    --cor-borda-fraca: #f1f1f1;
+    --cor-fundo-tabela-header: #f8f9fa;
+    --cor-fundo-tabela-hover: #f9f9f9;
+    --cor-branco: #ffffff;
+    
     --cor-sucesso: #28a745;
     --cor-perigo: #dc3545;
     --cor-alerta: #ffc107;
@@ -31,6 +35,7 @@ body {
     font-family: 'Montserrat', sans-serif;
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 /* --- COMPONENTES GLOBAIS --- */
@@ -93,7 +98,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.6);
+    background-color: rgba(0,0,0,0.7);
     display: none; /* Começa escondido */
     justify-content: center;
     align-items: center;
@@ -114,6 +119,7 @@ body {
     max-height: 90vh; /* Define uma altura máxima */
     overflow-y: auto; /* Adiciona rolagem vertical quando necessário */
     position: relative;
+    border: 1px solid var(--cor-borda);
 }
 .modal-content.modal-sm {
     max-width: 380px;
@@ -131,12 +137,25 @@ body {
 .modal-header h2 { margin: 0; font-size: 1.5rem; color: var(--cor-primaria); }
 
 .btn-fechar-modal, .modal-close { position: absolute; top: 10px; right: 15px; font-size: 2.5rem; color: #aaa; background: none; border: none; cursor: pointer; line-height: 1; }
-.btn-fechar-modal:hover, .modal-close:hover { color: #333; }
+.btn-fechar-modal:hover, .modal-close:hover { color: var(--cor-texto); }
 
 .form-group { margin-bottom: 18px; }
 .form-group label { font-weight: 600; margin-bottom: 6px; display: block; font-size: 0.9rem; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--cor-borda); border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--cor-acao); box-shadow: 0 0 0 2px rgba(77, 80, 255, 0.2); }
+.form-group input, .form-group select, .form-group textarea { 
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid var(--cor-borda); 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 1rem;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { 
+    outline: none; 
+    border-color: var(--cor-acao); 
+    box-shadow: 0 0 0 2px rgba(77, 80, 255, 0.2); 
+}
 
 .form-group-grid {
     display: grid;
@@ -163,7 +182,7 @@ body {
 .user-avatar-large {
     width: 80px; height: 80px; border-radius: 50%; background-color: var(--cor-acao); color: white; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 2.5rem; margin: 0 auto 15px auto;
 }
-.conta-modal-header h3 { font-size: 1.3rem; margin-bottom: 5px; }
+.conta-modal-header h3 { font-size: 1.3rem; margin-bottom: 5px; color: var(--cor-texto); }
 .conta-modal-header p { color: var(--cor-texto-claro); margin-bottom: 10px; }
 
 .badge {
@@ -172,7 +191,7 @@ body {
     font-size: 0.8rem;
     font-weight: 700;
     border-radius: 20px;
-    background-color: var(--cor-cinza-claro);
+    background-color: var(--cor-fundo);
     color: var(--cor-texto-claro);
 }
 
@@ -193,9 +212,9 @@ body {
     font-weight: 600;
     transition: background-color 0.2s;
 }
-.btn-modal-conta:hover { background-color: var(--cor-cinza-claro); }
-.btn-modal-conta.btn-perigo { background-color: #ffebee; color: var(--cor-perigo); }
-.btn-modal-conta.btn-perigo:hover { background-color: #ffcdd2; }
+.btn-modal-conta:hover { background-color: var(--cor-borda-fraca); }
+.btn-modal-conta.btn-perigo { background-color: rgba(220, 53, 69, 0.1); color: var(--cor-perigo); }
+.btn-modal-conta.btn-perigo:hover { background-color: rgba(220, 53, 69, 0.2); }
 
 /* Tabelas Padronizadas */
 .tabela-padrao {
@@ -213,11 +232,11 @@ body {
     border-bottom: 1px solid var(--cor-borda-fraca);
 }
 .tabela-padrao th {
-    background-color: #f8f9fa;
+    background-color: var(--cor-fundo-tabela-header);
     font-weight: 600;
 }
 .tabela-padrao tbody tr:hover {
-    background-color: #f9f9f9;
+    background-color: var(--cor-fundo-tabela-hover);
 }
 
 /* --- RESPONSIVIDADE GLOBAL --- */

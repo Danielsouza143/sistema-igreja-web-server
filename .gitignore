@@ -3,6 +3,7 @@ node_modules/
 
 # Ignora o arquivo de variáveis de ambiente com dados sensíveis
 .env
+backend/.env
 
 # Ignora a pasta de uploads de arquivos (fotos, documentos, etc.)
 uploads/

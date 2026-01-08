@@ -1,0 +1,206 @@
+:root {
+    --admin-primary-bg: #2d3748; /* Cinza mais escuro */
+    --admin-secondary-bg: #ffffff;
+    --admin-primary-text: #e2e8f0; /* Cinza claro */
+    --admin-secondary-text: #1a202c; /* Quase preto */
+    --admin-accent-color: #d69e2e; /* Dourado/Mostarda */
+    --admin-border-color: #e2e8f0;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f7fafc; /* Fundo bem claro */
+}
+
+.admin-panel-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: 250px;
+    background-color: var(--admin-primary-bg);
+    color: var(--admin-primary-text);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.sidebar-header p {
+    font-size: 0.8rem;
+    color: #a0aec0; /* Cinza médio */
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.sidebar-nav a {
+    display: block;
+    padding: 15px 20px;
+    color: var(--admin-primary-text);
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar-nav a:hover {
+    background-color: #4a5568; /* Cor de hover */
+}
+
+.sidebar-nav a.active {
+    background-color: var(--admin-accent-color);
+    color: var(--admin-primary-bg);
+    font-weight: bold;
+}
+
+.sidebar-footer a {
+     text-align: center;
+     font-size: 0.9rem;
+}
+
+/* --- Main Content --- */
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.main-content header {
+    border-bottom: 1px solid var(--admin-border-color);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.main-content header.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-content header h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: var(--admin-secondary-text);
+}
+
+.panel-section {
+    display: none; /* Seções são ocultadas por padrão */
+}
+
+.panel-section.active {
+    display: block; /* A seção ativa é exibida */
+}
+
+/* Reutilização de estilos do painel da Sede */
+.btn-primary {
+    background-color: var(--admin-accent-color);
+    color: var(--admin-primary-bg);
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #b7791f;
+}
+
+.table-container {
+    background-color: var(--admin-secondary-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 20px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+}
+
+/* --- Estilos da Tabela de Tenants --- */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background-color: #c6f6d5;
+    color: #2f855a;
+}
+
+.status-badge.suspended {
+    background-color: #fed7d7;
+    color: #c53030;
+}
+
+#tenants-table .actions button {
+    background: none;
+    border: 1px solid var(--admin-accent-color);
+    color: var(--admin-accent-color);
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+#tenants-table .actions button:hover {
+    background: var(--admin-accent-color);
+    color: var(--admin-primary-bg);
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge.sede {
+    background-color: #bee3f8;
+    color: #2a4365;
+}
+
+.badge.filial {
+    background-color: #e9d8fd;
+    color: #553c9a;
+}
