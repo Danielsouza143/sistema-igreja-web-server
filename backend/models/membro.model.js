@@ -66,6 +66,7 @@ const membroSchema = new mongoose.Schema({
     ministerio: { type: String },
     nomeOutroMinisterio: { type: String },
     cargoMinisterio: { type: String },
+    eDizimista: { type: Boolean, default: false },
     dataCadastro: { type: Date, default: Date.now }
 }, { strict: false }); // strict: false permite campos não definidos no schema
 

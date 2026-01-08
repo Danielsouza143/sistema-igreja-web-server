@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Membro</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+  <link rel="stylesheet" href="/pages/styles/global.css">
+  <link rel="stylesheet" href="/pages/cadastro.membro.page/styles.cadastro.membros.css">
+
+  <style>
+      /* Estilos Específicos para a Página Pública */
+      body {
+          background-color: #f4f7f9;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-height: 100vh;
+      }
+
+      .public-header {
+          width: 100%;
+          background: linear-gradient(135deg, var(--cor-primaria, #001f5d) 0%, var(--cor-secundaria, #0033a0) 100%);
+          color: white;
+          padding: 15px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+      }
+
+      .church-info {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+      }
+
+      .church-logo {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid white;
+          background-color: white;
+      }
+
+      .church-name {
+          font-size: 1.2rem;
+          font-weight: 600;
+          line-height: 1.2;
+      }
+
+      .conekta-logo {
+          height: 70px;
+          opacity: 0.9;
+      }
+
+      .conteudo {
+          margin-top: 20px;
+          margin-left: 0 !important; /* Remove margem do menu lateral */
+          width: 100%;
+          max-width: 800px;
+          padding: 20px;
+      }
+
+      .form-cadastro {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+          padding: 30px;
+      }
+
+      /* Ajustes Mobile */
+      @media (max-width: 600px) {
+          .public-header {
+              padding: 10px 15px;
+          }
+          .church-name {
+              font-size: 1rem;
+          }
+          .church-logo {
+              width: 40px;
+              height: 40px;
+          }
+          .conekta-logo {
+              height: 65px;
+          }
+          .conteudo {
+              padding: 10px;
+              margin-top: 10px;
+          }
+          .form-cadastro {
+              padding: 15px;
+          }
+          .title-page {
+              font-size: 1.5rem;
+              text-align: center;
+          }
+      }
+      
+      /* Esconder elementos de admin que não fazem sentido aqui */
+      #menu-placeholder, .btn-voltar {
+          display: none !important;
+      }
+  </style>
+
+</head>
+<body>
+
+<!-- Cabeçalho Público -->
+<header class="public-header">
+    <div class="church-info">
+        <img id="header-church-logo" src="/pages/logo.tab.png" alt="Logo Igreja" class="church-logo" style="display: none;">
+        <span id="header-church-name" class="church-name">Carregando...</span>
+    </div>
+    <img src="/conekta-white.png" alt="Conekta" class="conekta-logo">
+</header>
+
+<section class="conteudo">
+  <h1 class="title-page">Ficha de Cadastro</h1>
+  <p style="text-align: center; color: #666; margin-bottom: 20px;">Preencha seus dados para se tornar membro.</p>
+  
+  <form class="form-cadastro" id="form-cadastro-publico">
+    <!-- Barra de Progresso -->
+    <div class="progress-bar">
+      <div class="progress-step active" data-step="1"><div class="step-icon">1</div><span class="step-text">Pessoais</span></div>
+      <div class="progress-step" data-step="2"><div class="step-icon">2</div><span class="step-text">Contato</span></div>
+      <div class="progress-step" data-step="3"><div class="step-icon">3</div><span class="step-text">Família</span></div>
+      <div class="progress-step" data-step="4"><div class="step-icon">4</div><span class="step-text">Ministerial</span></div>
+      <div class="progress-step" data-step="5"><div class="step-icon">5</div><span class="step-text">Outros</span></div>
+    </div>
+
+    <!-- Etapa 1: Dados Pessoais -->
+    <div class="form-step active">
+      <div class="form-grid">
+        <div class="form-group full-width foto-upload-area">
+          <div class="foto-preview-container">
+            <img id="foto-preview" src="#" alt="Pré-visualização" style="display:none;" />
+            <div id="foto-placeholder" class="foto-placeholder">
+              <i class='bx bxs-user-circle'></i><span>Foto</span>
+            </div>
+          </div>
+          <div class="foto-botoes-container">
+            <button type="button" id="btn-escolher-arquivo" class="btn-secundario">Escolher Arquivo</button>
+            <input type="file" id="foto-upload" accept="image/*" style="display:none;">
+          </div>
+        </div>
+        <div class="form-group full-width"><label for="nome">Nome Completo *</label><input type="text" id="nome" name="nome" required /></div>
+        <div class="form-group"><label for="cpf">CPF</label><input type="text" id="cpf" name="cpf"></div>
+        <div class="form-group"><label for="rg">RG</label><input type="text" id="rg" name="rg"></div>
+        <div class="form-group"><label for="dataNascimento">Data de Nascimento *</label><input type="date" id="dataNascimento" name="dataNascimento" required></div>
+        <div class="form-group"><label for="genero">Gênero *</label><select id="genero" name="genero" required><option value="">Selecione</option><option value="masculino">Masculino</option><option value="feminino">Feminino</option></select></div>
+        <div class="form-group"><label for="naturalidade">Naturalidade</label><input type="text" id="naturalidade" name="naturalidade" placeholder="Ex: Fortaleza - CE"></div>
+        <div class="form-group"><label for="filiacao">Filiação (Mãe / Pai)</label><input type="text" id="filiacao" name="filiacao"></div>
+      </div>
+    </div>
+
+    <!-- Etapa 2: Contato e Endereço -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="telefone">WhatsApp/Telefone *</label><input type="tel" id="telefone" name="telefone" required></div>
+        <div class="form-group"><label for="email">E-mail</label><input type="email" id="email" name="email"></div>
+        <div class="form-group"><label for="cep">CEP</label><input type="text" id="cep" name="cep" placeholder="00000-000"></div>
+        <div class="form-group"><label for="endereco">Endereço</label><input type="text" id="endereco" name="endereco"></div>
+        <div class="form-group"><label for="bairro">Bairro</label><input type="text" id="bairro" name="bairro"></div>
+        <div class="form-group"><label for="cidade">Cidade</label><input type="text" id="cidade" name="cidade"></div>
+        <div class="form-group"><label for="estado">Estado</label><input type="text" id="estado" name="estado"></div>
+      </div>
+    </div>
+
+    <!-- Etapa 3: Família -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="estadoCivil">Estado Civil</label><select id="estadoCivil" name="estadoCivil"><option value="">Selecione</option><option value="solteiro">Solteiro(a)</option><option value="casado">Casado(a)</option><option value="divorciado">Divorciado(a)</option><option value="viuvo">Viúvo(a)</option></select></div>
+        <div class="form-group hidden" id="containerDataCasamento"><label for="dataCasamento">Data de Casamento</label><input type="date" id="dataCasamento" name="dataCasamento"></div>
+        <div class="form-group"><label for="nomeConjuge">Nome do Cônjuge</label><input type="text" id="nomeConjuge" name="nomeConjuge"></div>
+        <div class="form-group full-width"><label>Filhos</label><div id="listaFilhos"></div><button type="button" id="btn-add-filho" class="btn-secundario-pequeno">Adicionar Filho</button></div>
+      </div>
+    </div>
+
+    <!-- Etapa 4: Vida Ministerial -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="dataConversao">Data da Conversão</label><input type="date" id="dataConversao" name="dataConversao"></div>
+        <div class="form-group"><label for="batismoAguas">Batismo nas Águas?</label><select id="batismoAguas" name="batismoAguas"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerDataBatismoAguas"><label for="dataBatismo">Data</label><input type="date" id="dataBatismo" name="dataBatismo"></div>
+        <div class="form-group"><label for="batismoEspiritoSanto">Batismo com Espírito Santo?</label><select id="batismoEspiritoSanto" name="batismoEspiritoSanto"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group"><label for="veioDeOutraIgreja">Veio de outra igreja?</label><select id="veioDeOutraIgreja" name="veioDeOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerNomeOutraIgreja"><label for="nomeOutraIgreja">Qual?</label><input type="text" id="nomeOutraIgreja" name="nomeOutraIgreja"></div>
+        
+        <div class="form-group"><label for="temMinisterio">Já serviu em algum ministério?</label><select id="temMinisterio" name="temMinisterio"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group"><label for="eDizimista">É dizimista?</label><select id="eDizimista" name="eDizimista"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        
+        <div class="form-group full-width">
+          <label>Áreas de interesse para servir:</label>
+          <div class="checkbox-grid">
+            <div class="checkbox-item"><input type="checkbox" id="domLouvor" name="dons" value="louvor"><label for="domLouvor">Louvor</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domMidia" name="dons" value="midia"><label for="domMidia">Mídias</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domEnsino" name="dons" value="ensino"><label for="domEnsino">Ensino</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domAcaoSocial" name="dons" value="acao_social"><label for="domAcaoSocial">Ação Social</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domRecepcao" name="dons" value="recepcao"><label for="domRecepcao">Recepção</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domInfantil" name="dons" value="infantil"><label for="domInfantil">Infantil</label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Etapa 5: Outras Informações -->
+    <div class="form-step">
+      <div class="form-grid">
+        <div class="form-group"><label for="profissao">Profissão</label><input type="text" id="profissao" name="profissao"></div>
+        <div class="form-group"><label for="escolaridade">Escolaridade</label><select id="escolaridade" name="escolaridade"><option value="">Selecione</option><option value="medio_completo">Médio Completo</option><option value="superior_completo">Superior Completo</option><option value="outro">Outro</option></select></div>
+        <div class="form-group"><label for="comoConheceuIgreja">Como conheceu nossa igreja?</label><input type="text" id="comoConheceuIgreja" name="comoConheceuIgreja"></div>
+        <fieldset class="lgpd-fieldset full-width">
+          <legend>Consentimento (LGPD)</legend>
+          <div class="form-group"><label>Deseja receber comunicados?</label><div><input type="radio" id="comunicadosSim" name="autorizaComunicados" value="sim" checked><label for="comunicadosSim">Sim</label><input type="radio" id="comunicadosNao" name="autorizaComunicados" value="nao"><label for="comunicadosNao">Não</label></div></div>
+          <div class="form-group"><label>Autoriza o uso de imagem?</label><div><input type="radio" id="imagemSim" name="autorizaImagem" value="sim" checked><label for="imagemSim">Sim</label><input type="radio" id="imagemNao" name="autorizaImagem" value="nao"><label for="imagemNao">Não</label></div></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- Botões de Navegação -->
+    <div class="form-navigation">
+      <div></div> <!-- Espaçador para flexbox -->
+      <div>
+        <button type="button" id="btn-anterior" class="btn-navegacao" style="display: none;">Anterior</button>
+        <button type="button" id="btn-proximo" class="btn-principal">Próximo</button>
+        <button type="submit" class="btn-enviar" style="display: none;">Concluir Cadastro</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- Modal de Sucesso -->
+<div id="modal-sucesso" class="modal-overlay">
+  <div class="modal-content" style="text-align: center;">
+    <i class='bx bx-check-circle' style="font-size: 4rem; color: #28a745;"></i>
+    <h2>Cadastro Recebido!</h2>
+    <p>Seus dados foram enviados com sucesso para a secretaria da igreja.</p>
+    <p>Em breve entraremos em contato.</p>
+    <button onclick="window.location.reload()" class="btn-principal" style="margin-top: 20px;">Novo Cadastro</button>
+  </div>
+</div>
+
+<div id="modal-cropper" class="modal-overlay">
+  <div class="modal-content">
+    <h2>Ajustar Foto</h2>
+    <div class="cropper-container"><img id="image-to-crop" src=""></div>
+    <div class="modal-actions">
+      <button type="button" id="btn-cancelar-crop" class="btn-secundario">Cancelar</button>
+      <button type="button" id="btn-cortar" class="btn-principal">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="cadastro.js"></script>
+
+</body>
+</html>

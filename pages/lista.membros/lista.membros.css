@@ -1,5 +1,5 @@
 /* --- GERAL E LAYOUT --- */
-.conteudo { max-width: 1600px; margin: 20px auto; padding: 20px; background-color: var(--cor-branco); border-radius: 15px; box-shadow: var(--sombra-padrao); }
+.conteudo {max-width: 1600px; margin-top: 100px; background-color: var(--cor-branco); border-radius: 15px; box-shadow: var(--sombra-padrao); }
 .title-page { font-size: 2.2rem; color: var(--cor-primaria); margin-bottom: 25px; text-align: center; }
 
 /* --- NAVEGAÇÃO POR ABAS --- */
@@ -12,9 +12,41 @@
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* --- BOTÕES E AÇÕES --- */
-.btn-principal { background-color: var(--cor-acao); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+.header-actions { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+
+.btn-principal, .btn-secundario { 
+    padding: 10px 20px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 0.95rem; /* Tamanho ajustado para "nem tão grande nem tão pequeno" */
+    font-weight: 600; 
+    transition: all 0.3s; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center;
+    gap: 8px; 
+    height: 42px; /* Altura fixa para consistência */
+    white-space: nowrap;
+}
+
+.btn-principal { 
+    background-color: var(--cor-acao); 
+    color: white; 
+    border: none; 
+}
 .btn-principal:hover { background-color: var(--cor-secundaria); }
 .btn-principal:disabled { background-color: #ccc; cursor: not-allowed; }
+
+.btn-secundario {
+    background-color: white;
+    color: var(--cor-texto-escuro, #333);
+    border: 1px solid var(--cor-cinza-claro, #ccc);
+}
+.btn-secundario:hover {
+    background-color: #f8f9fa;
+    border-color: var(--cor-acao);
+    color: var(--cor-acao);
+}
 
 /* --- ABA LISTA DE MEMBROS --- */
 .acoes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
@@ -123,4 +155,91 @@
 .status-inativo {
     background-color: #f8f9fa; /* Fundo cinza claro */
     color: var(--cor-texto-claro);
+}
+
+/* --- MODAL DE COMPARTILHAMENTO --- */
+.share-modal-content {
+    max-width: 400px;
+    text-align: center;
+    padding: 30px 25px;
+    border-radius: 12px;
+}
+
+.share-header {
+    margin-bottom: 25px;
+}
+
+.share-icon-circle {
+    width: 60px;
+    height: 60px;
+    background-color: #eef2ff;
+    color: var(--cor-acao);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 15px;
+}
+
+.share-header h2 {
+    font-size: 1.4rem;
+    color: var(--cor-primaria);
+    margin-bottom: 8px;
+}
+
+.share-header p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.share-input-group {
+    display: flex;
+    margin-bottom: 20px;
+    border: 1px solid var(--cor-cinza-claro);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.share-input-group input {
+    flex-grow: 1;
+    border: none;
+    padding: 12px;
+    font-size: 0.9rem;
+    color: #555;
+    outline: none;
+    background-color: #f9f9f9;
+}
+
+.share-input-group button {
+    background-color: white;
+    border: none;
+    border-left: 1px solid var(--cor-cinza-claro);
+    padding: 0 15px;
+    cursor: pointer;
+    color: var(--cor-acao);
+    font-size: 1.2rem;
+    transition: background-color 0.2s;
+}
+
+.share-input-group button:hover {
+    background-color: #f0f0f0;
+}
+
+.full-width-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 1rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
 }

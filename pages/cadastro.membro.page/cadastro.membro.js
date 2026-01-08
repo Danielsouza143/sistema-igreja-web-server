@@ -282,6 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // CORREÇÃO: Converter strings vazias em null para evitar erro de Data no banco
                 if (value === '') {
                     dados[key] = null;
+                } else if (key === 'eDizimista') {
+                   dados[key] = value === 'sim';
                 } else {
                     dados[key] = value;
                 }
@@ -389,6 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (membro.liderancaOutraIgreja === 'sim') {
             selectLideranca.value = 'sim';
             containerQualLideranca.classList.remove('hidden');
+        }
+
+        if (membro.eDizimista !== undefined) {
+             document.getElementById('eDizimista').value = membro.eDizimista ? 'sim' : 'nao';
         }
 
         if (membro.dons && Array.isArray(membro.dons)) {

@@ -193,6 +193,7 @@
                                         <h4>Envolvimento</h4>
                                         <div class="info-item"><strong>Cargo Eclesiástico:</strong> <span>${capitalizar(membro.cargoEclesiastico) || 'Não definido'}</span></div>
                                         <div class="info-item"><strong>Pequeno Grupo:</strong> <span>${membro.grupoPequeno?.nome || 'Nenhum'}</span></div>
+                                        <div class="info-item"><strong>Dizimista:</strong> <span>${membro.eDizimista ? 'Sim' : 'Não'}</span></div>
                                         <div class="info-item"><strong>Ministério:</strong> <span>${membro.temMinisterio === 'sim' ? (membro.ministerio === 'outro' ? membro.nomeOutroMinisterio : capitalizar(membro.ministerio)) : 'Não participa'}</span></div>
                                         ${membro.temMinisterio === 'sim' ? `<div class="info-item"><strong>Função no Ministério:</strong> <span>${capitalizar(membro.cargoMinisterio) || 'Não informado'}</span></div>` : ''}
                                         ${membro.dons && membro.dons.length > 0 ? `<div class="info-item"><strong>Dons e Talentos:</strong> <span>${membro.dons.map(d => capitalizar(d.replace(/_/g, ' '))).join(', ')}</span></div>` : ''}

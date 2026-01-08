@@ -26,6 +26,7 @@ import emprestimosRoutes from './routes/emprestimos.routes.js';
 import visitantesRoutes from './routes/visitantes.routes.js';
 import tenantsRoutes from './routes/tenants.routes.js';
 import sedesRoutes from './routes/sedes.routes.js';
+import publicFormRoutes from './routes/public.form.routes.js'; // NOVO: Rotas do formulário público
 import { protect } from './middleware/auth.middleware.js';
 import { requireAdmin } from './middleware/tenant.middleware.js';
 
@@ -106,7 +107,7 @@ app.use((req, res, next) => {
 // Isso vai nos dizer se o bloqueio está acontecendo no Token
 app.use((req, res, next) => {
     // Verifica apenas rotas de API protegidas (exclui login e public)
-    if (req.path.startsWith('/api/') && !req.path.startsWith('/api/auth') && !req.path.startsWith('/api/public')) {
+    if (req.path.startsWith('/api/') && !req.path.startsWith('/api/auth') && !req.path.startsWith('/api/public') && !req.path.startsWith('/api/public-form')) {
         if (!req.headers.authorization) {
             console.error(`⛔ [BLOQUEIO AUTH] Tentativa de acesso a ${req.path} SEM TOKEN!`);
         }
@@ -163,6 +164,7 @@ app.get('/api/auth/mfa-status', (req, res) => {
 // --- REGISTRO DAS ROTAS DA API ---
 // Rota pública
 app.use('/api/auth', authRoutes);
+app.use('/api/public-form', publicFormRoutes); // Rotas do formulário público (NOVO)
 
 // Rota PROTEGIDA para checar CPF (Escopo por Tenant)
 // TODO: Mover esta lógica para membros.controller.js para limpar o server.js

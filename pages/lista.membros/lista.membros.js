@@ -264,4 +264,71 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.btn-relatorio').addEventListener('click', () => {
         alert("Funcionalidade de impressão de relatório a ser implementada.");
     });
+
+    // --- LÓGICA DO MODAL DE COMPARTILHAMENTO ---
+    const modalShare = document.getElementById('modal-share');
+    const btnShare = document.getElementById('btn-share-link');
+    const btnCloseShare = document.getElementById('btn-close-share');
+    const inputShareLink = document.getElementById('share-link-input');
+    const btnCopyModal = document.getElementById('btn-copy-modal');
+    const btnNativeShare = document.getElementById('btn-native-share');
+
+    // Abrir Modal
+    btnShare.addEventListener('click', () => {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const tenantId = userInfo?.tenant?.id || userInfo?.tenantId;
+
+        if (!tenantId) {
+            alert('Não foi possível identificar a sua igreja. Faça login novamente.');
+            return;
+        }
+        
+        const link = `${window.location.origin}/pages/public-form/cadastro.html?t=${tenantId}`;
+        inputShareLink.value = link;
+        
+        // Verifica suporte a compartilhamento nativo (Mobile)
+        if (navigator.share) {
+            btnNativeShare.style.display = 'flex';
+        } else {
+            btnNativeShare.style.display = 'none';
+        }
+
+        modalShare.classList.add('active');
+    });
+
+    // Fechar Modal
+    const fecharModalShare = () => modalShare.classList.remove('active');
+    btnCloseShare.addEventListener('click', fecharModalShare);
+    modalShare.addEventListener('click', (e) => {
+        if (e.target === modalShare) fecharModalShare();
+    });
+
+    // Copiar Link do Modal
+    btnCopyModal.addEventListener('click', () => {
+        inputShareLink.select();
+        inputShareLink.setSelectionRange(0, 99999); // Para mobile
+        navigator.clipboard.writeText(inputShareLink.value).then(() => {
+            const originalIcon = btnCopyModal.innerHTML;
+            btnCopyModal.innerHTML = "<i class='bx bx-check'></i>";
+            setTimeout(() => {
+                btnCopyModal.innerHTML = originalIcon;
+            }, 2000);
+        }).catch(err => console.error('Erro ao copiar', err));
+    });
+
+    // Compartilhar Nativo (WhatsApp/Outros)
+    btnNativeShare.addEventListener('click', async () => {
+        const link = inputShareLink.value;
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Cadastro de Membros',
+                    text: 'Olá! Segue o link para realizar o seu cadastro na igreja:',
+                    url: link
+                });
+            } catch (err) {
+                console.log('Compartilhamento cancelado ou falhou', err);
+            }
+        }
+    });
 });

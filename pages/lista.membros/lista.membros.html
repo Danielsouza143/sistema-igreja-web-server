@@ -23,7 +23,14 @@
 <body>
 <header id="menu-placeholder"></header>
     <main class="conteudo">
-        <h1 class="title-page">Gerenciamento de Membros</h1>
+        <div class="page-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h1 class="title-page" style="margin-bottom: 0;">Gerenciamento de Membros</h1>
+            <div class="header-actions">
+                <button class="btn-principal" onclick="window.location.href='../cadastro.membro.page/cadastro.membro.html'">+ Novo Membro</button>
+                <button class="btn-secundario btn-relatorio"><i class='bx bxs-file-pdf'></i> Relatório</button>
+                <button class="btn-secundario" id="btn-share-link" title="Copiar Link de Cadastro Público"><i class='bx bx-share-alt'></i> Link Público</button>
+            </div>
+        </div>
 
         <nav class="abas-navegacao">
             <button class="aba-link active" data-aba="lista">Lista de Membros</button>
@@ -39,7 +46,6 @@
                     <select id="filtro-genero"><option value="">Gênero</option><option value="homem">Homem</option><option value="mulher">Mulher</option></select>
                     <select id="filtro-cargo"><option value="">Todos os Cargos</option><option value="membro">Membro</option><option value="obreiro">Obreiro (Auxiliar)</option><option value="diacono">Diácono</option><option value="presbitero">Presbítero</option><option value="evangelista">Evangelista</option><option value="pastor">Pastor</option><option value="musico">Músico</option><option value="membra">Membra</option><option value="missionarioPastor">Missionária (Mulher de Pastor)</option><option value="missionariaPresbitero">Missionária (Mulher de Presbítero)</option><option value="diaconisa">Diaconisa</option></select>
                 </div>
-                <button class="btn-relatorio btn-principal"><i class='bx bxs-printer'></i> Imprimir Relatório</button>
             </div>
             <div class="tabela-wrapper">
                 <table class="tabela-dados">
@@ -90,6 +96,29 @@
             </div>
         </div>
     </main>
+
+    <!-- Modal de Compartilhamento -->
+    <div id="modal-share" class="modal-overlay">
+        <div class="modal-content share-modal-content">
+            <button class="modal-close" id="btn-close-share">&times;</button>
+            <div class="share-header">
+                <div class="share-icon-circle">
+                    <i class='bx bxs-share-alt'></i>
+                </div>
+                <h2>Compartilhar Cadastro</h2>
+                <p>Envie este link para novos membros se cadastrarem.</p>
+            </div>
+            
+            <div class="share-input-group">
+                <input type="text" id="share-link-input" readonly>
+                <button id="btn-copy-modal" title="Copiar Link"><i class='bx bx-copy'></i></button>
+            </div>
+
+            <button id="btn-native-share" class="btn-principal full-width-btn">
+                <i class='bx bxl-whatsapp'></i> Compartilhar via App
+            </button>
+        </div>
+    </div>
 
 <script src="/js/global-loader.js" defer></script>
 
