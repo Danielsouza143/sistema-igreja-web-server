@@ -281,8 +281,24 @@ app.use((err, req, res, next) => {
 // Conexão com o MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://silvasouzadaniel14_db_user:5Z1HIgrV9Qhng0G5@cluster0.9c4fxqv.mongodb.net/igreja-db?appName=Cluster0";
 mongoose.connect(MONGODB_URI)
-    .then(() => {
+    .then(async () => {
         console.log('Conectado ao MongoDB');
+        
+        // --- MIGRAÇÃO DE BANCO DE DADOS (FIX ÍNDICES) ---
+        try {
+            const collection = mongoose.connection.collection('emprestimos');
+            const indexes = await collection.indexes();
+            const indexExists = indexes.some(idx => idx.name === 'codigo_1');
+            if (indexExists) {
+                console.log('🔧 [MIGRAÇÃO] Removendo índice obsoleto "codigo_1" da coleção emprestimos...');
+                await collection.dropIndex('codigo_1');
+                console.log('✅ [MIGRAÇÃO] Índice removido com sucesso.');
+            }
+        } catch (idxError) {
+            // Ignora erro se a coleção não existir ou índice já tiver sumido
+            console.log('ℹ️ [MIGRAÇÃO] Verificação de índices concluída (sem alterações necessárias).');
+        }
+
         const dbName = mongoose.connection.name;
         console.log(`📦 Banco: [${dbName}] | Ambiente: ${process.env.NODE_ENV || 'development'} | Multi-Tenant: ATIVO`);
         app.listen(PORT, () => {

@@ -520,6 +520,19 @@ document.addEventListener('DOMContentLoaded', () => {
         prepararCanvasWrapper('grafico-estado-civil'); // Adicionado
         prepararCanvasWrapper('grafico-ministerios');
         prepararCanvasWrapper('grafico-frequencia-perfil');
+
+        // Aguarda a API ser carregada pelo global-loader.js
+        if (!window.api) {
+            await new Promise(resolve => {
+                const interval = setInterval(() => {
+                    if (window.api) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 50);
+            });
+        }
+
         try {
             todosOsMembros = await window.api.get('/api/membros');
             if (todosOsMembros.length === 0) {

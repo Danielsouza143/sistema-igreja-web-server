@@ -7,15 +7,12 @@ import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-const uploadPublic = s3Upload('utensilios', true);
-const uploadPrivate = s3Upload('utensilios', false);
+const upload = s3Upload('utensilios');
 
-const uploadFields = (req, res, next) => {
-    uploadPublic.fields([{ name: 'foto', maxCount: 1 }])(req, res, (err) => {
-        if (err) return next(err);
-        uploadPrivate.fields([{ name: 'notaFiscal', maxCount: 1 }])(req, res, next);
-    });
-};
+const uploadFields = upload.fields([
+    { name: 'foto', maxCount: 1 },
+    { name: 'notaFiscal', maxCount: 1 }
+]);
 
 // Protege todas as rotas de utensílios
 router.use(protect);

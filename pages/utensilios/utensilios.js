@@ -254,7 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = id ? `/api/utensilios/${id}` : '/api/utensilios';
 
         try {
-            await window.api.request(url, method, formData);
+            if (method === 'PUT') {
+                await window.api.put(url, formData);
+            } else {
+                await window.api.post(url, formData);
+            }
             fecharModalItem();
             await carregarDados(); // Recarrega tudo
             alert('Item salvo com sucesso!');
