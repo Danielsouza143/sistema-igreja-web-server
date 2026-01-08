@@ -43,13 +43,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
     window.addEventListener('hashchange', handleNavigation);
 
+    // --- HELPERS ---
+    const buildNestedPayload = (path, value) => {
+        // transforma 'a.b.c' + value => { a: { b: { c: value } } }
+        if (!path || typeof path !== 'string') return value;
+        const keys = path.split('.');
+        return keys.reduceRight((acc, key) => ({ [key]: acc }), value);
+    };
+
+    const getAuthHeader = () => {
+        try {
+            const ui = JSON.parse(localStorage.getItem('userInfo') || 'null');
+            if (ui && ui.token) return { 'Authorization': `Bearer ${ui.token}` };
+        } catch (e) { /* ignore */ }
+        return {};
+    };
+
     // --- LÓGICA PRINCIPAL DE CONFIGURAÇÕES ---
-    const salvarConfiguracao = async (key, value) => {
+    const salvarConfiguracao = async (path, value) => {
         try {
             await window.api.patch('/api/configs', { [key]: value });
         } catch (error) {
-            console.error(`Erro ao salvar a configuração '${key}':`, error);
-            alert(`Não foi possível salvar a configuração: ${error.message}`);
+            console.error(`Erro ao salvar a configuração '${path}':`, error);
+            alert(`Não foi possível salvar a configuração: ${error.message || error}`);
         }
     };
 
@@ -149,7 +165,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const formData = new FormData();
                 formData.append('nomeIgreja', nomeIgreja);
                 formData.append('logo', croppedLogoBlob, 'logo.png');
-                await window.api.post('/api/configs/upload-logo', formData);
+
+                try {
+                    // Tenta pelo wrapper (se suportar FormData)
+                    await window.api.post('/api/configs/upload-logo', formData);
+                } catch (err) {
+                    console.warn('[config] window.api.post falhou para FormData, tentando fetch direto', err);
+                    // Fallback: fetch direto (não setar Content-Type)
+                    const headers = getAuthHeader();
+                    await fetch('/api/configs/upload-logo', {
+                        method: 'POST',
+                        body: formData,
+                        headers: headers
+                    }).then(res => {
+                        if (!res.ok) throw new Error(`Upload falhou: ${res.status} ${res.statusText}`);
+                        return res.json().catch(()=>null);
+                    });
+                }
             } else {
                 await salvarConfiguracao('identidade.nomeIgreja', nomeIgreja);
             }
@@ -159,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Identidade da igreja salva com sucesso!');
         } catch (error) {
             console.error('Erro ao salvar identidade:', error);
-            alert(`Falha ao salvar a identidade: ${error.message}`);
+            alert(`Falha ao salvar a identidade: ${error.message || error}`);
         } finally {
             btnSalvarIdentidade.disabled = false;
             btnSalvarIdentidade.textContent = 'Salvar Identidade';
