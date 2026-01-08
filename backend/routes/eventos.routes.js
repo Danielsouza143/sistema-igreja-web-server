@@ -1,6 +1,6 @@
 import express from 'express';
 import Evento from '../models/evento.js';
-import Config from '../models/config.js';
+import Tenant from '../models/tenant.model.js'; // Importa o modelo de Tenant
 import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
 import { protect } from '../middleware/auth.middleware.js';
 
@@ -12,12 +12,16 @@ const upload = s3Upload('eventos');
 // Aplica o middleware de proteção a todas as rotas neste arquivo
 router.use(protect);
 
-// GET /api/eventos/configs - Rota para buscar configurações GLOBAIS de eventos (categorias)
+// GET /api/eventos/configs - Rota para buscar configurações de eventos do TENANT
 router.get('/configs', async (req, res) => {
     try {
-        const config = await Config.findOne({ singleton: 'main' });
+        const tenant = await Tenant.findById(req.tenant.id).select('config.eventos_categorias');
+        
+        // Retorna as categorias do tenant ou um array vazio se não houver
+        const categorias = tenant?.config?.eventos_categorias || [];
+        
         res.json({
-            eventos_categorias: config ? config.eventos_categorias : []
+            eventos_categorias: categorias
         });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar configurações de eventos', error });
@@ -31,6 +35,30 @@ router.get('/', async (req, res) => {
         res.json(eventos);
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar eventos', error });
+    }
+});
+
+// POST /api/eventos/lote - Criar múltiplos eventos de uma vez (para recorrência)
+router.post('/lote', async (req, res) => {
+    try {
+        const eventos = req.body;
+        
+        if (!Array.isArray(eventos) || eventos.length === 0) {
+            return res.status(400).json({ message: 'O corpo da requisição deve ser um array de eventos.' });
+        }
+
+        // Adiciona o tenantId a todos os eventos
+        const eventosComTenant = eventos.map(e => ({
+            ...e,
+            tenantId: req.tenant.id
+        }));
+
+        // Usa insertMany para performance
+        const novosEventos = await Evento.insertMany(eventosComTenant);
+        
+        res.status(201).json({ message: `${novosEventos.length} eventos criados com sucesso.`, eventos: novosEventos });
+    } catch (error) {
+        res.status(400).json({ message: 'Erro ao criar eventos em lote', error: error.message });
     }
 });
 

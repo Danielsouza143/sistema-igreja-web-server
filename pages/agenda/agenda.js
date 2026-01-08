@@ -144,59 +144,177 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // NOVO: Lógica de Recorrência UI
+        const checkboxRepetir = document.getElementById('evento-repetir');
+        const recurrenceOptions = document.getElementById('recurrence-options');
+        const selectPeriodo = document.getElementById('evento-periodo');
+        const containerDataLimite = document.getElementById('container-data-limite');
+
+        checkboxRepetir.addEventListener('change', (e) => {
+            recurrenceOptions.style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        selectPeriodo.addEventListener('change', (e) => {
+            containerDataLimite.style.display = e.target.value === 'personalizado' ? 'block' : 'none';
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('evento-id').value;
             const cartazInput = document.getElementById('evento-cartaz-input');
-
-            // 1. Criar FormData
-            const formData = new FormData();
-
-            // 2. Adicionar todos os campos do formulário ao FormData
-            formData.append('tipo', document.getElementById('evento-tipo').value);
-            formData.append('nome', document.getElementById('evento-nome').value);
-            formData.append('categoria', document.getElementById('evento-categoria').value);
-            formData.append('recorrencia', document.getElementById('evento-recorrencia').value);
-            formData.append('dataInicio', document.getElementById('evento-data-inicio').value);
-            formData.append('dataFim', document.getElementById('evento-data-fim').value);
-            formData.append('local', document.getElementById('evento-local').value);
-            formData.append('responsavelId', document.getElementById('evento-responsavel').value);
-            formData.append('descricao', document.getElementById('evento-descricao').value);
-            formData.append('cor', document.getElementById('evento-cor').value); // NOVO
             
-            // Adicionar a URL do cartaz existente (se houver) para não perdê-la na edição
-            formData.append('cartazUrl', document.getElementById('evento-cartaz-url').value);
-
-            // Adicionar o objeto financeiro como uma string JSON
-            const financeiro = {
-                envolveFundos: document.getElementById('evento-envolve-fundos').checked,
-                meta: parseFloat(document.getElementById('evento-meta').value) || 0,
-                custoEstimado: parseFloat(document.getElementById('evento-custo').value) || 0,
+            // Dados Básicos
+            const baseData = {
+                tipo: document.getElementById('evento-tipo').value,
+                nome: document.getElementById('evento-nome').value,
+                categoria: document.getElementById('evento-categoria').value,
+                local: document.getElementById('evento-local').value,
+                responsavelId: document.getElementById('evento-responsavel').value,
+                descricao: document.getElementById('evento-descricao').value,
+                cor: document.getElementById('evento-cor').value,
+                cartazUrl: document.getElementById('evento-cartaz-url').value,
+                financeiro: JSON.stringify({
+                    envolveFundos: document.getElementById('evento-envolve-fundos').checked,
+                    meta: parseFloat(document.getElementById('evento-meta').value) || 0,
+                    custoEstimado: parseFloat(document.getElementById('evento-custo').value) || 0,
+                })
             };
-            formData.append('financeiro', JSON.stringify(financeiro));
 
-            // 3. Adicionar o arquivo do cartaz (se um novo foi selecionado)
-            if (cartazInput.files[0]) {
-                formData.append('cartaz', cartazInput.files[0]);
-            }
+            // Dados de Data/Hora (Strings ISO para cálculo)
+            const dataInicioStr = document.getElementById('evento-data-inicio').value;
+            const dataFimStr = document.getElementById('evento-data-fim').value;
+            
+            // Se tiver imagem nova, faz upload primeiro (para usar URL em todos)
+            // OBS: Para simplicidade, se for lote com imagem, idealmente faria upload separado.
+            // Aqui, vamos manter a lógica: se for lote, NÃO suportaremos upload de cartaz NOVO por enquanto,
+            // ou teríamos que fazer upload manual antes. Para evitar complexidade extrema agora,
+            // vamos alertar se tentar lote + imagem nova, ou simplesmente ignorar a imagem nova no lote secundário.
+            // MELHOR: Se for lote, fazemos um upload fake/independente antes?
+            // Vamos usar a lógica padrão: Se for UM evento, usa FormData normal.
+            // Se for LOTE, precisamos da URL da imagem já pronta.
+            
+            let finalCartazUrl = baseData.cartazUrl;
 
-            try {
-                // 4. Enviar o FormData para a API
-                if (id) {
-                    await window.api.put(`/api/eventos/${id}`, formData);
-                } else {
-                    await window.api.post('/api/eventos', formData);
-                }
+            // Se for edição ou criação simples (SEM recorrência)
+            if (id || !checkboxRepetir.checked) {
+                const formData = new FormData();
+                Object.keys(baseData).forEach(key => formData.append(key, baseData[key]));
+                formData.append('dataInicio', dataInicioStr);
+                formData.append('dataFim', dataFimStr);
+                // Campo legado para manter compatibilidade com visualização, se quiser
+                if(checkboxRepetir.checked) formData.append('recorrencia', 'Semanal'); 
                 
-                modal.classList.remove('active');
-                await carregarDadosIniciais();
-                calendar.removeAllEvents();
-                calendar.addEventSource(formatarEventosParaCalendario(todosEventos));
-                renderizarLista();
-            } catch (error) {
-                console.error('Erro ao salvar evento:', error);
-                alert(`Erro ao salvar: ${error.message}`);
+                if (cartazInput.files[0]) {
+                    formData.append('cartaz', cartazInput.files[0]);
+                }
+
+                try {
+                    if (id) {
+                        await window.api.put(`/api/eventos/${id}`, formData);
+                    } else {
+                        await window.api.post('/api/eventos', formData);
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar evento:', error);
+                    alert(`Erro ao salvar: ${error.message}`);
+                    return;
+                }
+            } else {
+                // --- LÓGICA DE CRIAÇÃO EM LOTE (RECORRÊNCIA) ---
+                
+                // 1. Upload da imagem se houver (precisamos da URL para replicar)
+                if (cartazInput.files[0]) {
+                    // Como a API de eventos espera criar o evento JUNTO com o upload,
+                    // vamos criar o PRIMEIRO evento via FormData normalmente, e os outros via JSON.
+                    // Isso é mais seguro.
+                }
+
+                const eventosParaCriar = [];
+                const dataInicioBase = new Date(dataInicioStr);
+                const dataFimBase = new Date(dataFimStr);
+                const duracaoMs = dataFimBase - dataInicioBase;
+
+                // Define a data limite
+                let dataLimite = new Date();
+                const periodo = selectPeriodo.value;
+                if (periodo === 'mes') {
+                    dataLimite = new Date(dataInicioBase.getFullYear(), dataInicioBase.getMonth() + 1, 0); // Fim do mês da data inicial
+                } else if (periodo === 'ano') {
+                    dataLimite = new Date(dataInicioBase.getFullYear(), 11, 31); // Fim do ano
+                } else if (periodo === 'personalizado') {
+                    const limiteInput = document.getElementById('evento-data-limite').value;
+                    if (!limiteInput) {
+                        alert('Por favor, selecione uma data limite para a repetição.');
+                        return;
+                    }
+                    dataLimite = new Date(limiteInput);
+                    // Ajusta para o final do dia para garantir inclusão
+                    dataLimite.setHours(23, 59, 59);
+                }
+
+                // Loop para gerar datas (Semanal)
+                let currentInicio = new Date(dataInicioBase);
+                
+                // Adiciona o primeiro evento (que será enviado separadamente se tiver foto, ou no lote)
+                // Se tiver foto nova, criamos o primeiro via POST normal para obter a URL e depois os outros.
+                // Se não tiver foto nova, vai tudo no lote.
+                
+                let primeiroEventoComFoto = null;
+                if (cartazInput.files[0]) {
+                    // Marca para criar o primeiro separado
+                    const formData = new FormData();
+                    Object.keys(baseData).forEach(key => formData.append(key, baseData[key]));
+                    formData.append('dataInicio', dataInicioStr);
+                    formData.append('dataFim', dataFimStr);
+                    formData.append('recorrencia', 'Semanal');
+                    formData.append('cartaz', cartazInput.files[0]);
+                    
+                    try {
+                        const res = await window.api.post('/api/eventos', formData);
+                        // Atualiza a URL do cartaz para os próximos
+                        if (res && res.cartazUrl) finalCartazUrl = res.cartazUrl;
+                        
+                        // Avança uma semana para não duplicar o primeiro
+                        currentInicio.setDate(currentInicio.getDate() + 7);
+                    } catch (err) {
+                        alert('Erro ao criar o evento inicial da série: ' + err.message);
+                        return;
+                    }
+                }
+
+                while (currentInicio <= dataLimite) {
+                    const currentFim = new Date(currentInicio.getTime() + duracaoMs);
+                    
+                    eventosParaCriar.push({
+                        ...baseData,
+                        cartazUrl: finalCartazUrl, // Usa a URL (existente ou do upload recém feito)
+                        financeiro: JSON.parse(baseData.financeiro), // Precisa ser obj, não string
+                        dataInicio: currentInicio.toISOString(),
+                        dataFim: currentFim.toISOString(),
+                        recorrencia: 'Semanal',
+                        tenantId: undefined // Será posto pelo backend
+                    });
+
+                    // Avança 7 dias
+                    currentInicio.setDate(currentInicio.getDate() + 7);
+                }
+
+                if (eventosParaCriar.length > 0) {
+                    try {
+                        await window.api.post('/api/eventos/lote', eventosParaCriar);
+                    } catch (error) {
+                        console.error('Erro ao criar lote:', error);
+                        alert(`Erro ao criar recorrências: ${error.message}`);
+                        return;
+                    }
+                }
             }
+
+            modal.classList.remove('active');
+            await carregarDadosIniciais();
+            calendar.removeAllEvents();
+            calendar.addEventSource(formatarEventosParaCalendario(todosEventos));
+            renderizarLista();
         });
     }
 

@@ -78,9 +78,38 @@
                     <option value="">Carregando...</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="evento-recorrencia">Recorrência (se aplicável)</label>
-                <input type="text" id="evento-recorrencia" placeholder="Ex: Toda quinta-feira às 20h">
+            <div class="form-group full-width">
+                <label>Recorrência (Opcional)</label>
+                <div class="recurrence-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="evento-repetir"> Repetir este evento?
+                        <span class="checkmark"></span>
+                    </label>
+                    
+                    <div id="recurrence-options" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="evento-frequencia">Frequência</label>
+                                <select id="evento-frequencia" class="form-control">
+                                    <option value="semanal">Semanal (Todo dia da semana escolhido)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="evento-periodo">Período de Repetição</label>
+                                <select id="evento-periodo" class="form-control">
+                                    <option value="mes">Até o final deste mês</option>
+                                    <option value="ano">Até o final deste ano</option>
+                                    <option value="personalizado">Data personalizada</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" id="container-data-limite" style="display: none;">
+                            <label for="evento-data-limite">Repetir até</label>
+                            <input type="date" id="evento-data-limite" class="form-control">
+                        </div>
+                        <small style="color: #666;">Isso criará cópias independentes do evento para cada data.</small>
+                    </div>
+                </div>
             </div>
             <div class="form-group-grid">
                 <div class="form-group">

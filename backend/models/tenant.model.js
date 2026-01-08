@@ -40,10 +40,24 @@ const TenantSchema = new Schema({
             primaryColor: { type: String, default: '#3498db' },
             secondaryColor: { type: String, default: '#2c3e50' },
         },
+        // Nova estrutura de aparência compatível com o frontend atual
+        aparencia: {
+            theme: { type: String, default: 'light' },
+            corPrimaria: { type: String, default: '#001f5d' },
+            corSecundaria: { type: String, default: '#0033a0' }
+        },
         logoUrl: { type: String, default: '' },
         timezone: { type: String, default: 'America/Sao_Paulo' },
         currency: { type: String, default: 'BRL' },
-        completedOnboard: { type: Boolean, default: false }
+        completedOnboard: { type: Boolean, default: false },
+        
+        // Categorias personalizáveis
+        utensilios_categorias: { type: [String], default: [] },
+        eventos_categorias: { type: [String], default: [] },
+        financeiro_categorias: {
+            entradas: { type: [String], default: [] },
+            saidas: { type: [String], default: [] }
+        }
     }
 }, {
     timestamps: true // Adiciona createdAt e updatedAt automaticamente

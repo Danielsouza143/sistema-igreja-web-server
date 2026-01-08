@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA PRINCIPAL DE CONFIGURAÇÕES ---
     const salvarConfiguracao = async (path, value) => {
         try {
-            await window.api.patch('/api/configs', { [key]: value });
+            await window.api.patch('/api/configs', { [path]: value });
         } catch (error) {
             console.error(`Erro ao salvar a configuração '${path}':`, error);
             alert(`Não foi possível salvar a configuração: ${error.message || error}`);
