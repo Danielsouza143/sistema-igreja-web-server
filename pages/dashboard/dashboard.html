@@ -51,7 +51,12 @@
             </div>
             <div class="coluna-widgets">
                 <div class="widget">
-                    <h3><i class='bx bx-line-chart'></i> Resumo Financeiro do Mês</h3>
+                    <h3>
+                        <i class='bx bx-line-chart'></i> Resumo Financeiro do Mês
+                        <button id="btn-toggle-financeiro" class="btn-toggle-eye" title="Mostrar/Ocultar Valores">
+                            <i class='bx bx-show'></i>
+                        </button>
+                    </h3>
                     <div id="widget-financeiro" class="widget-conteudo chart-container">
                         <canvas id="grafico-resumo-financeiro"></canvas>
                     </div>

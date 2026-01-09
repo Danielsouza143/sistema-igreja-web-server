@@ -4,6 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatarDataSimples = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' });
     const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+    // --- ESTADO LOCAL ---
+    let chartFinanceiro = null;
+    let dadosLancamentos = [];
+    let financeiroOculto = true;
+
     // --- RENDERIZAÇÃO DOS WIDGETS ---
 
     function renderizarBoasVindas() {
@@ -110,13 +115,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderizarResumoFinanceiro(lancamentos) {
+        if (lancamentos) dadosLancamentos = lancamentos;
         const container = document.getElementById('widget-financeiro');
         const canvas = document.getElementById('grafico-resumo-financeiro');
+        const btnToggle = document.getElementById('btn-toggle-financeiro');
+        const iconToggle = btnToggle.querySelector('i');
+
         const hoje = new Date();
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
 
-        const lancamentosDoMes = lancamentos.filter(l => {
+        const lancamentosDoMes = dadosLancamentos.filter(l => {
             const dataLancamento = new Date(l.data);
             return dataLancamento.getMonth() === mesAtual && dataLancamento.getFullYear() === anoAtual;
         });
@@ -129,7 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalEntradas = lancamentosDoMes.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
         const totalSaidas = lancamentosDoMes.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
 
-        new Chart(canvas.getContext('2d'), {
+        // Destrói gráfico anterior se existir
+        if (chartFinanceiro) {
+            chartFinanceiro.destroy();
+        }
+
+        // Atualiza ícone do botão (Mostra o que acontecerá ao clicar)
+        if (financeiroOculto) {
+            iconToggle.className = 'bx bx-show';
+        } else {
+            iconToggle.className = 'bx bx-hide';
+        }
+
+        const formatarValor = (valor) => financeiroOculto ? 'R$ ****' : formatarDinheiro(valor);
+
+        chartFinanceiro = new Chart(canvas.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: ['Resumo do Mês'],
@@ -141,11 +164,38 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatarDinheiro(value) } } }
+                plugins: { 
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += formatarValor(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { 
+                            callback: (value) => formatarValor(value)
+                        } 
+                    } 
+                }
             }
         });
     }
+
+    // --- EVENT LISTENERS ---
+    document.getElementById('btn-toggle-financeiro').addEventListener('click', () => {
+        financeiroOculto = !financeiroOculto;
+        renderizarResumoFinanceiro();
+    });
 
     // --- INICIALIZAÇÃO E CARREGAMENTO DE DADOS ---
     async function carregarDashboard() {
