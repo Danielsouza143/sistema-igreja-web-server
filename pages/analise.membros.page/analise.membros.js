@@ -20,6 +20,38 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     })();
 
+    // Função auxiliar para processar diferentes formatos de data
+    const parseDate = (dateInput) => {
+        if (!dateInput) return null;
+        if (dateInput instanceof Date) return dateInput;
+        
+        let date = new Date(dateInput);
+        if (!isNaN(date.getTime())) return date;
+
+        if (typeof dateInput === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateInput)) {
+            const [day, month, year] = dateInput.split('/').map(Number);
+            date = new Date(year, month - 1, day);
+            if (!isNaN(date.getTime())) return date;
+        }
+        return null;
+    };
+
+    function calcularIdade(dataNascimento, idadePrevia) {
+        if (idadePrevia !== undefined && idadePrevia !== null && !isNaN(idadePrevia)) {
+            return parseInt(idadePrevia);
+        }
+        const nascimento = parseDate(dataNascimento);
+        if (!nascimento) return null;
+        
+        const hoje = new Date();
+        let idade = hoje.getFullYear() - nascimento.getFullYear();
+        const mes = hoje.getMonth() - nascimento.getMonth();
+        if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+            idade--;
+        }
+        return idade;
+    }
+
     function prepararCanvasWrapper(idCanvas) {
         const canvas = document.getElementById(idCanvas);
         if (canvas && !canvas.parentElement.classList.contains('chart-canvas-container')) {
@@ -35,18 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
     
-    function calcularIdade(dataNascimento) {
-        if (!dataNascimento) return null;
-        const hoje = new Date();
-        const nascimento = new Date(dataNascimento);
-        let idade = hoje.getFullYear() - nascimento.getFullYear();
-        const mes = hoje.getMonth() - nascimento.getMonth();
-        if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
-            idade--;
-        }
-        return idade;
-    }
-
     function mostrarModalAniversariantes() {
         const modalExistente = document.getElementById('modal-aniversariantes');
         if (modalExistente) modalExistente.remove();
@@ -116,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3>Dados Pessoais</h3>
                     <p><strong>CPF:</strong> ${membro.cpf || 'Não informado'}</p>
                     <p><strong>Telefone:</strong> ${membro.telefone || 'Não informado'}</p>
-                    <p><strong>Idade:</strong> ${calcularIdade(membro.dataNascimento) || 'Não informada'} anos</p>
+                    <p><strong>Idade:</strong> ${calcularIdade(membro.dataNascimento, membro.idade) || 'Não informada'} anos</p>
                 </div>
                 ${membro.temMinisterio === 'sim' ? `<div class="membro-dados-modal">
                     <h3>Dados Ministeriais</h3>
@@ -166,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function atualizarResumo(membros) {
         document.getElementById('total-membros').textContent = membros.length;
-        const idades = membros.map(m => calcularIdade(m.dataNascimento)).filter(idade => idade !== null);
+        const idades = membros.map(m => calcularIdade(m.dataNascimento, m.idade)).filter(idade => idade !== null);
         if (idades.length > 0) {
             const somaIdades = idades.reduce((acc, idade) => acc + idade, 0);
             const mediaIdade = Math.round(somaIdades / idades.length);
@@ -224,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function criarGraficoFaixaEtaria(membros) {
         const faixas = { 'Crianças (0-11)': 0, 'Adolescentes (12-17)': 0, 'Jovens (18-29)': 0, 'Adultos (30-59)': 0, 'Idosos (60+)': 0 };
         membros.forEach(m => {
-            const idade = calcularIdade(m.dataNascimento);
+            const idade = calcularIdade(m.dataNascimento, m.idade);
             if (idade !== null) {
                 if (idade <= 11) faixas['Crianças (0-11)']++;
                 else if (idade <= 17) faixas['Adolescentes (12-17)']++;
@@ -487,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (faixaEtaria) {
             const [min, max] = faixaEtaria.split('-').map(Number);
             membrosFiltrados = membrosFiltrados.filter(m => {
-                const idade = calcularIdade(m.dataNascimento);
+                const idade = calcularIdade(m.dataNascimento, m.idade);
                 if (idade === null) return false;
                 if (faixaEtaria === '60+') return idade >= 60;
                 return idade >= min && idade <= max;

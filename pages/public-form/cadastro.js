@@ -32,6 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.innerHTML = '<div style="text-align:center; padding:50px;"><h1>Igreja não encontrada</h1><p>Verifique o link e tente novamente.</p></div>';
         });
 
+    // Carregar Pequenos Grupos
+    fetch(`${window.location.origin}/api/public-form/grupos/${tenantId}`)
+        .then(res => res.json())
+        .then(grupos => {
+            const select = document.getElementById('grupoPequeno');
+            select.innerHTML = '<option value="">Nenhum</option>';
+            grupos.forEach(g => {
+                select.innerHTML += `<option value="${g._id}">${g.nome}</option>`;
+            });
+            select.innerHTML += `<option value="outro">Outro</option>`;
+        })
+        .catch(err => console.error('Erro ao carregar grupos:', err));
+
     // --- VARIÁVEIS GLOBAIS ---
     let fotoBase64 = null;
     const form = document.getElementById('form-cadastro-publico');
@@ -188,10 +201,122 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // NOVO: Lógica para Liderança em Outra Igreja
+    const selectLideranca = document.getElementById('liderancaOutraIgreja');
+    if(selectLideranca) {
+        selectLideranca.addEventListener('change', () => {
+            document.getElementById('containerQualLideranca').classList.toggle('hidden', selectLideranca.value !== 'sim');
+        });
+    }
+
     const selectBatismoAguas = document.getElementById('batismoAguas');
     if(selectBatismoAguas) {
         selectBatismoAguas.addEventListener('change', () => {
             document.getElementById('containerDataBatismoAguas').classList.toggle('hidden', selectBatismoAguas.value !== 'sim');
+        });
+    }
+
+    // NOVO: Lógica para Cargo Eclesiástico
+    const selectGenero = document.getElementById('genero');
+    const selectCargo = document.getElementById('cargoEclesiastico');
+    const divCargos = document.getElementById('cargosEclesiasticos');
+
+    const cargosMasculinos = [
+        { value: 'membro', text: 'Membro' },
+        { value: 'obreiro', text: 'Obreiro (Auxiliar)' },
+        { value: 'diacono', text: 'Diácono' },
+        { value: 'presbitero', text: 'Presbítero' },
+        { value: 'evangelista', text: 'Evangelista' },
+        { value: 'pastor', text: 'Pastor' },
+        { value: 'pastor-presidente', text: 'Pastor Presidente' },
+        { value: 'vice-presidente', text: 'Vice Presidente' },
+        { value: 'musico', text: 'Músico' },
+        { value: 'outro', text: 'Outro' }
+    ];
+    const cargosFemininos = [
+        { value: 'membro', text: 'Membro' },
+        { value: 'diaconisa', text: 'Diaconisa' },
+        { value: 'missionaria', text: 'Missionária' },
+        { value: 'regente', text: 'Regente' },
+        { value: 'musicista', text: 'Musicista' },
+        { value: 'pastora-presidente', text: 'Pastora Presidente' },
+        { value: 'vice-presidente', text: 'Vice Presidente' },
+        { value: 'outro', text: 'Outro' }
+    ];
+
+    function atualizarCargos(genero) {
+        if (!selectCargo) return;
+        selectCargo.innerHTML = '<option value="">Selecione um cargo</option>';
+        let lista = [];
+        
+        if (genero === 'masculino') { 
+            lista = cargosMasculinos; 
+            divCargos.classList.remove('hidden'); 
+        } else if (genero === 'feminino') { 
+            lista = cargosFemininos; 
+            divCargos.classList.remove('hidden'); 
+        } else { 
+            divCargos.classList.add('hidden'); 
+        }
+        
+        lista.forEach(c => { 
+            const opt = document.createElement('option'); 
+            opt.value = c.value; 
+            opt.textContent = c.text; 
+            selectCargo.appendChild(opt); 
+        });
+    }
+
+    if (selectCargo) {
+        selectCargo.addEventListener('change', () => {
+            document.getElementById('containerCargoOutro').classList.toggle('hidden', selectCargo.value !== 'outro');
+        });
+    }
+
+    if (selectGenero) {
+        selectGenero.addEventListener('change', () => atualizarCargos(selectGenero.value));
+    }
+
+    const selectGrupo = document.getElementById('grupoPequeno');
+    if (selectGrupo) {
+        selectGrupo.addEventListener('change', () => {
+            document.getElementById('outroGrupoContainer').classList.toggle('hidden', selectGrupo.value !== 'outro');
+        });
+    }
+
+    // --- CAMPOS DINÂMICOS (Ministério e Dons) ---
+    const selectTemMinisterio = document.getElementById('temMinisterio');
+    if(selectTemMinisterio) {
+        selectTemMinisterio.addEventListener('change', () => {
+            const isSim = selectTemMinisterio.value === 'sim';
+            document.getElementById('ministerioArea').classList.toggle('hidden', !isSim);
+            if (!isSim) {
+                document.getElementById('ministerio').value = '';
+                document.getElementById('nomeOutroMinisterio').value = '';
+                document.getElementById('outroMinisterioContainer').classList.add('hidden');
+            }
+        });
+    }
+
+    const selectMinisterio = document.getElementById('ministerio');
+    if(selectMinisterio) {
+        selectMinisterio.addEventListener('change', () => {
+            const isOutro = selectMinisterio.value === 'outro';
+            document.getElementById('outroMinisterioContainer').classList.toggle('hidden', !isOutro);
+            if (!isOutro) {
+                document.getElementById('nomeOutroMinisterio').value = '';
+            }
+        });
+    }
+
+    const domOutroCheck = document.getElementById('domOutro');
+    if(domOutroCheck) {
+        domOutroCheck.addEventListener('change', () => {
+            const isChecked = domOutroCheck.checked;
+            document.getElementById('containerOutroDom').classList.toggle('hidden', !isChecked);
+            if (!isChecked) {
+                document.getElementById('especificarOutroDom').value = '';
+            }
         });
     }
 
@@ -232,6 +357,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Adiciona Tenant ID
         formData.append('tenantId', tenantId);
+
+        // Ajuste para campos "Outro"
+        if (formData.get('cargoEclesiastico') === 'outro') {
+            formData.set('cargoEclesiastico', document.getElementById('cargoOutro').value);
+        }
+        if (formData.get('grupoPequeno') === 'outro') {
+            formData.set('grupoPequeno', document.getElementById('outroGrupo').value); // Backend espera string para outroGrupo? Model tem campo 'outroGrupo', mas 'grupoPequeno' é ObjectId.
+            // Correção: O modelo tem 'grupoPequeno' (ObjectId) e 'outroGrupo' (String).
+            // Se for 'outro', mandamos grupoPequeno como null (ou vazio) e preenchemos outroGrupo.
+            formData.delete('grupoPequeno'); // Remove para não dar erro de Cast to ObjectId
+            formData.set('outroGrupo', document.getElementById('outroGrupo').value);
+        }
+        if (formData.get('ministerio') === 'outro') {
+            // Modelo tem 'ministerio' e 'nomeOutroMinisterio'.
+            // Se for outro, mantemos 'ministerio'='outro' e preenchemos 'nomeOutroMinisterio'.
+            // O código original do backend já deve lidar com isso ou esperamos que o frontend mande ambos.
+            // O HTML já tem os inputs com os nomes certos (ministerio e nomeOutroMinisterio).
+            // Nada a fazer aqui se o input tiver o name correto.
+        }
 
         // Processa Filhos manualmente para JSON string
         const filhos = [];

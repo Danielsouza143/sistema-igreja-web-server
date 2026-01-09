@@ -194,10 +194,26 @@
         <div class="form-group"><label for="batismoAguas">Batismo nas Águas?</label><select id="batismoAguas" name="batismoAguas"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
         <div class="form-group hidden" id="containerDataBatismoAguas"><label for="dataBatismo">Data</label><input type="date" id="dataBatismo" name="dataBatismo"></div>
         <div class="form-group"><label for="batismoEspiritoSanto">Batismo com Espírito Santo?</label><select id="batismoEspiritoSanto" name="batismoEspiritoSanto"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        
         <div class="form-group"><label for="veioDeOutraIgreja">Veio de outra igreja?</label><select id="veioDeOutraIgreja" name="veioDeOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
         <div class="form-group hidden" id="containerNomeOutraIgreja"><label for="nomeOutraIgreja">Qual?</label><input type="text" id="nomeOutraIgreja" name="nomeOutraIgreja"></div>
         
-        <div class="form-group"><label for="temMinisterio">Já serviu em algum ministério?</label><select id="temMinisterio" name="temMinisterio"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group"><label for="liderancaOutraIgreja">Exerceu liderança em outra igreja?</label><select id="liderancaOutraIgreja" name="liderancaOutraIgreja"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div class="form-group hidden" id="containerQualLideranca"><label for="qualLideranca">Qual função?</label><input type="text" id="qualLideranca" name="qualLideranca"></div>
+
+        <div id="cargosEclesiasticos" class="form-group hidden"><label for="cargoEclesiastico">Cargo Eclesiástico</label><select id="cargoEclesiastico" name="cargoEclesiastico"></select></div>
+        <div class="form-group hidden" id="containerCargoOutro"><label for="cargoOutro">Especifique o Cargo:</label><input type="text" id="cargoOutro" name="cargoOutro"></div>
+
+        <div class="form-group"><label for="grupoPequeno">Pequeno Grupo / Célula</label><select id="grupoPequeno" name="grupoPequeno"><option value="">Carregando...</option></select></div>
+        <div class="form-group hidden" id="outroGrupoContainer"><label for="outroGrupo">Especifique o Grupo</label><input type="text" id="outroGrupo" name="outroGrupo"></div>
+
+        <div class="form-group"><label for="temMinisterio">Faz parte de algum ministério?</label><select id="temMinisterio" name="temMinisterio"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+        <div id="ministerioArea" class="hidden full-width form-grid">
+          <div class="form-group"><label for="ministerio">Qual ministério?</label><select id="ministerio" name="ministerio"><option value="">Selecione</option><option value="familia">Ministério da Família</option><option value="jovens">Ministério de Jovens</option><option value="mulheres">Ministério de Mulheres</option><option value="infantil">Ministério Infantil</option><option value="ebd">EBD</option><option value="missoes">Missões</option><option value="outro">Outro</option></select></div>
+          <div id="outroMinisterioContainer" class="form-group hidden"><label for="nomeOutroMinisterio">Especifique o ministério:</label><input type="text" id="nomeOutroMinisterio" name="nomeOutroMinisterio"></div>
+          <div class="form-group"><label for="cargoMinisterio">Função no ministério:</label><select id="cargoMinisterio" name="cargoMinisterio"><option value="">Selecione</option><option value="lider">Líder</option><option value="vice-lider">Vice-líder</option><option value="membro">Membro da Equipe</option></select></div>
+        </div>
+        
         <div class="form-group"><label for="eDizimista">É dizimista?</label><select id="eDizimista" name="eDizimista"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
         
         <div class="form-group full-width">
@@ -209,7 +225,13 @@
             <div class="checkbox-item"><input type="checkbox" id="domAcaoSocial" name="dons" value="acao_social"><label for="domAcaoSocial">Ação Social</label></div>
             <div class="checkbox-item"><input type="checkbox" id="domRecepcao" name="dons" value="recepcao"><label for="domRecepcao">Recepção</label></div>
             <div class="checkbox-item"><input type="checkbox" id="domInfantil" name="dons" value="infantil"><label for="domInfantil">Infantil</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domAdmin" name="dons" value="admin"><label for="domAdmin">Administração</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domCozinha" name="dons" value="cozinha"><label for="domCozinha">Cozinha</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domVisitacao" name="dons" value="visitacao"><label for="domVisitacao">Visitação</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domOracao" name="dons" value="oracao"><label for="domOracao">Oração</label></div>
+            <div class="checkbox-item"><input type="checkbox" id="domOutro" name="dons" value="outro"><label for="domOutro">Outro</label></div>
           </div>
+          <div class="form-group hidden" id="containerOutroDom"><input type="text" id="especificarOutroDom" name="especificarOutroDom" placeholder="Especifique a área de interesse"></div>
         </div>
       </div>
     </div>
@@ -218,8 +240,10 @@
     <div class="form-step">
       <div class="form-grid">
         <div class="form-group"><label for="profissao">Profissão</label><input type="text" id="profissao" name="profissao"></div>
-        <div class="form-group"><label for="escolaridade">Escolaridade</label><select id="escolaridade" name="escolaridade"><option value="">Selecione</option><option value="medio_completo">Médio Completo</option><option value="superior_completo">Superior Completo</option><option value="outro">Outro</option></select></div>
+        <div class="form-group"><label for="escolaridade">Escolaridade</label><select id="escolaridade" name="escolaridade"><option value="">Selecione</option><option value="analfabeto">Analfabeto</option><option value="fundamental_incompleto">Fundamental Incompleto</option><option value="fundamental_completo">Fundamental Completo</option><option value="medio_incompleto">Médio Incompleto</option><option value="medio_completo">Médio Completo</option><option value="superior_incompleto">Superior Incompleto</option><option value="superior_completo">Superior Completo</option><option value="pos_graduado">Pós-graduado</option><option value="outro">Outro</option></select></div>
+        <div class="form-group"><label for="cursoTeologico">Possui curso teológico/ministerial?</label><input type="text" id="cursoTeologico" name="cursoTeologico" placeholder="Ex: Seminário, curso de liderança, etc."></div>
         <div class="form-group"><label for="comoConheceuIgreja">Como conheceu nossa igreja?</label><input type="text" id="comoConheceuIgreja" name="comoConheceuIgreja"></div>
+        <div class="form-group full-width"><label for="restricaoSaude">Restrição alimentar ou condição de saúde importante?</label><textarea id="restricaoSaude" name="restricaoSaude" rows="3"></textarea></div>
         <fieldset class="lgpd-fieldset full-width">
           <legend>Consentimento (LGPD)</legend>
           <div class="form-group"><label>Deseja receber comunicados?</label><div><input type="radio" id="comunicadosSim" name="autorizaComunicados" value="sim" checked><label for="comunicadosSim">Sim</label><input type="radio" id="comunicadosNao" name="autorizaComunicados" value="nao"><label for="comunicadosNao">Não</label></div></div>

@@ -42,9 +42,10 @@
         <div id="lista" class="aba-conteudo active">
             <div class="acoes-header">
                 <div class="filtros-container">
-                    <input type="text" id="filtro-nome" placeholder="Buscar por nome...">
-                    <select id="filtro-genero"><option value="">Gênero</option><option value="homem">Homem</option><option value="mulher">Mulher</option></select>
-                    <select id="filtro-cargo"><option value="">Todos os Cargos</option><option value="membro">Membro</option><option value="obreiro">Obreiro (Auxiliar)</option><option value="diacono">Diácono</option><option value="presbitero">Presbítero</option><option value="evangelista">Evangelista</option><option value="pastor">Pastor</option><option value="musico">Músico</option><option value="membra">Membra</option><option value="missionarioPastor">Missionária (Mulher de Pastor)</option><option value="missionariaPresbitero">Missionária (Mulher de Presbítero)</option><option value="diaconisa">Diaconisa</option></select>
+                    <input type="text" id="filtro-nome" placeholder="Buscar por nome, CPF...">
+                    <button id="btn-filtros-avancados" class="btn-secundario" title="Filtros Avançados">
+                        <i class='bx bx-filter-alt'></i> Filtros
+                    </button>
                 </div>
             </div>
             <div class="tabela-wrapper">
@@ -117,6 +118,100 @@
             <button id="btn-native-share" class="btn-principal full-width-btn">
                 <i class='bx bxl-whatsapp'></i> Compartilhar via App
             </button>
+        </div>
+    </div>
+
+    <!-- Modal de Filtros Avançados -->
+    <div id="modal-filtros" class="modal-overlay">
+        <div class="modal-content filtros-modal-content">
+            <div class="modal-header">
+                <h2>Filtros Avançados</h2>
+                <button class="modal-close" id="btn-close-filtros">&times;</button>
+            </div>
+            <form id="form-filtros">
+                <div class="filtros-grid">
+                    <div class="form-group">
+                        <label for="f-status">Status</label>
+                        <select id="f-status" name="status">
+                            <option value="">Todos</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-genero">Gênero</label>
+                        <select id="f-genero" name="genero">
+                            <option value="">Todos</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-cargo">Cargo Eclesiástico</label>
+                        <select id="f-cargo" name="cargoEclesiastico">
+                            <option value="">Todos</option>
+                            <option value="membro">Membro</option>
+                            <option value="obreiro">Obreiro</option>
+                            <option value="diacono">Diácono</option>
+                            <option value="diaconisa">Diaconisa</option>
+                            <option value="presbitero">Presbítero</option>
+                            <option value="evangelista">Evangelista</option>
+                            <option value="pastor">Pastor</option>
+                            <option value="musico">Músico</option>
+                            <option value="missionaria">Missionária</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-estado-civil">Estado Civil</label>
+                        <select id="f-estado-civil" name="estadoCivil">
+                            <option value="">Todos</option>
+                            <option value="solteiro">Solteiro(a)</option>
+                            <option value="casado">Casado(a)</option>
+                            <option value="divorciado">Divorciado(a)</option>
+                            <option value="viuvo">Viúvo(a)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-ministerio">Ministério</label>
+                        <select id="f-ministerio" name="temMinisterio">
+                            <option value="">Todos</option>
+                            <option value="sim">Participa</option>
+                            <option value="nao">Não Participa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-batismo">Batismo nas Águas</label>
+                        <select id="f-batismo" name="batismoAguas">
+                            <option value="">Todos</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-dizimista">Dizimista</label>
+                        <select id="f-dizimista" name="eDizimista">
+                            <option value="">Todos</option>
+                            <option value="true">Sim</option>
+                            <option value="false">Não</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f-faixa-etaria">Faixa Etária</label>
+                        <select id="f-faixa-etaria" name="faixaEtaria">
+                            <option value="">Todas</option>
+                            <option value="0-11">Crianças (0-11)</option>
+                            <option value="12-17">Adolescentes (12-17)</option>
+                            <option value="18-29">Jovens (18-29)</option>
+                            <option value="30-59">Adultos (30-59)</option>
+                            <option value="60+">Idosos (60+)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer-actions">
+                    <button type="button" id="btn-limpar-filtros" class="btn-secundario">Limpar Filtros</button>
+                    <button type="submit" class="btn-principal">Aplicar Filtros</button>
+                </div>
+            </form>
         </div>
     </div>
 

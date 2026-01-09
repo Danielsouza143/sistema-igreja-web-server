@@ -7,6 +7,8 @@ import { logActivity } from '../utils/logActivity.js';
 const router = express.Router();
 const upload = s3Upload('membros-publico');
 
+import PequenoGrupo from '../models/pequenoGrupo.model.js'; // Importar Model
+
 // GET /api/public-form/tenant/:id - Retorna dados básicos da igreja para o cabeçalho
 router.get('/tenant/:id', async (req, res) => {
     try {
@@ -21,6 +23,16 @@ router.get('/tenant/:id', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar dados da igreja.', error: error.message });
+    }
+});
+
+// GET /api/public-form/grupos/:tenantId - Listar pequenos grupos para o formulário
+router.get('/grupos/:tenantId', async (req, res) => {
+    try {
+        const grupos = await PequenoGrupo.find({ tenantId: req.params.tenantId }).select('nome _id').lean();
+        res.json(grupos);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar grupos.', error: error.message });
     }
 });
 

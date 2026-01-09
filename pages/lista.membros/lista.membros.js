@@ -5,15 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let presencasMembros = {};
     // --- ELEMENTOS DO DOM ---
     const filtroNomeInput = document.getElementById('filtro-nome');
-    const filtroGeneroInput = document.getElementById('filtro-genero');
-    const filtroCargoInput = document.getElementById('filtro-cargo');
-    // CORREÇÃO: Ajustar os valores do filtro de gênero para corresponder ao banco de dados
-    filtroGeneroInput.innerHTML = `
-        <option value="">Gênero</option>
-        <option value="masculino">Masculino</option>
-        <option value="feminino">Feminino</option>
-    `;
     const tabelaCorpo = document.querySelector('.membros-lista');
+
+    // --- MODAL DE FILTROS ---
+    const modalFiltros = document.getElementById('modal-filtros');
+    const btnAbrirFiltros = document.getElementById('btn-filtros-avancados');
+    const btnFecharFiltros = document.getElementById('btn-close-filtros');
+    const formFiltros = document.getElementById('form-filtros');
+    const btnLimparFiltros = document.getElementById('btn-limpar-filtros');
+
+    // Abrir/Fechar Modal
+    btnAbrirFiltros.addEventListener('click', () => modalFiltros.classList.add('active'));
+    
+    const fecharModalFiltros = () => modalFiltros.classList.remove('active');
+    btnFecharFiltros.addEventListener('click', fecharModalFiltros);
+    modalFiltros.addEventListener('click', (e) => {
+        if (e.target === modalFiltros) fecharModalFiltros();
+    });
 
     // --- CONTROLE DAS ABAS ---
     const abasLink = document.querySelectorAll('.aba-link');
@@ -33,10 +41,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- LÓGICA DA LISTA DE MEMBROS E FILTROS ---
+    
+    // Função auxiliar para processar diferentes formatos de data
+    const parseDate = (dateInput) => {
+        if (!dateInput) return null;
+        if (dateInput instanceof Date) return dateInput;
+        
+        // Tenta criar Data padrão (ISO string, etc)
+        let date = new Date(dateInput);
+        if (!isNaN(date.getTime())) return date;
+
+        // Tenta formato brasileiro DD/MM/YYYY
+        if (typeof dateInput === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateInput)) {
+            const [day, month, year] = dateInput.split('/').map(Number);
+            date = new Date(year, month - 1, day);
+            if (!isNaN(date.getTime())) return date;
+        }
+        
+        return null;
+    };
+
+    const calcularIdade = (dataNascimento, idadePrevia) => {
+        // Se já tiver idade cadastrada diretamente (legado/importação), usa ela
+        if (idadePrevia !== undefined && idadePrevia !== null && !isNaN(idadePrevia)) {
+            return parseInt(idadePrevia);
+        }
+
+        const nascimento = parseDate(dataNascimento);
+        if (!nascimento) return null;
+
+        const hoje = new Date();
+        let idade = hoje.getFullYear() - nascimento.getFullYear();
+        const mes = hoje.getMonth() - nascimento.getMonth();
+        if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+            idade--;
+        }
+        return idade;
+    };
+
     const renderizarTabelaMembros = (membros) => {
         tabelaCorpo.innerHTML = '';
         if (membros.length === 0) {
-            tabelaCorpo.innerHTML = '<tr><td colspan="6" class="mensagem-vazio">Nenhum membro encontrado.</td></tr>';
+            tabelaCorpo.innerHTML = '<tr><td colspan="6" class="mensagem-vazio">Nenhum membro encontrado com os filtros atuais.</td></tr>';
             return;
         }
 
@@ -50,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : `<div class="membro-foto-placeholder"><i class='bx bx-user'></i></div>`;
 
             // Célula do Status
-            const status = membro.status || 'inativo';
+            const status = membro.status || 'ativo'; // Default para ativo se não definido
             const statusClasse = `status-badge status-${status}`;
             const statusTexto = status.charAt(0).toUpperCase() + status.slice(1);
             const statusHtml = `<span class="${statusClasse}">${statusTexto}</span>`;
@@ -59,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td data-label="Foto">${fotoHtml}</td>
                 <td data-label="Nome">${membro.nome}</td>
                 <td data-label="Status">${statusHtml}</td>
-                <td data-label="Cargo">${membro.cargoEclesiastico || 'Não definido'}</td>
+                <td data-label="Cargo">${membro.cargoEclesiastico ? membro.cargoEclesiastico.charAt(0).toUpperCase() + membro.cargoEclesiastico.slice(1) : 'Membro'}</td>
                 <td data-label="Telefone">${membro.telefone || 'Não informado'}</td>
                 <td data-label="Ações">
                     <div class="acoes-item">
@@ -75,22 +121,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const aplicarFiltros = () => {
         const nomeFiltro = filtroNomeInput.value.toLowerCase();
-        const generoFiltro = filtroGeneroInput.value;
-        const cargoFiltro = filtroCargoInput.value;
+        
+        // Captura dados do formulário do modal
+        const formData = new FormData(formFiltros);
+        const filtros = Object.fromEntries(formData.entries());
 
         const membrosFiltrados = todosMembros.filter(membro => {
+            // Filtro de Nome (Barra de Pesquisa)
             const nomeOk = membro.nome.toLowerCase().includes(nomeFiltro) || 
                          (membro.cpf && membro.cpf.includes(nomeFiltro)) ||
                          (membro.nomeConjuge && membro.nomeConjuge.toLowerCase().includes(nomeFiltro));
-            const generoOk = !generoFiltro || membro.genero === generoFiltro;
-            const cargoOk = !cargoFiltro || membro.cargoEclesiastico === cargoFiltro;
-            return nomeOk && generoOk && cargoOk;
+            
+            if (!nomeOk) return false;
+
+            // Filtros Avançados
+            if (filtros.status && (membro.status || 'ativo') !== filtros.status) return false;
+            if (filtros.genero && membro.genero !== filtros.genero) return false;
+            if (filtros.cargoEclesiastico && membro.cargoEclesiastico !== filtros.cargoEclesiastico) return false;
+            if (filtros.estadoCivil && membro.estadoCivil !== filtros.estadoCivil) return false;
+            
+            // Filtro de Faixa Etária
+            if (filtros.faixaEtaria) {
+                const idade = calcularIdade(membro.dataNascimento, membro.idade);
+                if (idade === null) return false; // Sem data de nascimento não entra em faixa etária
+
+                if (filtros.faixaEtaria === '60+') {
+                    if (idade < 60) return false;
+                } else {
+                    const [min, max] = filtros.faixaEtaria.split('-').map(Number);
+                    if (idade < min || idade > max) return false;
+                }
+            }
+
+            // Filtros Booleanos/Especiais
+            if (filtros.temMinisterio) {
+                if (filtros.temMinisterio === 'sim' && membro.temMinisterio !== 'sim') return false;
+                if (filtros.temMinisterio === 'nao' && membro.temMinisterio === 'sim') return false;
+            }
+
+            if (filtros.batismoAguas) {
+                if (filtros.batismoAguas === 'sim' && membro.batismoAguas !== 'sim') return false;
+                if (filtros.batismoAguas === 'nao' && membro.batismoAguas === 'sim') return false;
+            }
+
+            if (filtros.eDizimista) {
+                const isDizimista = membro.eDizimista === true;
+                const filterValue = filtros.eDizimista === 'true';
+                if (isDizimista !== filterValue) return false;
+            }
+
+            return true;
         });
+        
         renderizarTabelaMembros(membrosFiltrados);
     };
 
-    [filtroNomeInput, filtroGeneroInput, filtroCargoInput].forEach(input => {
-        input.addEventListener('input', aplicarFiltros);
+    // Listeners
+    filtroNomeInput.addEventListener('input', aplicarFiltros);
+    
+    formFiltros.addEventListener('submit', (e) => {
+        e.preventDefault();
+        aplicarFiltros();
+        fecharModalFiltros();
+    });
+
+    btnLimparFiltros.addEventListener('click', () => {
+        formFiltros.reset();
+        aplicarFiltros();
+        // Não fecha o modal automaticamente, permitindo que o usuário veja que limpou
     });
 
     tabelaCorpo.addEventListener('click', (e) => {
