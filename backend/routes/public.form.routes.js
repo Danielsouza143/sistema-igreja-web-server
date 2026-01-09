@@ -69,6 +69,21 @@ router.post('/membros', upload.single('foto'), async (req, res) => {
         // Remove campos que não devem ser preenchidos publicamente (segurança)
         delete dadosMembro.status; // Entra como 'ativo' por padrão no model, ou podemos forçar 'pendente' se houver lógica de aprovação
         
+        // CORREÇÃO: Sanitização de campos vazios que causam erro de Cast no Mongoose
+        const camposObjectId = ['grupoPequeno', 'conjugeId'];
+        camposObjectId.forEach(campo => {
+            if (dadosMembro[campo] === '') {
+                dadosMembro[campo] = null;
+            }
+        });
+
+        const camposData = ['dataCasamento', 'dataDivorcio', 'dataViuvez', 'dataBatismo', 'dataBatismoEspiritoSanto', 'dataConversao'];
+        camposData.forEach(campo => {
+            if (dadosMembro[campo] === '') {
+                dadosMembro[campo] = null;
+            }
+        });
+
         // Tratamento de Arrays e Booleanos vindos do FormData (strings)
         if (dadosMembro.dons && typeof dadosMembro.dons === 'string') {
             dadosMembro.dons = [dadosMembro.dons]; // Se vier apenas um
