@@ -26,7 +26,8 @@ import emprestimosRoutes from './routes/emprestimos.routes.js';
 import visitantesRoutes from './routes/visitantes.routes.js';
 import tenantsRoutes from './routes/tenants.routes.js';
 import sedesRoutes from './routes/sedes.routes.js';
-import publicFormRoutes from './routes/public.form.routes.js'; // NOVO: Rotas do formulário público
+import publicFormRoutes from './routes/public.form.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js'; // NOVO
 import { protect } from './middleware/auth.middleware.js';
 import { requireAdmin } from './middleware/tenant.middleware.js';
 
@@ -235,6 +236,7 @@ app.get('/api/debug/status', async (req, res) => {
 app.use('/api/tenants', protect, tenantsRoutes);
 app.use('/api/sedes', protect, sedesRoutes); // Adicionado 'protect' para segurança
 app.use('/api/admin', protect, adminRoutes); // Adicionado 'protect' para segurança
+app.use('/api/notifications', protect, notificationsRoutes); // NOVO
 app.use('/api/membros', protect, membrosRoutes);
 app.use('/api/visitantes', protect, visitantesRoutes);
 app.use('/api/pequenos-grupos', protect, pequenosGruposRoutes);

@@ -180,28 +180,6 @@ function initMenu() {
         if (configLink) configLink.closest('li').style.display = 'none';
     }
 
-    // --- LÓGICA DO PAINEL DE NOTIFICAÇÕES ---
-    const notificacaoContainer = document.getElementById('notificacao-container');
-    const notificationPanel = document.getElementById('notification-panel');
-    const notificationPanelCloseBtn = document.getElementById('notification-panel-close-btn');
-
-    if (notificacaoContainer && notificationPanel && notificationPanelCloseBtn && overlay) {
-        const toggleNotificationPanel = () => {
-            notificationPanel.classList.toggle('active');
-            overlay.classList.toggle('active');
-        };
-
-        notificacaoContainer.addEventListener('click', toggleNotificationPanel);
-        notificationPanelCloseBtn.addEventListener('click', toggleNotificationPanel);
-        
-        overlay.addEventListener('click', () => {
-            // Adicionado um listener separado para o painel de notificações
-            if (notificationPanel.classList.contains('active')) {
-                toggleNotificationPanel();
-            }
-        });
-    }
-
     // --- INICIALIZAÇÃO ---
     ChurchIdentity.init();
     aplicarAparencia();

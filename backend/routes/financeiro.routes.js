@@ -2,6 +2,7 @@ import express from 'express';
 import Lancamento from '../models/lancamento.model.js';
 import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
 import { protect } from '../middleware/auth.middleware.js';
+import { createNotification } from '../utils/notification.service.js';
 
 const router = express.Router();
 const upload = s3Upload('comprovantes', false);
@@ -35,6 +36,14 @@ router.post('/lancamentos', async (req, res) => {
             tenantId: req.tenant.id
         });
         await novoLancamento.save();
+
+        await createNotification(req.tenant.id, {
+            title: 'Novo Lançamento',
+            message: `${novoLancamento.tipo === 'entrada' ? 'Entrada' : 'Saída'} de R$ ${novoLancamento.valor.toFixed(2)} registrada.`,
+            type: 'finance',
+            link: '/pages/financeiro.page/financeiro.html'
+        });
+
         res.status(201).json(novoLancamento);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao criar lançamento.', error: error.message });

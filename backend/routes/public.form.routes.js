@@ -3,6 +3,7 @@ import Membro from '../models/membro.model.js';
 import Tenant from '../models/tenant.model.js';
 import { s3Upload } from '../utils/s3-upload.js';
 import { logActivity } from '../utils/logActivity.js';
+import { createNotification } from '../utils/notification.service.js';
 
 const router = express.Router();
 const upload = s3Upload('membros-publico');
@@ -118,6 +119,14 @@ router.post('/membros', upload.single('foto'), async (req, res) => {
         });
 
         await novoMembro.save();
+
+        // Notificar admins do tenant
+        await createNotification(tenantId, {
+            title: 'Novo Cadastro Online',
+            message: `${novoMembro.nome} se cadastrou pelo formulário público.`,
+            type: 'member',
+            link: `/pages/lista.membros/detalhes_membro.html?id=${novoMembro._id}`
+        });
 
         // Log (Sem usuário logado, usamos 'SYSTEM' ou 'PUBLIC')
         // await logActivity({ _id: 'PUBLIC', username: 'Formulário Público' }, 'CREATE_MEMBRO_PUBLIC', `Novo cadastro público: ${novoMembro.nome}`);

@@ -1,90 +1,145 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const notificationList = document.getElementById('notification-list');
-    const notificationCounter = document.getElementById('notificacao-contador');
-    const markAllAsReadBtn = document.getElementById('mark-all-as-read');
+const initNotifications = () => {
+    const bellIcon = document.querySelector('.menu-notifications i');
+    const badge = document.querySelector('.notification-badge');
+    const notificationList = document.querySelector('.notifications-list');
+    const notificationDropdown = document.querySelector('.notifications-dropdown');
+    const markAllReadBtn = document.querySelector('.mark-all-read');
 
-    // Função para buscar notificações
-    async function fetchNotifications() {
+    // Estado local
+    let notifications = [];
+
+    // --- FUNÇÕES ---
+
+    const fetchNotifications = async () => {
         try {
-            const notifications = await window.api.get('/api/lembretes/my');
-            renderNotifications(notifications);
+            if (!window.api) return; // Aguarda API carregar
+            
+            const data = await window.api.get('/api/notifications');
+            notifications = data.notifications;
+            updateBadge(data.unreadCount);
+            renderNotifications();
         } catch (error) {
             console.error('Erro ao buscar notificações:', error);
-            if (notificationList) {
-                notificationList.innerHTML = '<p class="empty-message">Erro ao carregar notificações.</p>';
-            }
-        }
-    }
-
-    // Função para renderizar as notificações no painel
-    function renderNotifications(notifications) {
-        if (!notificationList) return;
-
-        if (!notifications || notifications.length === 0) {
-            notificationList.innerHTML = '<p class="empty-message">Nenhuma notificação nova.</p>';
-        } else {
-            notificationList.innerHTML = notifications.map(n => `
-                <div class="notification-item ${n.read ? '' : 'unread'}" data-id="${n._id}" data-link="${n.link || '#'}">
-                    <div class="icon-container"><i class='bx bxs-bell'></i></div>
-                    <div class="content-container">
-                        <p>${n.message}</p>
-                        <span class="timestamp">${new Date(n.createdAt).toLocaleString('pt-BR')}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        const unreadCount = notifications.filter(n => !n.read).length;
-        updateCounter(unreadCount);
-    }
-
-    // Função para atualizar o contador
-    function updateCounter(count) {
-        if (!notificationCounter) return;
-        if (count > 0) {
-            notificationCounter.textContent = count;
-            notificationCounter.style.display = 'flex';
-        } else {
-            notificationCounter.style.display = 'none';
-        }
-    }
-
-    // Função para criar um lembrete (chamada pela página da agenda)
-    window.criarLembreteEvento = async (eventoId) => {
-        console.log('criarLembreteEvento called for event:', eventoId);
-        try {
-            await window.api.post('/api/lembretes', { eventoId });
-            alert('Lembrete agendado com sucesso!');
-            fetchNotifications(); // Atualiza a lista
-        } catch (error) {
-            console.error('Erro ao criar lembrete:', error);
-            alert(error.message || 'Não foi possível agendar o lembrete.');
         }
     };
 
-    // Event listener para marcar todas como lidas
-    if (markAllAsReadBtn) {
-        markAllAsReadBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                await window.api.post('/api/lembretes/mark-all-as-read');
-                fetchNotifications();
-            } catch (error) {
-                console.error('Erro ao marcar notificações como lidas:', error);
-            }
+    const updateBadge = (count) => {
+        if (count > 0) {
+            badge.style.display = 'flex'; // Exibe apenas se houver notificações
+            badge.textContent = count > 99 ? '99+' : count;
+        } else {
+            badge.style.display = 'none'; // Oculta completamente se zero
+        }
+    };
+
+    const getIconByType = (type) => {
+        switch (type) {
+            case 'member': return '<i class="bx bx-user-plus" style="color: #4CAF50;"></i>';
+            case 'finance': return '<i class="bx bx-dollar-circle" style="color: #2196F3;"></i>';
+            case 'event': return '<i class="bx bx-calendar-event" style="color: #FF9800;"></i>';
+            case 'inventory': return '<i class="bx bx-box" style="color: #9C27B0;"></i>';
+            default: return '<i class="bx bx-info-circle" style="color: #607D8B;"></i>';
+        }
+    };
+
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.round(diffMs / 60000);
+        const diffHours = Math.round(diffMs / 3600000);
+        const diffDays = Math.round(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Agora mesmo';
+        if (diffMins < 60) return `${diffMins} min atrás`;
+        if (diffHours < 24) return `${diffHours} h atrás`;
+        if (diffDays < 7) return `${diffDays} dias atrás`;
+        return date.toLocaleDateString('pt-BR');
+    };
+
+    const renderNotifications = () => {
+        notificationList.innerHTML = '';
+
+        if (notifications.length === 0) {
+            notificationList.innerHTML = '<li class="no-notifications">Nenhuma notificação recente.</li>';
+            return;
+        }
+
+        notifications.forEach(notif => {
+            const li = document.createElement('li');
+            li.className = `notification-item ${notif.read ? 'read' : 'unread'}`;
+            li.innerHTML = `
+                <div class="notification-icon">
+                    ${getIconByType(notif.type)}
+                </div>
+                <div class="notification-content">
+                    <p class="notification-title">${notif.title}</p>
+                    <p class="notification-message">${notif.message}</p>
+                    <span class="notification-time">${formatTime(notif.createdAt)}</span>
+                </div>
+                ${!notif.read ? '<span class="unread-dot"></span>' : ''}
+            `;
+
+            li.addEventListener('click', async () => {
+                // Marca como lida e redireciona
+                if (!notif.read) {
+                    try {
+                        await window.api.put(`/api/notifications/${notif._id}/read`);
+                        fetchNotifications(); // Atualiza contador
+                    } catch (e) { console.error(e); }
+                }
+                if (notif.link && notif.link !== '#') {
+                    window.location.href = notif.link;
+                }
+            });
+
+            notificationList.appendChild(li);
+        });
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await window.api.put('/api/notifications/read-all');
+            fetchNotifications(); // Recarrega lista (deve vir vazia ou tudo lido)
+        } catch (error) {
+            console.error('Erro ao limpar notificações:', error);
+        }
+    };
+
+    // --- EVENT LISTENERS ---
+
+    // Toggle Dropdown
+    document.querySelector('.menu-notifications').addEventListener('click', (e) => {
+        e.stopPropagation();
+        notificationDropdown.classList.toggle('active');
+    });
+
+    // Fechar ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.menu-notifications')) {
+            notificationDropdown.classList.remove('active');
+        }
+    });
+
+    // Marcar todas como lidas
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            markAllAsRead();
         });
     }
 
-    // Event listener para clicar em uma notificação
-    if (notificationList) {
-        notificationList.addEventListener('click', (e) => {
-            const item = e.target.closest('.notification-item');
-            if (item && item.dataset.link && item.dataset.link !== '#') {
-                window.location.href = item.dataset.link;
-            }
-        });
-    }
+    // --- INICIALIZAÇÃO ---
+    // Aguarda um pouco para garantir que o token esteja pronto (api.js)
+    setTimeout(() => {
+        fetchNotifications();
+        // Polling: Atualiza a cada 60 segundos
+        setInterval(fetchNotifications, 60000);
+    }, 1000);
+};
 
-    // Inicialização
-    fetchNotifications();
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotifications);
+} else {
+    initNotifications();
+}

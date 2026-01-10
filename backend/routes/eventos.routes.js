@@ -1,8 +1,10 @@
 import express from 'express';
 import Evento from '../models/evento.js';
+import Config from '../models/config.js';
 import Tenant from '../models/tenant.model.js'; // Importa o modelo de Tenant
 import { s3Upload, s3Delete, getS3KeyFromUrl } from '../utils/s3-upload.js';
 import { protect } from '../middleware/auth.middleware.js';
+import { createNotification } from '../utils/notification.service.js';
 
 console.log('--- DEBUG: O arquivo eventos.routes.js foi carregado pelo servidor. ---');
 
@@ -81,6 +83,14 @@ router.post('/', upload.single('cartaz'), async (req, res) => {
 
         const novoEvento = new Evento(eventoData);
         await novoEvento.save();
+
+        await createNotification(req.tenant.id, {
+            title: 'Novo Evento/Programação',
+            message: `${novoEvento.nome} agendado para ${new Date(novoEvento.dataInicio).toLocaleDateString('pt-BR')}.`,
+            type: 'event',
+            link: '/pages/agenda/agenda.html'
+        });
+
         res.status(201).json(novoEvento);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao criar evento', error: error.message });

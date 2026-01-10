@@ -4,6 +4,7 @@ import Lancamento from '../models/lancamento.model.js';
 import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { logActivity } from '../utils/logActivity.js';
+import { createNotification } from '../utils/notification.service.js'; // NOVO
 
 const router = express.Router();
 
@@ -50,6 +51,15 @@ router.post('/', async (req, res) => {
         });
         await novoMembro.save();
         await logActivity(req.user, 'CREATE_MEMBER', `Cadastrou o membro '${novoMembro.nome}'.`, novoMembro._id);
+        
+        // Notificação
+        await createNotification(req.tenant.id, {
+            title: 'Novo Membro',
+            message: `${novoMembro.nome} foi cadastrado(a) com sucesso.`,
+            type: 'member',
+            link: `/pages/lista.membros/detalhes_membro.html?id=${novoMembro._id}`
+        });
+
         res.status(201).json(novoMembro);
     } catch (error) {
         res.status(400).json({ message: 'Erro ao cadastrar membro', error: error.message });
