@@ -358,10 +358,123 @@ document.addEventListener('DOMContentLoaded', () => {
 
     init();
 
-    // Botão de relatório
-    document.querySelector('.btn-relatorio').addEventListener('click', () => {
-        alert("Funcionalidade de impressão de relatório a ser implementada.");
-    });
+    // --- GERAÇÃO DE RELATÓRIO PDF ---
+    const loadScript = (src) => {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) return resolve();
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    };
+
+    const gerarRelatorioPDF = async () => {
+        const btn = document.querySelector('.btn-relatorio');
+        const originalContent = btn.innerHTML;
+        
+        try {
+            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Gerando...';
+            btn.disabled = true;
+
+            // Carrega dependências (jsPDF e AutoTable) via CDN
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // 1. Cabeçalho e Identidade
+            const identity = JSON.parse(localStorage.getItem('churchIdentity')) || {};
+            const nomeIgreja = identity.nomeIgreja || 'Relatório Geral';
+            const logoUrl = identity.logoIgrejaUrl;
+
+            let startX = 14;
+
+            if (logoUrl) {
+                try {
+                    const getBase64FromUrl = async (url) => {
+                        const response = await fetch(url);
+                        const blob = await response.blob();
+                        return new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.readAsDataURL(blob);
+                        });
+                    };
+
+                    const imgData = await getBase64FromUrl(logoUrl);
+                    // Adiciona logo (x: 14, y: 10, w: 25, h: 25)
+                    // O formato é inferido pelo jsPDF a partir do Data URI
+                    doc.addImage(imgData, 14, 10, 25, 25);
+                    startX = 45; // Desloca o texto para a direita
+                } catch (err) {
+                    console.warn('Erro ao carregar logo no PDF:', err);
+                }
+            }
+            
+            doc.setFontSize(16);
+            doc.text(nomeIgreja, startX, 22);
+            
+            doc.setFontSize(10);
+            doc.text(`Relatório de Membros - Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, startX, 29);
+
+            // 2. Resumo Estatístico
+            const total = todosMembros.length;
+            const ativos = todosMembros.filter(m => (m.status || 'ativo') === 'ativo').length;
+            const inativos = total - ativos;
+
+            doc.setDrawColor(200);
+            doc.line(14, 32, 196, 32);
+            doc.text(`Total: ${total}   |   Ativos: ${ativos}   |   Inativos: ${inativos}`, 14, 38);
+
+            // 3. Preparação dos Dados
+            const formatarTelefone = (fone) => {
+                if (!fone) return '-';
+                const limpo = fone.replace(/\D/g, '');
+                if (limpo.length === 11) return `(${limpo.slice(0,2)}) ${limpo.slice(2,7)}-${limpo.slice(7)}`;
+                if (limpo.length === 10) return `(${limpo.slice(0,2)}) ${limpo.slice(2,6)}-${limpo.slice(6)}`;
+                return fone;
+            };
+
+            const formatarData = (dataStr) => {
+                const data = parseDate(dataStr); // Usa a função auxiliar do escopo pai
+                return data ? data.toLocaleDateString('pt-BR') : '-';
+            };
+
+            const colunas = ['Nome', 'Status', 'Cargo', 'Telefone', 'Nascimento'];
+            const linhas = todosMembros.map(m => [
+                m.nome,
+                (m.status || 'ativo').toUpperCase(),
+                (m.cargoEclesiastico || 'Membro').toUpperCase(),
+                formatarTelefone(m.telefone),
+                formatarData(m.dataNascimento)
+            ]);
+
+            // 4. Geração da Tabela
+            doc.autoTable({
+                head: [colunas],
+                body: linhas,
+                startY: 45,
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [41, 128, 185] }, // Azul padrão
+                alternateRowStyles: { fillColor: [245, 245, 245] }
+            });
+
+            doc.save('relatorio-membros.pdf');
+
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error);
+            alert('Ocorreu um erro ao gerar o relatório. Verifique sua conexão.');
+        } finally {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    };
+
+    // Event Listener do Botão
+    document.querySelector('.btn-relatorio').addEventListener('click', gerarRelatorioPDF);
 
     // --- LÓGICA DO MODAL DE COMPARTILHAMENTO ---
     const modalShare = document.getElementById('modal-share');
