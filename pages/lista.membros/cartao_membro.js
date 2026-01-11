@@ -23,7 +23,28 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPresets();
         loadCustomBackgrounds();
         attachEventListeners();
- 
+        
+        // Configura texto padrão baseado no Tenant (Sede vs Filial)
+        try {
+            const tenant = await window.api.get('/api/tenants/me');
+            const inputCongregacao = $('#congregacao-text');
+            
+            // Só define o padrão se o usuário não estiver carregando um preset salvo específico que sobrescreve isso
+            // (A lógica de preset roda depois, então aqui definimos o 'default' do input)
+            if (tenant) {
+                // Verifica se é Sede (tenantType 'sede')
+                if (tenant.tenantType === 'sede') {
+                    inputCongregacao.value = 'CONGREGAÇÃO SEDE';
+                } else {
+                    // É filial, tenta pegar o nome do parentTenant
+                    const nomeSede = tenant.parentTenant?.name || tenant.name || 'CONGREGAÇÃO';
+                    inputCongregacao.value = nomeSede.toUpperCase();
+                }
+            }
+        } catch (error) {
+            console.warn('Não foi possível obter detalhes do tenant para texto padrão do cartão:', error);
+        }
+
         if (membroId) {
           try {
             const membro = await window.api.get(`/api/membros/${membroId}`);
@@ -65,6 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const qrCodeId = `qr-code-${type}-${membro._id}`;
         const logoFinalUrl = churchIdentity.logoIgrejaUrl || '';
         const congregationText = cardOptions?.congregationText || 'CONGREGAÇÃO SEDE';
+        const showCongregation = cardOptions?.congregationVisible !== false; // Default true
+        const congregationStyle = showCongregation ? '' : 'display: none;';
 
         if (type === 'front') {
             return `
@@ -77,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <img src="${logoFinalUrl}" alt="Logo" class="header-logo-new">
                     <div class="church-info-new">
                         <h3>${churchIdentity.nomeIgreja}</h3>
-                        <p>${congregationText}</p>
+                        <p style="${congregationStyle}">${congregationText}</p>
                     </div>
                 </div>
                 <div class="card-body-new">
@@ -119,8 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getCardOptions = () => {
+        const btnToggle = $('#btn-toggle-congregation');
+        const isHidden = btnToggle && btnToggle.classList.contains('hidden-state');
         return {
-            congregationText: $('#congregacao-text').value.trim()
+            congregationText: $('#congregacao-text').value.trim(),
+            congregationVisible: !isHidden
         };
     };
 
@@ -178,6 +204,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENT LISTENERS ---
     const attachEventListeners = () => {
         $('#btn-back').addEventListener('click', () => history.back());
+        
+        // Toggle Congregation Text
+        $('#btn-toggle-congregation').addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            btn.classList.toggle('hidden-state');
+            const icon = btn.querySelector('i');
+            if (btn.classList.contains('hidden-state')) {
+                icon.className = 'bx bx-hide';
+                btn.title = "Texto Oculto";
+            } else {
+                icon.className = 'bx bx-show';
+                btn.title = "Texto Visível";
+            }
+            applyCustomization();
+        });
+
         $('#view-physical').addEventListener('change', handleViewSwitch);
         $('#view-virtual').addEventListener('change', handleViewSwitch);
         $('#color-primary').addEventListener('input', applyCustomization);
@@ -255,18 +297,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CUSTOMIZATION & PRESETS ---
     const applyCustomization = () => {
+        const btnToggle = $('#btn-toggle-congregation');
+        const isHidden = btnToggle.classList.contains('hidden-state');
+
         const preset = {
             '--card-color-primary': $('#color-primary').value.trim(),
             '--card-color-secondary': $('#color-secondary').value.trim(),
             '--card-color-text': $('#color-text').value.trim(),
             '--card-background': $('.gallery-item.active')?.dataset.bg || 'var(--card-color-primary)',
             '--card-font-family': $('#font-select').value.trim(),
-            'congregacao-text': $('#congregacao-text').value.trim(),
+            'congregacao-text': $('#congregacao-text').value, // Removido .trim() para permitir espaços ao digitar
+            'congregacao-visible': !isHidden
         };
         if ($('.gallery-item[data-bg="var(--card-color-primary)"]').classList.contains('active')) {
             preset['--card-background'] = $('#color-primary').value;
         }
-        applyPreset(preset);
+        applyPreset(preset); // Chama para aplicar visualmente (embora redundante para cores, importante para consistência)
         if (currentMember) { // Re-render card on customization change
             populateCardViews(currentMember);
         }
@@ -285,6 +331,19 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#color-text').value = preset['--card-color-text'] || '#ffffff';
         $('#font-select').value = preset['--card-font-family'] || "'Poppins', sans-serif";
         $('#congregacao-text').value = preset['congregacao-text'] || 'CONGREGAÇÃO SEDE';
+        
+        // Restaura estado do botão de visibilidade
+        const btnToggle = $('#btn-toggle-congregation');
+        const shouldBeVisible = preset['congregacao-visible'] !== false; // Default true
+        
+        if (!shouldBeVisible) {
+            btnToggle.classList.add('hidden-state');
+            btnToggle.querySelector('i').className = 'bx bx-hide';
+        } else {
+            btnToggle.classList.remove('hidden-state');
+            btnToggle.querySelector('i').className = 'bx bx-show';
+        }
+
         $$('.gallery-item').forEach(item => {
             item.classList.toggle('active', item.dataset.bg === preset['--card-background']);
         });

@@ -78,7 +78,7 @@ export const getTenantStatus = async (req, res, next) => {
 export const getMyTenant = async (req, res, next) => {
     try {
         const { id: tenantId } = req.tenant;
-        const tenant = await Tenant.findById(tenantId);
+        const tenant = await Tenant.findById(tenantId).populate('parentTenant', 'name');
 
         if (!tenant) {
             return res.status(404).json({ message: 'Tenant não encontrado.' });

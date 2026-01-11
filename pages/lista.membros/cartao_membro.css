@@ -37,6 +37,33 @@
 
 /* Redesign dos seletores de cor para círculos */
 .color-selector-group { display: flex; gap: 16px; align-items: center; }
+
+/* Input com botão lateral (Toggle) */
+.input-group-row { display: flex; gap: 8px; align-items: center; }
+.input-group-row input { flex: 1; }
+.btn-icon-toggle {
+    background: #fff;
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    width: 36px; /* Tamanho fixo quadrado */
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s;
+    font-size: 1.2rem;
+}
+.btn-icon-toggle:hover { background-color: #f0f0f0; }
+.btn-icon-toggle.hidden-state {
+    color: #999;
+    background-color: #e0e0e0;
+}
+.btn-icon-toggle.hidden-state i::before {
+    content: "\ec00"; /* Code for bx-hide */
+}
+
 .color-input-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .color-input-wrapper label { margin-bottom: 0; font-size: 0.8rem; color: #555; }
 .form-group input[type="color"] {
