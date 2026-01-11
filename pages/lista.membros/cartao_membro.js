@@ -496,19 +496,51 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        const selectedMembers = selectedIds.map(id => allMembers.find(m => m._id == id)).filter(Boolean);
-        
-        const cardOptions = getCardOptions();
-        let cardsHTML = '';
-        selectedMembers.forEach(membro => {
-            cardsHTML += `
-                <div class="print-page">
-                    <div class="card physical-card">${createCardHTML(membro, 'front', cardOptions)}</div>
-                    <div class="card physical-card card-back-style">${createCardHTML(membro, 'back', cardOptions)}</div>
-                </div>`;
-        });
-        
-        launchPrint(cardsHTML, selectedMembers);
+        // Mostra feedback de carregamento
+        const btn = $('#btn-confirm-batch-print');
+        const originalText = btn.textContent;
+        btn.textContent = 'Preparando...';
+        btn.disabled = true;
+
+        try {
+            // Busca dados completos (com token) para cada membro selecionado
+            // Isso garante que o token seja gerado pelo backend se não existir
+            const selectedMembers = await Promise.all(selectedIds.map(async (id) => {
+                const memberInList = allMembers.find(m => m._id == id);
+                if (memberInList && memberInList.cardToken) {
+                    return memberInList;
+                } else {
+                    // Busca individual para forçar geração/recuperação do token
+                    try {
+                        return await window.api.get(`/api/membros/${id}`);
+                    } catch (e) {
+                        console.error(`Erro ao buscar detalhes do membro ${id}`, e);
+                        return memberInList; // Retorna o que tem (sem token) como fallback
+                    }
+                }
+            }));
+            
+            const validMembers = selectedMembers.filter(Boolean);
+            const cardOptions = getCardOptions();
+            let cardsHTML = '';
+            
+            validMembers.forEach(membro => {
+                cardsHTML += `
+                    <div class="print-page">
+                        <div class="card physical-card">${createCardHTML(membro, 'front', cardOptions)}</div>
+                        <div class="card physical-card card-back-style">${createCardHTML(membro, 'back', cardOptions)}</div>
+                    </div>`;
+            });
+            
+            launchPrint(cardsHTML, validMembers);
+
+        } catch (error) {
+            console.error('Erro na impressão em lote:', error);
+            alert('Ocorreu um erro ao preparar a impressão.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     };
 
     // --- CENTRALIZED PRINT LAUNCHER ---
