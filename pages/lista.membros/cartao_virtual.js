@@ -35,25 +35,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('logo-igreja').src = window.api.getImageUrl(identidade.logoIgrejaUrl);
             }
 
-            // Busca os dados públicos do membro
-            const membro = await window.api.get(`/api/public/membro/${membroId}`);
-
-            // Popula o cartão
-            document.title = `Cartão Virtual - ${membro.nome}`;
-            document.getElementById('member-name').textContent = membro.nome;
-            document.getElementById('member-role').textContent = membro.cargoEclesiastico ? membro.cargoEclesiastico.charAt(0).toUpperCase() + membro.cargoEclesiastico.slice(1) : 'Membro';
+            // Busca os dados do membro (Rota PRIVADA para garantir que pegamos o token atualizado)
+            const membroPrivado = await window.api.get(`/api/membros/${membroId}`);
             
-            const dataMembro = membro.dataCadastro || membro.dataConversao;
+            // Popula o cartão visualmente
+            document.title = `Cartão Virtual - ${membroPrivado.nome}`;
+            document.getElementById('member-name').textContent = membroPrivado.nome;
+            document.getElementById('member-role').textContent = membroPrivado.cargoEclesiastico ? membroPrivado.cargoEclesiastico.charAt(0).toUpperCase() + membroPrivado.cargoEclesiastico.slice(1) : 'Membro';
+            
+            const dataMembro = membroPrivado.dataCadastro || membroPrivado.dataConversao;
             document.getElementById('member-since').textContent = dataMembro ? new Date(dataMembro).toLocaleDateString('pt-BR') : 'Não informado';
 
             const photoEl = document.getElementById('member-photo');
-            if (membro.foto) {
-                photoEl.style.backgroundImage = `url(${window.api.getImageUrl(membro.foto)})`;
-                photoEl.innerHTML = ''; // Remove o ícone
+            if (membroPrivado.fotoUrl || membroPrivado.foto) {
+                photoEl.style.backgroundImage = `url(${window.api.getImageUrl(membroPrivado.fotoUrl || membroPrivado.foto)})`;
+                photoEl.innerHTML = ''; 
             }
 
-            // Gera o QR Code que aponta para a própria página
-            generateQRCode(window.location.href, document.getElementById('qr-code'));
+            // Gera o QR Code Público
+            if (membroPrivado.cardToken) {
+                const publicUrl = `${window.location.origin}/pages/public-card/card.html?token=${membroPrivado.cardToken}`;
+                generateQRCode(publicUrl, document.getElementById('qr-code'));
+            } else {
+                console.warn('Membro sem cardToken. QR Code não gerado.');
+                document.getElementById('qr-code').innerHTML = '<p style="font-size:10px; color:red">Token não gerado</p>';
+            }
 
         } catch (error) {
             console.error('Erro ao carregar dados:', error);

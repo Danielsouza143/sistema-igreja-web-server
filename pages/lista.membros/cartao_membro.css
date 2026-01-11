@@ -252,25 +252,71 @@
 
 .card-back-footer { font-size: 0.6rem; text-align: center; color: #888; padding: 10px 15px; }
 
-/* Virtual Card Redesign */
-.virtual-card { width: 320px; min-height: 580px; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.virtual-card-header .logo { width: 50px; height: 50px; margin-bottom: 8px; }
-.virtual-card-header h3 { font-size: 1rem; margin: 0; }
+/* Virtual Card Redesign (Matching Public Card) */
+.virtual-card {
+    width: 320px;
+    min-height: 580px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--card-background); /* Usa a variável dinâmica do editor */
+    color: var(--card-color-text);
+    position: relative;
+    border-radius: 16px; /* Garante borda arredondada no preview */
+}
+
+.virtual-card-header { width: 100%; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; }
+.virtual-card-header .logo { 
+    width: 60px; height: 60px; margin-bottom: 10px; 
+    border-radius: 50%; object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.virtual-card-header h3 { font-size: 1.1rem; margin: 0; font-weight: 700; color: inherit; }
+
 #member-photo-virtual {
-    width: 120px; height: 120px;
+    width: 140px; height: 140px;
     border-radius: 50%;
-    margin-top: 20px;
+    margin-top: 15px;
+    border: 4px solid rgba(255,255,255,0.2);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     background-size: cover;
     background-position: center;
+    background-color: #ddd;
+    display: flex; align-items: center; justify-content: center;
 }
-#member-name-virtual { font-size: 1.5rem; margin: 15px 0 5px 0; }
-#member-role-virtual { font-size: 0.9rem; opacity: 0.8; margin-bottom: 20px; }
-.virtual-card-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 15px; text-align: left; width: 100%; padding: 0 10px; margin-top: 20px; font-size: 0.85rem; }
-.virtual-card-info-grid p { margin: 0; }
-.virtual-card-info-grid span { font-weight: 500; opacity: 0.7; display: block; font-size: 0.75rem; }
-.virtual-card-info-grid span:last-child { font-weight: normal; opacity: 1; color: var(--card-color-text); }
-#qr-code-virtual { width: 120px; height: 120px; margin: 20px auto; flex-shrink: 0; }
-.virtual-card-footer { margin-top: auto; font-size: 0.7rem; opacity: 0.7; }
+#member-photo-virtual i { font-size: 4rem; color: #aaa; }
+
+#member-name-virtual { font-size: 1.6rem; margin: 20px 0 5px 0; font-weight: 700; line-height: 1.2; color: inherit; }
+#member-role-virtual { font-size: 1rem; opacity: 0.9; margin-bottom: 25px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: inherit; }
+
+.virtual-card-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    text-align: left;
+    width: 100%;
+    padding: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    margin-top: 10px;
+}
+.virtual-card-info-grid p { margin: 0; display: flex; flex-direction: column; }
+.virtual-card-info-grid span:first-child { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; font-weight: normal; } /* Rótulo */
+.virtual-card-info-grid span:last-child { font-weight: 600; display: block; font-size: 0.9rem; opacity: 1; color: inherit; } /* Valor */
+
+#qr-code-virtual { width: 120px; height: 120px; margin: 20px auto; flex-shrink: 0; } /* Mantém tamanho do QR Code */
+
+.virtual-card-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    width: 100%;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
 
 /* PRINTING STYLES */
 /* Estilo para forçar o fundo branco no verso do cartão durante a impressão */

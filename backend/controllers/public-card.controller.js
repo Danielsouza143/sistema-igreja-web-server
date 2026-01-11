@@ -20,9 +20,13 @@ export const getPublicMemberCard = async (req, res) => {
             return res.status(403).json({ message: 'Acesso ao cartão temporariamente indisponível.' });
         }
 
-        // Lógica de Sede/Filial para o nome da igreja
-        let nomeIgreja = membro.tenantId.name;
-        let logoUrl = membro.tenantId.config?.logoUrl;
+        // Lógica de Sede/Filial e Identidade para o nome da igreja
+        // Verifica primeiro em config.identidade (padrão novo), depois nos campos raiz (padrão antigo/onboarding)
+        const config = membro.tenantId.config || {};
+        const identidade = config.identidade || {};
+
+        let nomeIgreja = identidade.nomeIgreja || membro.tenantId.name;
+        let logoUrl = identidade.logoIgrejaUrl || config.logoUrl;
         
         // Se for filial, tenta pegar o nome da sede principal para exibição (opcional, mas segue a lógica do cartão físico)
         // Nota: O populate acima pegou apenas o tenant direto. Se quiséssemos a sede da filial, precisaríamos de mais um populate.

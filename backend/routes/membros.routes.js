@@ -74,15 +74,19 @@ router.get('/:id', async (req, res) => {
 
         // --- GERAÇÃO AUTOMÁTICA DE TOKEN DE CARTÃO ---
         if (!membro.cardToken) {
+            console.log(`[MEMBER-CARD] Membro ${membro.nome} (ID: ${membro._id}) sem token. Gerando novo...`);
             try {
                 const newToken = crypto.randomBytes(16).toString('hex');
                 // Atualiza no banco
                 await Membro.findByIdAndUpdate(membro._id, { cardToken: newToken });
                 // Atualiza o objeto em memória para retornar agora
                 membro.cardToken = newToken;
+                console.log(`[MEMBER-CARD] Token gerado com sucesso: ${newToken}`);
             } catch (tokenError) {
-                console.error('Erro ao gerar token do cartão:', tokenError);
+                console.error('[MEMBER-CARD] Erro ao gerar token do cartão:', tokenError);
             }
+        } else {
+            // console.log(`[MEMBER-CARD] Token já existente para ${membro.nome}: ${membro.cardToken}`);
         }
 
         if (membro.foto) {

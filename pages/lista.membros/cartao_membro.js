@@ -154,33 +154,73 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DATA POPULATION ---
     const populateCardViews = (membro) => {
         const cardOptions = getCardOptions();
+        
+        // 1. Gera o HTML do Cartão Físico (Front e Back) - Mantém lógica existente
         $('#card-front').innerHTML = createCardHTML(membro, 'front', cardOptions);
         $('#card-back').innerHTML = createCardHTML(membro, 'back', cardOptions);
+
+        // 2. Gera o HTML do Cartão Virtual (Dinâmico para evitar erros de ID e manter consistência com public card)
         const fields = getMemberFields(membro);
-        $('#member-name-virtual').textContent = fields['member-name'];
-        $('#member-role-virtual').textContent = fields['member-role'];
-        $('#member-rg-virtual').textContent = fields['member-rg'];
-        $('#member-cpf-virtual').textContent = fields['member-cpf'];
-        $('#member-birthdate-virtual').textContent = fields['member-birthdate'];
-        $('#member-marital-status-virtual').textContent = fields['member-marital-status'];
-        $('#card-validity-virtual').textContent = fields['card-validity'];
-        const photoUrl = membro.fotoUrl;
-        const photoElVirtual = $('#member-photo-virtual');
-        photoElVirtual.style.backgroundImage = photoUrl ? `url(${photoUrl})` : 'none';
-        photoElVirtual.innerHTML = !photoUrl ? `<i class='bx bxs-user'></i>` : '';
-        const virtualCardUrl = `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${membro._id}`;
-        generateQRCode(virtualCardUrl, $(`#qr-code-back-${membro._id}`));
-        generateQRCode(virtualCardUrl, $('#qr-code-virtual'));
+        const logoFinalUrl = churchIdentity.logoIgrejaUrl || '';
+        const congregationText = cardOptions?.congregationText || 'CONGREGAÇÃO SEDE';
+        const showCongregation = cardOptions?.congregationVisible !== false;
         
-        // Atualiza o cabeçalho do cartão virtual dinamicamente
-        const virtualHeader = $('#virtual-card .virtual-card-header');
-        if (virtualHeader) {
-            const logoEl = churchIdentity.logoIgrejaUrl 
-                ? `<img src="${churchIdentity.logoIgrejaUrl}" class="logo" alt="Logo" style="height: 50px; width: 50px; border-radius: 50%; object-fit: cover;">`
-                : `<i class='bx bx-church logo' style="font-size: 50px; color: #fff;"></i>`;
-            
-            virtualHeader.innerHTML = `${logoEl}<h3>${churchIdentity.nomeIgreja || 'Igreja'}</h3>`;
+        // Logo
+        const logoHtml = logoFinalUrl 
+            ? `<img src="${logoFinalUrl}" class="logo" alt="Logo">`
+            : `<i class='bx bxs-church' style="font-size: 50px; margin-bottom: 10px;"></i>`;
+
+        // Foto
+        const photoUrl = membro.fotoUrl;
+        const photoStyle = photoUrl ? `background-image: url('${photoUrl}')` : '';
+        const photoIcon = !photoUrl ? `<i class='bx bxs-user'></i>` : '';
+
+        // Template do Cartão Virtual (Idêntico ao card.js público)
+        const virtualCardHTML = `
+            <div class="virtual-card-header">
+                ${logoHtml}
+                <h3>${churchIdentity.nomeIgreja}</h3>
+                ${showCongregation ? `<p style="font-size: 0.7rem; opacity: 0.8; margin-top: 2px;">${congregationText}</p>` : ''}
+            </div>
+
+            <div id="member-photo-virtual" style="${photoStyle}">
+                ${photoIcon}
+            </div>
+
+            <h2 id="member-name-virtual">${fields['member-name']}</h2>
+            <p id="member-role-virtual">${fields['member-role']}</p>
+
+            <div class="virtual-card-info-grid">
+                <p><span>RG</span><span>${fields['member-rg']}</span></p>
+                <p><span>CPF</span><span>${fields['member-cpf']}</span></p>
+                <p><span>Nascimento</span><span>${fields['member-birthdate']}</span></p>
+                <p><span>Estado Civil</span><span>${fields['member-marital-status']}</span></p>
+            </div>
+
+            <div id="qr-code-virtual"></div>
+
+            <div class="virtual-card-footer">
+                <p>Validade: ${fields['card-validity']}</p>
+            </div>
+        `;
+
+        // Injeta o HTML no container do cartão virtual
+        const virtualCardContainer = $('#virtual-card');
+        if (virtualCardContainer) {
+            virtualCardContainer.innerHTML = virtualCardHTML;
         }
+
+        // 3. Gera QR Codes
+        // URL Pública para o QR Code (Token Seguro)
+        const token = membro.cardToken; 
+        const publicCardUrl = token 
+            ? `${window.location.origin}/pages/public-card/card.html?token=${token}`
+            : `${window.location.origin}/pages/public-card/card.html?error=missing_token`;
+
+        console.log('[DEBUG] QR Code:', { nome: membro.nome, token, url: publicCardUrl });
+
+        generateQRCode(publicCardUrl, $(`#qr-code-back-${membro._id}`));
+        generateQRCode(publicCardUrl, $('#qr-code-virtual'));
     };
     
     const getMemberFields = (membro) => {
@@ -551,14 +591,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         printWindow.onload = () => {
             membersToPrint.forEach(member => {
-        const token = membro.cardToken; 
-        const publicCardUrl = token 
-            ? `${window.location.origin}/pages/public-card/card.html?token=${token}`
-            : `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${membro._id}`;
-        
-        console.log('QR Gen:', { token, url: publicCardUrl }); // DEBUG
-
-        generateQRCode(publicCardUrl, $(`#qr-code-back-${membro._id}`));
+                const token = member.cardToken; 
+                const publicCardUrl = token 
+                    ? `${window.location.origin}/pages/public-card/card.html?token=${token}`
+                    : `${window.location.origin}/pages/public-card/card.html?error=missing_token_print`;
+                    
+                const container = printWindow.document.getElementById(`qr-code-back-${member._id}`);
+                generateQRCode(publicCardUrl, container, printWindow);
             });
             
             setTimeout(() => {

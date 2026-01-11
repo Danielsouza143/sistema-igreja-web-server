@@ -39,6 +39,12 @@ if (!window.api) {
         post: createApiHandler('POST'),
         patch: createApiHandler('PATCH'),
         put: createApiHandler('PUT'),
-        delete: createApiHandler('DELETE')
+        delete: createApiHandler('DELETE'),
+        getImageUrl: (url) => {
+            if (!url) return '';
+            if (url.startsWith('http') || url.startsWith('data:')) return url;
+            // Se for relativo, garante que começa com / e concatena com a origem
+            return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+        }
     };
 }

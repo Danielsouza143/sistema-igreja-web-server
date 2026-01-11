@@ -228,16 +228,39 @@
                     });
 
                     // Links do cartão
-                    const linkVirtualRelativo = `cartao_virtual.html?id=${membroId}`;
+                    let linkVirtualPublico;
+                    if (membro.cardToken) {
+                        linkVirtualPublico = `/pages/public-card/card.html?token=${membro.cardToken}`;
+                    } else {
+                        // Fallback temporário ou mensagem se não tiver token (embora o backend deva gerar ao buscar)
+                        console.warn('Membro sem cardToken. O link pode não funcionar.');
+                        linkVirtualPublico = '#';
+                    }
+
                     document.getElementById('link-personalizar-cartao').href = `cartao_membro.html?id=${membroId}`;
-                    document.getElementById('link-ver-cartao-virtual').href = linkVirtualRelativo;
+                    
+                    const btnVerCartao = document.getElementById('link-ver-cartao-virtual');
+                    if (membro.cardToken) {
+                        btnVerCartao.href = linkVirtualPublico;
+                    } else {
+                        btnVerCartao.style.opacity = '0.5';
+                        btnVerCartao.style.cursor = 'not-allowed';
+                        btnVerCartao.title = "Cartão indisponível (Token ausente)";
+                        btnVerCartao.onclick = (e) => e.preventDefault();
+                    }
 
                     // --- ADICIONADO: Lógica para copiar o link ---
                     document.getElementById('btn-copiar-link-virtual').addEventListener('click', (e) => {
                         e.preventDefault(); // Previne a navegação do link
-                        const urlCompleta = new URL(linkVirtualRelativo, window.location.href).href;
+                        
+                        if (!membro.cardToken) {
+                            alert('Cartão virtual ainda não gerado para este membro.');
+                            return;
+                        }
+
+                        const urlCompleta = new URL(linkVirtualPublico, window.location.href).href;
                         navigator.clipboard.writeText(urlCompleta).then(() => {
-                            alert('Link do Cartão Virtual copiado para a área de transferência!');
+                            alert('Link do Cartão Virtual Público copiado para a área de transferência!');
                         }).catch(err => {
                             console.error('Erro ao copiar o link: ', err);
                             alert('Não foi possível copiar o link.');
