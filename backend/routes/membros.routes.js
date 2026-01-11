@@ -5,10 +5,10 @@ import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../u
 import { protect } from '../middleware/auth.middleware.js';
 import { logActivity } from '../utils/logActivity.js';
 import { createNotification } from '../utils/notification.service.js'; // NOVO
+import crypto from 'crypto'; // Necessário para gerar token do cartão
 
 const router = express.Router();
-
-const upload = s3Upload('membros');
+const upload = s3Upload('membros'); // Restaurando a definição do upload
 
 // Todas as rotas de membros são protegidas
 router.use(protect);
@@ -69,8 +69,21 @@ router.post('/', async (req, res) => {
 // GET /:id - Obter um membro específico do tenant
 router.get('/:id', async (req, res) => {
     try {
-        const membro = await Membro.findOne({ _id: req.params.id, tenantId: req.tenant.id }).lean();
+        let membro = await Membro.findOne({ _id: req.params.id, tenantId: req.tenant.id }).lean();
         if (!membro) return res.status(404).json({ message: 'Membro não encontrado' });
+
+        // --- GERAÇÃO AUTOMÁTICA DE TOKEN DE CARTÃO ---
+        if (!membro.cardToken) {
+            try {
+                const newToken = crypto.randomBytes(16).toString('hex');
+                // Atualiza no banco
+                await Membro.findByIdAndUpdate(membro._id, { cardToken: newToken });
+                // Atualiza o objeto em memória para retornar agora
+                membro.cardToken = newToken;
+            } catch (tokenError) {
+                console.error('Erro ao gerar token do cartão:', tokenError);
+            }
+        }
 
         if (membro.foto) {
             const s3Key = getS3KeyFromUrl(membro.foto);

@@ -27,6 +27,7 @@ import visitantesRoutes from './routes/visitantes.routes.js';
 import tenantsRoutes from './routes/tenants.routes.js';
 import sedesRoutes from './routes/sedes.routes.js';
 import publicFormRoutes from './routes/public.form.routes.js';
+import publicCardRoutes from './routes/public-card.routes.js'; // NOVO: Rotas para cartão público
 import notificationsRoutes from './routes/notifications.routes.js'; // NOVO
 import { protect } from './middleware/auth.middleware.js';
 import { requireAdmin } from './middleware/tenant.middleware.js';
@@ -166,6 +167,7 @@ app.get('/api/auth/mfa-status', (req, res) => {
 // Rota pública
 app.use('/api/auth', authRoutes);
 app.use('/api/public-form', publicFormRoutes); // Rotas do formulário público (NOVO)
+app.use('/api/public', publicCardRoutes); // Rota pública do cartão (NOVO)
 
 // Rota PROTEGIDA para checar CPF (Escopo por Tenant)
 // TODO: Mover esta lógica para membros.controller.js para limpar o server.js

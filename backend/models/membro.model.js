@@ -13,13 +13,21 @@ const membroSchema = new mongoose.Schema({
         index: true
     },
     nome: { type: String, required: true },
-    status: { 
-        type: String, 
-        required: true, 
-        enum: ['ativo', 'inativo'], 
-        default: 'ativo' 
-    },
-    foto: { type: String },
+        status: {
+            type: String,
+            enum: ['ativo', 'inativo', 'disciplina', 'transferido', 'falecido'],
+            default: 'ativo'
+        },
+        cardToken: {
+            type: String,
+            unique: true,
+            sparse: true, // Permite valores nulos (para membros antigos que ainda não têm token)
+            index: true
+        },
+        motivoInatividade: {
+            type: String,
+            trim: true
+        },    foto: { type: String },
     cpf: { type: String },
     dataNascimento: { type: Date },
     telefone: { type: String },

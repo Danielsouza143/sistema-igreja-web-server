@@ -519,9 +519,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         printWindow.onload = () => {
             membersToPrint.forEach(member => {
-                const virtualCardUrl = `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${member._id}`;
+                const token = member.cardToken; 
+                const publicCardUrl = token 
+                    ? `${window.location.origin}/pages/public-card/card.html?token=${token}`
+                    : `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${member._id}`;
+                    
                 const container = printWindow.document.getElementById(`qr-code-back-${member._id}`);
-                generateQRCode(virtualCardUrl, container, printWindow);
+                generateQRCode(publicCardUrl, container, printWindow);
             });
             
             setTimeout(() => {
