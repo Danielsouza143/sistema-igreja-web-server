@@ -17,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const loadCardData = async () => {
+        // Aguarda a API estar pronta (caso carregamento assíncrono)
+        if (!window.api) {
+            console.log('Aguardando API...');
+            setTimeout(loadCardData, 100);
+            return;
+        }
+
         try {
             // CORREÇÃO: Busca as configurações de uma nova rota pública.
             const configs = await window.api.get('/api/public/configs');

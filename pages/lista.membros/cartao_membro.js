@@ -551,13 +551,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         printWindow.onload = () => {
             membersToPrint.forEach(member => {
-                const token = member.cardToken; 
-                const publicCardUrl = token 
-                    ? `${window.location.origin}/pages/public-card/card.html?token=${token}`
-                    : `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${member._id}`;
-                    
-                const container = printWindow.document.getElementById(`qr-code-back-${member._id}`);
-                generateQRCode(publicCardUrl, container, printWindow);
+        const token = membro.cardToken; 
+        const publicCardUrl = token 
+            ? `${window.location.origin}/pages/public-card/card.html?token=${token}`
+            : `${window.location.origin}/pages/lista.membros/detalhes_membro.html?id=${membro._id}`;
+        
+        console.log('QR Gen:', { token, url: publicCardUrl }); // DEBUG
+
+        generateQRCode(publicCardUrl, $(`#qr-code-back-${membro._id}`));
             });
             
             setTimeout(() => {
