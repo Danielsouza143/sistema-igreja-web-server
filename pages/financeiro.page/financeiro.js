@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const atualizarCategoriasModal = (tipo, categoriaSelecionada = null) => {
         const selectCategoria = document.getElementById('categoria');
-        const categorias = tipo === 'entrada' ? categoriasConfig.entradas : categoriasConfig.saidas;
+        const categorias = (tipo === 'entrada' ? categoriasConfig?.entradas : categoriasConfig?.saidas) || [];
         selectCategoria.innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         if (categoriaSelecionada) {
             selectCategoria.value = categoriaSelecionada;
@@ -853,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             todosLancamentos = resLancamentos;
             todosMembros = resMembros;
-            categoriasConfig = resConfig.financeiro_categorias;
+            categoriasConfig = resConfig.financeiro_categorias || { entradas: [], saidas: [] };
 
             popularFiltros();
             aplicarFiltros();
