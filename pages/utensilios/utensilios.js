@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarUtensilios = () => {
     // --- ESTADO DA APLICAÇÃO ---
     let inventario = [];
     let emprestimos = [];
@@ -470,4 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     carregarDados();
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarUtensilios);
+document.body.addEventListener('htmx:afterSwap', iniciarUtensilios);
+if (document.readyState !== 'loading') iniciarUtensilios();

@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/preload.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/auth-guard.js"></script>
 
@@ -18,12 +20,11 @@
     <link rel="stylesheet" href="/components/menu.css">
     <link rel="stylesheet" href="/components/notifications.css">
     <link rel="stylesheet" href="/pages/styles/tabelas-abas.css">
-    <link rel="stylesheet" href="utensilios.css">
-</head>
-<body>
-
-<header id="menu-placeholder"></header>
-
+            <link rel="stylesheet" href="utensilios.css">
+        </head>
+        <body hx-boost="true" hx-ext="preload">
+            <!-- Barra de Progresso do HTMX -->        <div class="htmx-indicator"></div>
+        <header id="menu-placeholder"></header>
 <main class="conteudo">
     <div class="header-pagina">
         <h1 class="title-page">Gestão de Utensílios</h1>

@@ -1,6 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+if (typeof iniciarAnaliseMembros === 'undefined') {
+    window.iniciarAnaliseMembros = () => {
     
-    const graficos = {};
+        const graficos = {};
     let todosOsMembros = [];
     const CORES_BASE = ['#0033a0', '#ff8800', '#28a745', '#0056b3', '#ffcd56', '#4bc0c0', '#6c757d'];
 
@@ -569,4 +570,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     iniciar();
-});
+    };
+}
+
+document.addEventListener('DOMContentLoaded', window.iniciarAnaliseMembros);
+document.body.addEventListener('htmx:afterSwap', window.iniciarAnaliseMembros);
+if (document.readyState !== 'loading') window.iniciarAnaliseMembros();

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarGlobalLoader = () => {
 
     /**
      * Lógica para o modo de Supervisão (Impersonation)
@@ -76,4 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.head.appendChild(apiScript);
-});
+};
+
+// Padrão de Inicialização para HTMX
+document.addEventListener('DOMContentLoaded', iniciarGlobalLoader);
+document.body.addEventListener('htmx:afterSwap', iniciarGlobalLoader);
+// Executa imediatamente se já estiver carregado (caso o script seja inserido via HTMX)
+if (document.readyState !== 'loading') {
+    iniciarGlobalLoader();
+}

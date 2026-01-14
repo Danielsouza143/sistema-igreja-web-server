@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarFinanceiro = () => {
     let todosLancamentos = [];
     let lancamentosSelecionados = new Set();
     let todosMembros = [];
@@ -1064,4 +1064,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializa a página
     carregarDados();
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarFinanceiro);
+document.body.addEventListener('htmx:afterSwap', iniciarFinanceiro);
+if (document.readyState !== 'loading') iniciarFinanceiro();

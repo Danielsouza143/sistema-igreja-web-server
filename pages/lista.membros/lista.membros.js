@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarListaMembros = () => {
 
     // --- ESTADO DA APLICAÇÃO ---
     let todosMembros = [];
@@ -542,4 +542,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarListaMembros);
+document.body.addEventListener('htmx:afterSwap', iniciarListaMembros);
+if (document.readyState !== 'loading') iniciarListaMembros();

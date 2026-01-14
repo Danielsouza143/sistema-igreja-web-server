@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async () => {
+const iniciarAgenda = async () => {
     // --- Elementos da UI ---
     const tabButtons = document.querySelectorAll('.aba-link');
     const tabContents = document.querySelectorAll('.aba-conteudo');
@@ -702,4 +702,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Chamar a configuração do novo modal na inicialização
     configurarDetalhesModal();
 
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarAgenda);
+document.body.addEventListener('htmx:afterSwap', iniciarAgenda);
+if (document.readyState !== 'loading') iniciarAgenda();

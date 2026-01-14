@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarDashboard = () => {
     
     // --- FUNÇÕES AUXILIARES ---
     const formatarDataSimples = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' });
@@ -230,4 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicia tudo
     carregarDashboard();
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarDashboard);
+document.body.addEventListener('htmx:afterSwap', iniciarDashboard);
+if (document.readyState !== 'loading') iniciarDashboard();

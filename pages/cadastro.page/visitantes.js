@@ -1,6 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+if (typeof iniciarVisitantes === 'undefined') {
+    window.iniciarVisitantes = () => {
 
-    // --- ESTADO DA APLICAÇÃO ---
+        // --- ESTADO DA APLICAÇÃO ---
     let visitantes = [];
     let presencas = {};
     const graficos = {};
@@ -429,4 +430,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     init();
-});
+    };
+}
+
+document.addEventListener('DOMContentLoaded', window.iniciarVisitantes);
+document.body.addEventListener('htmx:afterSwap', window.iniciarVisitantes);
+if (document.readyState !== 'loading') window.iniciarVisitantes();

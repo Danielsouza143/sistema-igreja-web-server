@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/preload.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/auth-guard.js"></script>
     <title>Gerenciador de Cartão de Membro</title>
@@ -17,7 +19,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="/auth-guard.js"></script>
 </head>
-<body>
+<body hx-boost="true" hx-ext="preload">
+    <!-- Barra de Progresso do HTMX -->
+    <div class="htmx-indicator"></div>
     <header id="menu-placeholder"></header>
 
     <main class="main-content">

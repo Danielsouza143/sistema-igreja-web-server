@@ -2,27 +2,19 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/preload.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/auth-guard.js"></script>
-    <title>Lista de Membros</title>
-    <link rel="stylesheet" href="/pages/lista.membros/lista.membros.css"> <!-- Caminho já estava correto, confirmando -->
-    <link rel="stylesheet" href="/pages/styles/global.css"> 
+    <link rel="stylesheet" href="/pages/styles/global.css">
     <link rel="stylesheet" href="/components/menu.css">
     <link rel="stylesheet" href="/components/notifications.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <style>
-        /* Estilo para o ícone de membro inativo */
-        .status-inativo {
-            color: #ffc107; /* Amarelo/Laranja para alerta */
-            font-size: 0.9em;
-            margin-left: 8px;
-        }
-    </style>
 </head>
-<body>
-<header id="menu-placeholder"></header>
-    <main class="conteudo">
+<body hx-boost="true" hx-ext="preload">
+    <!-- Barra de Progresso do HTMX -->
+    <div class="htmx-indicator"></div>
+    <link rel="stylesheet" href="/pages/lista.membros/lista.membros.css">
+    <header id="menu-placeholder"></header>    <main class="conteudo">
         <div class="page-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
             <h1 class="title-page" style="margin-bottom: 0;">Gerenciamento de Membros</h1>
             <div class="header-actions">

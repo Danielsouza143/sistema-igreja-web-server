@@ -250,3 +250,81 @@ body {
         margin-bottom: 20px;
     }
 }
+
+/* --- TAREFA 1: VIEW TRANSITIONS API (Nativo) --- */
+@view-transition { navigation: auto; }
+
+/* --- TAREFA 4: OTIMIZAÇÃO VISUAL --- */
+html {
+    scroll-behavior: smooth;
+}
+
+/* --- TAREFA 2: BARRA DE PROGRESSO (HTMX Loading Indicator) --- */
+/*
+   Esta barra de progresso aparece automaticamente quando o HTMX 
+   adiciona a classe .htmx-request ao body (devido ao hx-boost).
+*/
+.htmx-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background-color: var(--cor-acao); /* Azul/Cor de destaque */
+    z-index: 99999;
+    pointer-events: none;
+    width: 0;
+    opacity: 0;
+    transition: width 0.3s ease-out, opacity 0.3s ease-in;
+}
+
+/* Estado Ativo (Carregando) */
+body.htmx-request .htmx-indicator {
+    width: 100%; /* Anima até 100% (ou use keyframes para infinito) */
+    opacity: 1;
+    animation: progress-indeterminate 1.5s infinite linear;
+}
+
+@keyframes progress-indeterminate {
+    0% { left: 0; width: 0; }
+    50% { left: 0; width: 50%; }
+    75% { left: 0; width: 75%; }
+    100% { left: 0; width: 100%; }
+}
+
+/* Fallback: Se o usuário preferir usar uma div vazia no HTML com a classe .htmx-indicator */
+.htmx-indicator.htmx-request {
+    opacity: 1;
+    width: 100%;
+}
+
+/* --- TAREFA 3: SUAVIZAR ENTRADA E SAÍDA (Fade & Slide) --- */
+
+/* Animação de Entrada */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Aplica a animação ao container principal quando o conteúdo é trocado */
+main.conteudo, .conteudo {
+    animation: fadeSlideIn 0.4s ease-out forwards;
+}
+
+/* Estado de Saída (HTMX Swapping) */
+/* O HTMX adiciona esta classe ao elemento alvo DURANTE a troca */
+.htmx-swapping {
+    /* REMOVIDO: opacity: 0; -> Conteúdo antigo fica visível até ser substituído */
+    pointer-events: none; /* Evita cliques durante a troca */
+}
+
+/* Garante altura mínima para evitar colapso visual */
+main, .conteudo {
+    min-height: 100vh;
+    animation: fadeSlideIn 0.4s ease-out forwards;
+}

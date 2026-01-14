@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- SELETORES E VARIÁVEIS GLOBAIS ---
+if (typeof iniciarCadastroMembro === 'undefined') {
+    window.iniciarCadastroMembro = () => {
+        // --- SELETORES E VARIÁVEIS GLOBAIS ---
     const form = document.getElementById('form-cadastro-membro');
     const tituloPagina = document.querySelector('.title-page');
     const urlParams = new URLSearchParams(window.location.search);
@@ -445,4 +446,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     inicializarPagina();
-});
+    };
+}
+
+document.addEventListener('DOMContentLoaded', window.iniciarCadastroMembro);
+document.body.addEventListener('htmx:afterSwap', window.iniciarCadastroMembro);
+if (document.readyState !== 'loading') window.iniciarCadastroMembro();

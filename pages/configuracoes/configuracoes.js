@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarConfiguracoes = () => {
     // --- ESTADO DA APLICAÇÃO ---
     let configs = {};
     let cropper;
@@ -406,4 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     init();
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarConfiguracoes);
+document.body.addEventListener('htmx:afterSwap', iniciarConfiguracoes);
+if (document.readyState !== 'loading') iniciarConfiguracoes();

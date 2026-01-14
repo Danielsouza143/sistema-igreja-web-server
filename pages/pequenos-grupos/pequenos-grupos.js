@@ -1,6 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+if (typeof iniciarPequenosGrupos === 'undefined') {
+    window.iniciarPequenosGrupos = () => {
 
-    // --- ESTADO DA APLICAÇÃO ---
+        // --- ESTADO DA APLICAÇÃO ---
     let todosGrupos = [];
     let todosMembros = [];
     let grupoEmEdicaoId = null;
@@ -397,4 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     carregarDados();
-});
+    };
+}
+
+document.addEventListener('DOMContentLoaded', window.iniciarPequenosGrupos);
+document.body.addEventListener('htmx:afterSwap', window.iniciarPequenosGrupos);
+if (document.readyState !== 'loading') window.iniciarPequenosGrupos();

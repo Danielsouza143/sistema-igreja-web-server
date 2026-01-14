@@ -1,15 +1,17 @@
 // Função de logout robusta para garantir a limpeza completa do estado
-const handleLogout = () => {
-    // Limpa TODO o armazenamento local e de sessão para evitar vazamento de estado.
-    // Esta é a etapa mais crucial para a segurança em um ambiente multi-tenant.
-    localStorage.clear();
-    sessionStorage.clear();
+if (typeof handleLogout === 'undefined') {
+    window.handleLogout = () => {
+        // Limpa TODO o armazenamento local e de sessão para evitar vazamento de estado.
+        // Esta é a etapa mais crucial para a segurança em um ambiente multi-tenant.
+        localStorage.clear();
+        sessionStorage.clear();
 
-    // Redireciona para a página de login. O navegador irá carregar a página do zero.
-    window.location.href = '/login.html';
-};
+        // Redireciona para a página de login. O navegador irá carregar a página do zero.
+        window.location.href = '/login.html';
+    };
+}
 
-function initMenu() {
+const iniciarMenu = () => {
     // --- LÓGICA DE IDENTIDADE DA IGREJA (MOVIDA DE CHURCH-IDENTITY.JS) ---
     class ChurchIdentity {
         static async loadAndApplyIdentity() {
@@ -193,7 +195,21 @@ function initMenu() {
     });
 
     // Adiciona o script de notificações dinamicamente
-    const notificationsScript = document.createElement('script');
-    notificationsScript.src = '/components/notifications.js';
-    document.body.appendChild(notificationsScript);
+    if (!document.querySelector('script[src="/components/notifications.js"]')) {
+        const notificationsScript = document.createElement('script');
+        notificationsScript.src = '/components/notifications.js';
+        document.body.appendChild(notificationsScript);
+    }
 }
+
+// Inicialização compatível com HTMX
+document.addEventListener('DOMContentLoaded', iniciarMenu);
+document.body.addEventListener('htmx:afterSwap', iniciarMenu);
+
+// Se carregado dinamicamente via script tag no body (pelo global-loader)
+if (document.readyState !== 'loading') {
+    iniciarMenu();
+}
+
+// Expõe globalmente para o global-loader chamar se necessário
+window.initMenu = iniciarMenu;

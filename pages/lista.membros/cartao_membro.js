@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+const iniciarCartaoMembro = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const membroId = urlParams.get('id');
     let currentMember = null;
@@ -754,4 +754,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '...';
 
     init();
-});
+};
+
+document.addEventListener('DOMContentLoaded', iniciarCartaoMembro);
+document.body.addEventListener('htmx:afterSwap', iniciarCartaoMembro);
+if (document.readyState !== 'loading') iniciarCartaoMembro();
