@@ -24,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loadCustomBackgrounds();
         attachEventListeners();
         
+        // Inicializa input de validade com o fim do ano atual
+        const currentYear = new Date().getFullYear();
+        const defaultValidity = `${currentYear}-12-31`;
+        const validityInput = $('#card-validity-input');
+        if (validityInput) {
+            validityInput.value = defaultValidity;
+        }
+
         // Configura texto padrão baseado no Tenant (Sede vs Filial)
         try {
             const tenant = await window.api.get('/api/tenants/me');
@@ -226,14 +234,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const getMemberFields = (membro) => {
         const dataCadastro = new Date(membro.dataCadastro);
         const anoEmissao = dataCadastro.getFullYear();
-        const validade = new Date(anoEmissao, 11, 31); // 31 de dezembro do ano de emissão
+        let validadeFormatada;
+        
+        const validityInput = $('#card-validity-input');
+        if (validityInput && validityInput.value) {
+            // Usa o valor do input (YYYY-MM-DD) e formata para PT-BR
+            const parts = validityInput.value.split('-');
+            validadeFormatada = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else {
+            // Fallback para lógica antiga
+            const validade = new Date(anoEmissao, 11, 31); 
+            validadeFormatada = validade.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        }
 
         return {
             'member-name': membro.nome,
             'member-role': capitalize(membro.cargoEclesiastico || 'Membro'),
             'member-rg': membro.rg || 'Não informado',
             'member-cpf': membro.cpf || 'Não informado',
-            'card-validity': validade.toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+            'card-validity': validadeFormatada,
             'member-birthdate': formatDate(membro.dataNascimento),
             'member-marital-status': capitalize(membro.estadoCivil),
             'member-baptism-date': formatDate(membro.dataBatismo),
@@ -267,6 +286,15 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#color-text').addEventListener('input', applyCustomization);
         $('#congregacao-text').addEventListener('input', applyCustomization);
         $('#font-select').addEventListener('change', applyCustomization);
+
+        // Novos Event Listeners
+        $('#card-validity-input').addEventListener('change', () => {
+             if (currentMember) populateCardViews(currentMember);
+        });
+        $('#font-size-name').addEventListener('input', applyCustomization);
+        $('#font-size-congregation').addEventListener('input', applyCustomization);
+        $('#font-size-general').addEventListener('input', applyCustomization);
+
         $('#btn-add-background').addEventListener('click', () => $('#background-upload').click());
         $('#background-upload').addEventListener('change', handleBackgroundUpload);
         $('#btn-clear-gallery').addEventListener('click', clearCustomBackgrounds);
@@ -347,7 +375,13 @@ document.addEventListener('DOMContentLoaded', () => {
             '--card-background': $('.gallery-item.active')?.dataset.bg || 'var(--card-color-primary)',
             '--card-font-family': $('#font-select').value.trim(),
             'congregacao-text': $('#congregacao-text').value, // Removido .trim() para permitir espaços ao digitar
-            'congregacao-visible': !isHidden
+            'congregacao-visible': !isHidden,
+            // Font Sizes
+            '--card-font-size-name': ($('#font-size-name').value || 1.4) + 'rem',
+            '--card-font-size-congregation': ($('#font-size-congregation').value || 0.6) + 'rem',
+            '--card-font-size-general': ($('#font-size-general').value || 0.65) + 'rem',
+            // Validity Date
+            'card-validity': $('#card-validity-input').value
         };
         if ($('.gallery-item[data-bg="var(--card-color-primary)"]').classList.contains('active')) {
             preset['--card-background'] = $('#color-primary').value;
@@ -372,6 +406,20 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#font-select').value = preset['--card-font-family'] || "'Poppins', sans-serif";
         $('#congregacao-text').value = preset['congregacao-text'] || 'CONGREGAÇÃO SEDE';
         
+        // Restore Font Sizes (remove 'rem' for input value)
+        if (preset['--card-font-size-name']) $('#font-size-name').value = parseFloat(preset['--card-font-size-name']);
+        if (preset['--card-font-size-congregation']) $('#font-size-congregation').value = parseFloat(preset['--card-font-size-congregation']);
+        if (preset['--card-font-size-general']) $('#font-size-general').value = parseFloat(preset['--card-font-size-general']);
+
+        // Restore Validity Date
+        if (preset['card-validity']) {
+            $('#card-validity-input').value = preset['card-validity'];
+        } else {
+            // Revert to default (end of current year) if not in preset
+            const currentYear = new Date().getFullYear();
+            $('#card-validity-input').value = `${currentYear}-12-31`;
+        }
+
         // Restaura estado do botão de visibilidade
         const btnToggle = $('#btn-toggle-congregation');
         const shouldBeVisible = preset['congregacao-visible'] !== false; // Default true
@@ -416,6 +464,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 '--card-background': '#1a2a4c',
                 '--card-font-family': "'Poppins', sans-serif",
                 'congregacao-text': 'CONGREGAÇÃO SEDE',
+                '--card-font-size-name': '1.4rem',
+                '--card-font-size-congregation': '0.6rem',
+                '--card-font-size-general': '0.65rem'
             };
         }
         updatePresetList();
@@ -630,7 +681,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const computedStyles = getComputedStyle(document.documentElement);
         const customProperties = [
             '--card-color-primary', '--card-color-secondary', '--card-color-text',
-            '--card-font-family', '--card-background'
+            '--card-font-family', '--card-background',
+            '--card-font-size-name', '--card-font-size-congregation', '--card-font-size-general'
         ];
         let inlineStyles = ':root {';
         customProperties.forEach(prop => {
