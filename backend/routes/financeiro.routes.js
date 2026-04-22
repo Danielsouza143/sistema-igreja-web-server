@@ -10,10 +10,44 @@ const upload = s3Upload('comprovantes', false);
 // Aplica proteção a todas as rotas financeiras
 router.use(protect);
 
-// GET /api/financeiro/lancamentos - Listar todos os lançamentos do tenant
+// GET /api/financeiro/lancamentos - Listar lançamentos com filtros dinâmicos
 router.get('/lancamentos', async (req, res) => {
     try {
-        const lancamentos = await Lancamento.find({ tenantId: req.tenant.id }).sort({ data: -1 }).lean();
+        const { ano, mes, categorias } = req.query;
+        let query = { tenantId: req.tenant.id };
+
+        // Filtro por Ano e Mês
+        if (ano && ano !== 'todos') {
+            const anoInt = parseInt(ano);
+            let start, end;
+
+            if (mes && mes !== 'todos') {
+                const mesInt = parseInt(mes) - 1; // JS months are 0-11
+                start = new Date(Date.UTC(anoInt, mesInt, 1, 0, 0, 0));
+                end = new Date(Date.UTC(anoInt, mesInt + 1, 0, 23, 59, 59, 999));
+            } else {
+                start = new Date(Date.UTC(anoInt, 0, 1, 0, 0, 0));
+                end = new Date(Date.UTC(anoInt, 11, 31, 23, 59, 59, 999));
+            }
+            query.data = { $gte: start, $lte: end };
+        } else if (mes && mes !== 'todos') {
+            // Se escolher mês mas não ano (improvável pela UI, mas seguro), usa o ano atual
+            const anoAtual = new Date().getUTCFullYear();
+            const mesInt = parseInt(mes) - 1;
+            const start = new Date(Date.UTC(anoAtual, mesInt, 1, 0, 0, 0));
+            const end = new Date(Date.UTC(anoAtual, mesInt + 1, 0, 23, 59, 59, 999));
+            query.data = { $gte: start, $lte: end };
+        }
+
+        // Filtro por Múltiplas Categorias (Array ou String separada por vírgula)
+        if (categorias) {
+            let catsArray = Array.isArray(categorias) ? categorias : categorias.split(',').map(c => c.trim()).filter(Boolean);
+            if (catsArray.length > 0) {
+                query.categoria = { $in: catsArray };
+            }
+        }
+
+        const lancamentos = await Lancamento.find(query).sort({ data: -1 }).lean();
         for (let lancamento of lancamentos) {
             if (lancamento.comprovanteUrl) {
                 const s3Key = getS3KeyFromUrl(lancamento.comprovanteUrl);

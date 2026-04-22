@@ -26,6 +26,12 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
         if (!dateInput) return null;
         if (dateInput instanceof Date) return dateInput;
         
+        // Se for string no formato YYYY-MM-DD, trata como local para evitar fuso horário
+        if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
+            const [year, month, day] = dateInput.split('T')[0].split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
         let date = new Date(dateInput);
         if (!isNaN(date.getTime())) return date;
 
@@ -90,22 +96,60 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
         const aniversariantesOrdenados = todosOsMembros
             .filter(m => m.dataNascimento)
             .map(m => {
-                const niver = new Date(m.dataNascimento);
-                return { id: m._id, nome: m.nome, data: new Date(new Date().getFullYear(), niver.getMonth(), niver.getDate()), dataStr: `${String(niver.getDate()).padStart(2, '0')}/${String(niver.getMonth() + 1).padStart(2, '0')}` };
+                const niver = parseDate(m.dataNascimento);
+                return { 
+                    id: m._id, 
+                    nome: m.nome, 
+                    foto: m.foto,
+                    telefone: m.telefone,
+                    data: new Date(new Date().getFullYear(), niver.getMonth(), niver.getDate()), 
+                    dataStr: `${String(niver.getDate()).padStart(2, '0')}/${String(niver.getMonth() + 1).padStart(2, '0')}` 
+                };
             }).sort((a, b) => a.data - b.data);
         if (aniversariantesOrdenados.length > 0) {
             aniversariantesOrdenados.forEach(aniversariante => {
                 const item = document.createElement('div');
                 item.className = 'aniversariante-item';
                 item.dataset.id = aniversariante.id;
-                item.innerHTML = `<strong>${aniversariante.nome}</strong> - ${aniversariante.dataStr}`;
+                
+                const fotoUrl = aniversariante.foto ? (window.api && window.api.getImageUrl ? window.api.getImageUrl(aniversariante.foto) : `${window.API_BASE_URL || ''}/${aniversariante.foto}`) : '';
+                const fotoHtml = fotoUrl ? `<img src="${fotoUrl}" class="aniversariante-foto">` : `<div class="aniversariante-foto-placeholder"><i class="bx bx-user"></i></div>`;
+                
+                const whatsappBtn = aniversariante.telefone
+                    ? `<button class="btn-whatsapp-aniversario" data-phone="${aniversariante.telefone}" data-nome="${aniversariante.nome}" title="Enviar parabéns"><i class='bx bxl-whatsapp'></i></button>`
+                    : '';
+
+                item.innerHTML = `
+                    <div class="aniversariante-info">
+                        ${fotoHtml}
+                        <div class="aniversariante-text">
+                            <strong>${aniversariante.nome}</strong>
+                            <span>${aniversariante.dataStr}</span>
+                        </div>
+                    </div>
+                    ${whatsappBtn}
+                `;
                 listaContainer.appendChild(item);
             });
         } else {
             listaContainer.innerHTML = '<p>Nenhum membro com data de nascimento cadastrada.</p>';
         }
+
+        // Listener para clique no item (abre detalhes)
         listaContainer.addEventListener('click', (e) => {
             const item = e.target.closest('.aniversariante-item');
+            const btnWhatsapp = e.target.closest('.btn-whatsapp-aniversario');
+            
+            if (btnWhatsapp) {
+                e.stopPropagation();
+                const phone = btnWhatsapp.dataset.phone.replace(/\D/g, '');
+                const nome = btnWhatsapp.dataset.nome.split(' ')[0];
+                const message = encodeURIComponent(`Olá ${nome}! A família Tabernáculo Celeste passa para desejar um feliz aniversário! Que Deus te abençoe grandemente. 🎉🎂`);
+                const fullPhone = phone.length > 11 ? phone : `55${phone}`;
+                window.open(`https://wa.me/${fullPhone}?text=${message}`, '_blank');
+                return;
+            }
+
             if (item) {
                 const membroId = item.dataset.id;
                 mostrarDetalheDoMembroNoModal(membroId, viewLista, viewDetalhe);
@@ -124,10 +168,12 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
         viewDetalhe.innerHTML = '<p class="carregando-detalhe">Carregando dados do membro...</p>';
         try {
             const membro = await window.api.get(`/api/membros/${membroId}`);
+            const fotoUrl = membro.foto ? (window.api && window.api.getImageUrl ? window.api.getImageUrl(membro.foto) : `${window.API_BASE_URL || ''}/${membro.foto}`) : '';
+            
             const detalhesHTML = `
                 <button class="btn-voltar-lista">&larr; Voltar à Lista</button>
                 <div class="membro-header-modal">
-                    ${membro.foto ? `<img src="${window.API_BASE_URL}/${membro.foto}" alt="Foto de ${membro.nome}" class="detalhe-foto-modal">` : '<div class="detalhe-foto-placeholder-modal"><i class="bx bx-user-circle"></i></div>'}
+                    ${fotoUrl ? `<img src="${fotoUrl}" alt="Foto de ${membro.nome}" class="detalhe-foto-modal">` : '<div class="detalhe-foto-placeholder-modal"><i class="bx bx-user-circle"></i></div>'}
                     <div class="membro-titulo-info-modal">
                         <h2>${membro.nome}</h2>
                         <p><strong>Cargo:</strong> ${capitalizar(membro.cargoEclesiastico) || 'Não definido'}</p>
@@ -163,14 +209,26 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
         if (document.getElementById('modal-styles')) return;
         const css = `
             .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-            .modal-content { background-color: #fff; padding: 25px; border-radius: 8px; width: 90%; max-width: 550px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+            .modal-content { background-color: #fff; padding: 25px; border-radius: 12px; width: 95%; max-width: 550px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
             .modal-close { position: absolute; top: 10px; right: 15px; font-size: 1.8rem; color: #aaa; background: none; border: none; cursor: pointer; }
-            .modal-content h2 { margin-top: 0; color: var(--cor-primaria, #001f5d); }
-            .aniversariante-item { display: block; padding: 10px 5px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
-            .aniversariante-item:hover { background-color: #f4f7f9; }
+            .modal-content h2 { margin-top: 0; color: var(--cor-primaria, #001f5d); margin-bottom: 20px; font-weight: 700; }
+            
+            .aniversariante-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; border-radius: 8px; margin-bottom: 5px; }
+            .aniversariante-item:hover { background-color: #f8f9fa; }
             .aniversariante-item:last-child { border-bottom: none; }
+            
+            .aniversariante-info { display: flex; align-items: center; gap: 15px; }
+            .aniversariante-foto { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cor-acao, #ff8800); }
+            .aniversariante-foto-placeholder { width: 45px; height: 45px; border-radius: 50%; background-color: #eee; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #999; }
+            .aniversariante-text { display: flex; flex-direction: column; }
+            .aniversariante-text strong { font-size: 1rem; color: #333; }
+            .aniversariante-text span { font-size: 0.85rem; color: #666; }
+            
+            .btn-whatsapp-aniversario { background-color: #25D366; color: white; border: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s, background-color 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            .btn-whatsapp-aniversario:hover { background-color: #128C7E; transform: scale(1.1); }
+
             .carregando-detalhe { text-align: center; padding: 40px; color: #888; }
-            .btn-voltar-lista { background: none; border: 1px solid #ccc; color: #555; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+            .btn-voltar-lista { background: none; border: 1px solid #ccc; color: #555; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-weight: 600; }
             .membro-header-modal { display: flex; align-items: center; gap: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
             .detalhe-foto-modal { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 4px solid var(--cor-secundaria, #0033a0); }
             .detalhe-foto-placeholder-modal { font-size: 80px; color:#999; }
@@ -199,7 +257,7 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
         document.getElementById('total-ministerios').textContent = ministerios.size;
         const hoje = new Date();
         const proximosAniversarios = membros.filter(m => m.dataNascimento).map(m => {
-            const niver = new Date(m.dataNascimento);
+            const niver = parseDate(m.dataNascimento);
             let diasAteNiver = (new Date(hoje.getFullYear(), niver.getMonth(), niver.getDate()) - hoje) / (1000 * 60 * 60 * 24);
             if (diasAteNiver < -1) diasAteNiver += 365.25;
             return { nome: m.nome.split(' ')[0], data: `${String(niver.getDate()).padStart(2, '0')}/${String(niver.getMonth() + 1).padStart(2, '0')}`, dias: diasAteNiver };
@@ -533,39 +591,86 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
     }
 
     async function iniciar() {
-        injetarCSSModal();
-        prepararCanvasWrapper('grafico-genero');
-        prepararCanvasWrapper('grafico-faixa-etaria');
-        prepararCanvasWrapper('grafico-cargos');
-        prepararCanvasWrapper('grafico-aniversariantes-mes');
-        prepararCanvasWrapper('grafico-estado-civil'); // Adicionado
-        prepararCanvasWrapper('grafico-ministerios');
-        prepararCanvasWrapper('grafico-frequencia-perfil');
-
-        // Aguarda a API ser carregada pelo global-loader.js
-        if (!window.api) {
-            await new Promise(resolve => {
-                const interval = setInterval(() => {
-                    if (window.api) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 50);
-            });
-        }
+        // Evita rodar se a página foi trocada ou se já está inicializando
+        if (window.analiseMembrosInicializando) return;
+        
+        // Garante que só executamos se estivermos na página correta (DOM presente)
+        if (!document.getElementById('grafico-genero')) return;
+        
+        window.analiseMembrosInicializando = true;
 
         try {
+            injetarCSSModal();
+            
+            // Injeta o Chart.js dinamicamente se não estiver presente (para navegação HTMX resiliente)
+            if (!window.Chart) {
+                console.log("Chart.js não encontrado. Injetando dinamicamente...");
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = "https://cdn.jsdelivr.net/npm/chart.js";
+                    script.onload = resolve;
+                    script.onerror = () => reject(new Error("Erro ao carregar Chart.js via CDN"));
+                    document.head.appendChild(script);
+                });
+            }
+
+            // Garante que os elementos do DOM existam antes de preparar os canvas
+            const canvases = [
+                'grafico-genero', 'grafico-faixa-etaria', 'grafico-cargos', 
+                'grafico-aniversariantes-mes', 'grafico-estado-civil', 
+                'grafico-ministerios', 'grafico-frequencia-perfil'
+            ];
+            canvases.forEach(id => prepararCanvasWrapper(id));
+
+            // Aguarda a API ser carregada com um timeout de segurança
+            let tentativas = 0;
+            while (!window.api && tentativas < 100) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                tentativas++;
+            }
+
+            if (!window.api || !window.Chart) {
+                throw new Error("Bibliotecas essenciais (API ou Chart) não foram carregadas.");
+            }
+
+            // Aguarda o token estar disponível (essencial para hx-boost)
+            let tokenTentativas = 0;
+            while (!localStorage.getItem('userToken') && tokenTentativas < 20) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                tokenTentativas++;
+            }
+
             todosOsMembros = await window.api.get('/api/membros');
+            
+            if (!todosOsMembros || !Array.isArray(todosOsMembros)) {
+                todosOsMembros = [];
+            }
+
             if (todosOsMembros.length === 0) {
-                document.querySelector('.dashboard-resumo').innerHTML = '<p>Nenhum membro cadastrado para análise.</p>';
+                const resumo = document.querySelector('.dashboard-resumo');
+                if (resumo) resumo.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 20px;">Nenhum membro cadastrado para análise.</p>';
                 return;
             }
+
             atualizarDashboard(todosOsMembros);
             adicionarEventosAosCards();
-            adicionarEventListenersFiltros(); // Adiciona os listeners para os filtros
+            adicionarEventListenersFiltros();
+
         } catch (error) {
             console.error('Falha ao carregar e processar dados:', error);
-            document.querySelector('.conteudo').innerHTML = '<h1>Erro ao carregar dados. Verifique a conexão com o servidor.</h1>';
+            const conteudo = document.querySelector('.conteudo');
+            if (conteudo) {
+                conteudo.innerHTML = `
+                    <div style="text-align: center; padding: 50px;">
+                        <i class='bx bx-error-circle' style="font-size: 4rem; color: #dc3545;"></i>
+                        <h1>Erro ao carregar dados</h1>
+                        <p>${error.message || 'Não foi possível conectar ao servidor. Verifique sua conexão.'}</p>
+                        <button onclick="window.location.reload()" class="btn-secundario" style="margin-top: 20px; background-color: #0033a0; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Tentar Novamente</button>
+                    </div>
+                `;
+            }
+        } finally {
+            window.analiseMembrosInicializando = false;
         }
     }
     
@@ -573,6 +678,23 @@ if (typeof iniciarAnaliseMembros === 'undefined') {
     };
 }
 
-document.addEventListener('DOMContentLoaded', window.iniciarAnaliseMembros);
-document.body.addEventListener('htmx:afterSwap', window.iniciarAnaliseMembros);
-if (document.readyState !== 'loading') window.iniciarAnaliseMembros();
+// Garante uma única execução por carregamento de página/troca HTMX
+(function() {
+    const runInit = () => {
+        if (typeof window.iniciarAnaliseMembros === 'function') {
+            window.iniciarAnaliseMembros();
+        }
+    };
+
+    if (document.readyState !== 'loading') {
+        runInit();
+    } else {
+        document.addEventListener('DOMContentLoaded', runInit);
+    }
+    
+    document.body.addEventListener('htmx:afterSwap', (e) => {
+        // Só re-inicializa se o alvo da troca for o conteúdo principal ou se contiver elementos da página
+        if (e.detail.target.id === 'menu-placeholder' || !document.getElementById('grafico-genero')) return;
+        runInit();
+    });
+})();

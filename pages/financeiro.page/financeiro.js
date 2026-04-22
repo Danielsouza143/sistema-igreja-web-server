@@ -17,10 +17,37 @@ const iniciarFinanceiro = () => {
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const filtroAno = document.getElementById('filtro-ano');
     const filtroMes = document.getElementById('filtro-mes');
-    const filtroCategoria = document.getElementById('filtro-categoria');
     const filtroTipo = document.getElementById('filtro-tipo');
     const contextMenu = document.getElementById('context-menu');
     let rightClickedRowId = null;
+
+    // --- Funções de Multi-select ---
+    window.toggleMultiSelect = () => {
+        const checkboxes = document.getElementById('categorias-checkboxes');
+        checkboxes.classList.toggle('active');
+    };
+
+    // Fecha o multi-select ao clicar fora
+    window.addEventListener('click', (e) => {
+        const cbContainer = document.getElementById('categorias-checkboxes');
+        if (cbContainer && !e.target.closest('#multi-select-categoria')) {
+            cbContainer.classList.remove('active');
+        }
+    });
+
+    const atualizarTextoCategorias = () => {
+        const checkboxes = document.querySelectorAll('.categoria-checkbox:checked');
+        const textSpan = document.getElementById('selected-categories-text');
+        if (!textSpan) return;
+        
+        if (checkboxes.length === 0) {
+            textSpan.textContent = 'Todas as Categorias';
+        } else if (checkboxes.length === 1) {
+            textSpan.textContent = checkboxes[0].value;
+        } else {
+            textSpan.textContent = `${checkboxes.length} selecionadas`;
+        }
+    };
 
     // --- Seletores para a busca de membro no modal ---
     const buscaMembroModalInput = document.getElementById('busca-membro-modal');
@@ -71,25 +98,36 @@ const iniciarFinanceiro = () => {
         document.getElementById('total-receitas').textContent = formatarMoeda(receitas);
         document.getElementById('total-despesas').textContent = formatarMoeda(despesas);
         const balancoEl = document.getElementById('balanco-mensal');
-        balancoEl.textContent = formatarMoeda(balanco);
-        balancoEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
+        if (balancoEl) {
+            balancoEl.textContent = formatarMoeda(balanco);
+            balancoEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
+        }
     };
 
-    const renderizarGraficoAnual = (lancamentos) => {
-        const anoSelecionado = filtroAno.value === 'todos' ? new Date().getFullYear() : filtroAno.value;
-        document.getElementById('grafico-ano-titulo').textContent = anoSelecionado;
+    const calcularBalancoGeral = (todosOsLancamentosNoBanco) => {
+        const receitas = todosOsLancamentosNoBanco.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
+        const despesas = todosOsLancamentosNoBanco.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
+        const balanco = receitas - despesas;
+        const geralEl = document.getElementById('balanco-geral');
+        if (geralEl) {
+            geralEl.textContent = formatarMoeda(balanco);
+            geralEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
+        }
+    };
+
+    const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
+        const tituloEl = document.getElementById('grafico-ano-titulo');
+        if (tituloEl) tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
 
         const dadosPorMes = Array(12).fill(null).map(() => ({ entradas: 0, saidas: 0 }));
 
         lancamentos.forEach(l => {
             const data = new Date(l.data);
-            if (data.getUTCFullYear() == anoSelecionado) {
-                const mes = data.getUTCMonth();
-                if (l.tipo === 'entrada') {
-                    dadosPorMes[mes].entradas += l.valor;
-                } else {
-                    dadosPorMes[mes].saidas += l.valor;
-                }
+            const mesIdx = data.getUTCMonth();
+            if (l.tipo === 'entrada') {
+                dadosPorMes[mesIdx].entradas += l.valor;
+            } else {
+                dadosPorMes[mesIdx].saidas += l.valor;
             }
         });
 
@@ -97,10 +135,10 @@ const iniciarFinanceiro = () => {
         const dadosEntradas = dadosPorMes.map(d => d.entradas);
         const dadosSaidas = dadosPorMes.map(d => d.saidas);
 
-        const ctx = document.getElementById('grafico-mensal').getContext('2d');
-        if (graficoAnual) {
-            graficoAnual.destroy();
-        }
+        const canvas = document.getElementById('grafico-mensal');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (graficoAnual) graficoAnual.destroy();
         graficoAnual = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -119,7 +157,7 @@ const iniciarFinanceiro = () => {
         const pizzaContainer = document.getElementById('grafico-pizza-container');
 
         if (despesas.length === 0) {
-            pizzaContainer.innerHTML = '<p style="text-align:center; padding: 40px 20px; color: #888;">Nenhuma despesa no período para exibir o gráfico.</p>';
+            pizzaContainer.innerHTML = '<p style="text-align:center; padding: 40px 20px; color: #888;">Nenhuma despesa nos filtros selecionados para exibir o gráfico.</p>';
             if (graficoDespesasPizza) graficoDespesasPizza.destroy();
             return;
         }
@@ -137,9 +175,7 @@ const iniciarFinanceiro = () => {
         const cores = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#17a2b8', '#6f42c1'];
 
         const ctx = document.getElementById('grafico-despesas-pizza').getContext('2d');
-        if (graficoDespesasPizza) {
-            graficoDespesasPizza.destroy();
-        }
+        if (graficoDespesasPizza) graficoDespesasPizza.destroy();
         graficoDespesasPizza = new Chart(ctx, {
             type: 'pie',
             data: {
@@ -203,52 +239,81 @@ const iniciarFinanceiro = () => {
     };
 
     // --- Lógica de Filtros ---
-    const aplicarFiltros = (retornarArray = false) => {
+    const aplicarFiltros = async (retornarArray = false) => {
         const ano = filtroAno.value;
         const mes = filtroMes.value;
-        const categoria = filtroCategoria.value;
         const tipo = filtroTipo.value;
+        const categoriasSelecionadas = Array.from(document.querySelectorAll('.categoria-checkbox:checked')).map(cb => cb.value);
 
-        const lancamentosFiltrados = todosLancamentos.filter(l => {
-            const dataLancamento = new Date(l.data);
-            const anoOk = ano === 'todos' || dataLancamento.getUTCFullYear() == ano;
-            const mesOk = mes === 'todos' || dataLancamento.getUTCMonth() + 1 == mes;
-            const categoriaOk = categoria === 'todos' || l.categoria === categoria;
-            const tipoOk = tipo === 'todos' || l.tipo === tipo;
-            return anoOk && mesOk && categoriaOk && tipoOk;
-        });
+        const queryParams = new URLSearchParams();
+        if (ano && ano !== 'todos') queryParams.append('ano', ano);
+        if (mes && mes !== 'todos') queryParams.append('mes', mes);
+        if (categoriasSelecionadas.length > 0) queryParams.append('categorias', categoriasSelecionadas.join(','));
 
-        if (retornarArray) {
+        try {
+            const lancamentos = await window.api.get(`/api/financeiro/lancamentos?${queryParams.toString()}`);
+            
+            const lancamentosFiltrados = tipo === 'todos' ? lancamentos : lancamentos.filter(l => l.tipo === tipo);
+
+            if (retornarArray) return lancamentosFiltrados;
+
+            renderizarTabela(lancamentosFiltrados);
+            atualizarDashboard(lancamentosFiltrados);
+            renderizarGraficoDespesasPizza(lancamentosFiltrados);
+            
+            if (ano !== 'todos') {
+                const resAno = await window.api.get(`/api/financeiro/lancamentos?ano=${ano}`);
+                renderizarGraficoAnual(resAno, ano);
+            } else {
+                renderizarGraficoAnual(lancamentos, 'Geral');
+            }
+
             return lancamentosFiltrados;
+        } catch (error) {
+            console.error("Erro ao filtrar:", error);
         }
-
-        renderizarTabela(lancamentosFiltrados);
-        atualizarDashboard(lancamentosFiltrados);
-        renderizarGraficoDespesasPizza(lancamentosFiltrados);
-        renderizarGraficoAnual(todosLancamentos);
     };
 
-    const popularFiltros = () => {
-        const anos = [...new Set(todosLancamentos.map(l => new Date(l.data).getUTCFullYear()))].sort((a, b) => b - a);
-        filtroAno.innerHTML = '<option value="todos">Todos os Anos</option>' + anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+    const popularFiltros = (lancamentosIniciais) => {
+        if (!filtroAno || !filtroMes) {
+            console.error("Elementos de filtro não encontrados no DOM.");
+            return;
+        }
 
-        const meses = [
-            { v: 1, n: 'Janeiro' }, { v: 2, n: 'Fevereiro' }, { v: 3, n: 'Março' }, { v: 4, n: 'Abril' },
-            { v: 5, n: 'Maio' }, { v: 6, n: 'Junho' }, { v: 7, n: 'Julho' }, { v: 8, n: 'Agosto' },
-            { v: 9, n: 'Setembro' }, { v: 10, n: 'Outubro' }, { v: 11, n: 'Novembro' }, { v: 12, n: 'Dezembro' }
-        ];
-        filtroMes.innerHTML = '<option value="todos">Todos os Meses</option>' + meses.map(m => `<option value="${m.v}">${m.n}</option>`).join('');
-
-        const categorias = [...new Set(todosLancamentos.map(l => l.categoria))].sort();
-        filtroCategoria.innerHTML = '<option value="todos">Todas as Categorias</option>' + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-
+        const anosNoBanco = [...new Set(lancamentosIniciais.map(l => new Date(l.data).getUTCFullYear()))];
         const hoje = new Date();
-        filtroAno.value = hoje.getFullYear();
-        filtroMes.value = hoje.getMonth() + 1;
+        const anoAtual = hoje.getFullYear();
+        const mesAtual = hoje.getMonth() + 1;
 
-        [filtroAno, filtroMes, filtroCategoria, filtroTipo].forEach(filtro => {
-            filtro.addEventListener('change', aplicarFiltros);
-        });
+        if (!anosNoBanco.includes(anoAtual)) anosNoBanco.push(anoAtual);
+        
+        filtroAno.innerHTML = '<option value="todos">Todos os Anos</option>' + 
+                             anosNoBanco.sort((a, b) => b - a).map(ano => `<option value="${ano}">${ano}</option>`).join('');
+        
+        filtroAno.value = anoAtual;
+        filtroMes.value = mesAtual;
+
+        const categoriasConfigSet = new Set([...(categoriasConfig?.entradas || []), ...(categoriasConfig?.saidas || [])]);
+        const categoriasLancamentosSet = new Set(lancamentosIniciais.map(l => l.categoria));
+        const todasCategorias = [...new Set([...categoriasConfigSet, ...categoriasLancamentosSet])].sort();
+
+        const containerCheckbox = document.getElementById('categorias-checkboxes');
+        if (containerCheckbox) {
+            containerCheckbox.innerHTML = todasCategorias.map(cat => `
+                <label><input type="checkbox" class="categoria-checkbox" value="${cat}"> ${cat}</label>
+            `).join('');
+            containerCheckbox.querySelectorAll('.categoria-checkbox').forEach(cb => {
+                cb.addEventListener('change', atualizarTextoCategorias);
+            });
+        }
+
+        const btnAplicar = document.getElementById('btn-aplicar-filtros');
+        if (btnAplicar) {
+            // Remove listeners antigos para evitar duplicação
+            const novoBtn = btnAplicar.cloneNode(true);
+            btnAplicar.parentNode.replaceChild(novoBtn, btnAplicar);
+            novoBtn.addEventListener('click', () => aplicarFiltros());
+        }
     };
 
     // --- Lógica do Modal ---
@@ -845,24 +910,30 @@ const iniciarFinanceiro = () => {
     // --- Carregamento Inicial ---
     const carregarDados = async () => {
         try {
-            const [resLancamentos, resMembros, resConfig] = await Promise.all([
-                window.api.get('/api/financeiro/lancamentos'),
+            const [resMembros, resConfig, resLancamentosTodos] = await Promise.all([
                 window.api.get('/api/membros'),
-                window.api.get('/api/configs')
+                window.api.get('/api/configs'),
+                window.api.get('/api/financeiro/lancamentos?ano=todos')
             ]);
 
-            todosLancamentos = resLancamentos;
             todosMembros = resMembros;
             categoriasConfig = resConfig.financeiro_categorias || { entradas: [], saidas: [] };
-
-            popularFiltros();
-            aplicarFiltros();
+            
+            calcularBalancoGeral(resLancamentosTodos);
+            popularFiltros(resLancamentosTodos);
+            
+            // Filtro automático inicial: Mês Atual
+            await aplicarFiltros();
 
         } catch (error) {
             console.error("Erro no carregamento inicial:", error);
-            tabelaCorpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Falha ao carregar dados do servidor.</td></tr>';
+            const corpo = document.getElementById('tabela-lancamentos-corpo');
+            if (corpo) corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Falha ao carregar dados do servidor.</td></tr>';
         }
     };
+
+    // Remove event listeners antigos que usavam os filtros deletados
+    // [filtroAno, filtroMes, filtroCategoria, filtroTipo].forEach(filtro => { ... }); -> REMOVIDO
 
     // --- Lógica da Aba de Dízimos ---
     const buscaMembroInput = document.getElementById('busca-membro-input');
@@ -1000,15 +1071,14 @@ const iniciarFinanceiro = () => {
     };
 
     // --- Lógica de Exportação para PDF ---
-    document.getElementById('btn-exportar-pdf').addEventListener('click', () => {
+    document.getElementById('btn-exportar-pdf').addEventListener('click', async () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        const lancamentosFiltrados = aplicarFiltros(true);
+        const lancamentosFiltrados = await aplicarFiltros(true);
 
         const ano = filtroAno.value;
-        const mes = filtroMes.options[filtroMes.selectedIndex].text;
-        const titulo = `Relatório Financeiro - ${mes} ${ano}`;
+        const titulo = `Relatório Financeiro - Ano ${ano === 'todos' ? 'Geral' : ano}`;
 
         doc.setFontSize(18);
         doc.text(titulo, 14, 22);
@@ -1048,7 +1118,7 @@ const iniciarFinanceiro = () => {
             columnStyles: { 1: { halign: 'right' } }
         });
 
-        doc.save(`Relatorio_Financeiro_${mes}_${ano}.pdf`);
+        doc.save(`Relatorio_Financeiro_${ano}.pdf`);
     });
 
     // --- Lógica das Abas ---

@@ -66,18 +66,55 @@
             </div>
             
             <div class="filtros-container">
-                <label for="filtro-ano">Ano:</label>
-                <select id="filtro-ano"></select>
-                <label for="filtro-mes">Mês:</label>
-                <select id="filtro-mes"></select>
-                <label for="filtro-categoria">Categoria:</label>
-                <select id="filtro-categoria"></select>
-                <label for="filtro-tipo">Tipo:</label>
-                <select id="filtro-tipo">
-                    <option value="todos">Todos</option>
-                    <option value="entrada">Entradas</option>
-                    <option value="saida">Saídas</option>
-                </select>
+                <div class="filtro-item">
+                    <label for="filtro-ano">Ano:</label>
+                    <select id="filtro-ano"></select>
+                </div>
+
+                <div class="filtro-item">
+                    <label for="filtro-mes">Mês:</label>
+                    <select id="filtro-mes">
+                        <option value="todos">Todos os Meses</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-item">
+                    <label>Categorias:</label>
+                    <div class="multi-select" id="multi-select-categoria">
+                        <div class="select-box" onclick="window.toggleMultiSelect()">
+                            <span id="selected-categories-text">Todas as Categorias</span>
+                            <i class='bx bx-chevron-down'></i>
+                        </div>
+                        <div class="checkboxes" id="categorias-checkboxes">
+                            <!-- Categorias serão injetadas aqui -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filtro-item">
+                    <label for="filtro-tipo">Tipo:</label>
+                    <select id="filtro-tipo">
+                        <option value="todos">Todos</option>
+                        <option value="entrada">Entradas</option>
+                        <option value="saida">Saídas</option>
+                    </select>
+                </div>
+
+                <button id="btn-aplicar-filtros" class="btn-principal">
+                    <i class='bx bx-filter-alt'></i> Aplicar Filtros
+                </button>
             </div>
 
             <table class="tabela-lancamentos">
