@@ -3,6 +3,7 @@ import Lancamento from '../models/lancamento.model.js';
 import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { createNotification } from '../utils/notification.service.js';
+import Fundo from '../models/fundo.model.js';
 
 const router = express.Router();
 const upload = s3Upload('comprovantes', false);
