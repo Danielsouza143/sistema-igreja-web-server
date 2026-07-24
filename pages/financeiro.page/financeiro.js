@@ -9,7 +9,11 @@ const iniciarFinanceiro = () => {
     let exclusaoTimeout = null;
     let itemParaExcluir = null;
     let graficoContribuicoesMembro = null;
-    let membroEmVisualizacaoId = null; // Variável para guardar o membro em visualização na aba de dízimos
+    let membroEmVisualizacaoId = null; 
+
+    // --- VARIÁVEIS GLOBAIS DE FUNDOS ---
+    let fundosAtivos = [];
+    let graficoFundoAtual = null;
 
     // --- Seletores do DOM ---
     const modalLancamento = document.getElementById('modal-lancamento');
@@ -27,7 +31,6 @@ const iniciarFinanceiro = () => {
         checkboxes.classList.toggle('active');
     };
 
-    // Fecha o multi-select ao clicar fora
     window.addEventListener('click', (e) => {
         const cbContainer = document.getElementById('categorias-checkboxes');
         if (cbContainer && !e.target.closest('#multi-select-categoria')) {
@@ -55,8 +58,7 @@ const iniciarFinanceiro = () => {
     const membroIdHiddenInput = document.getElementById('membroId-hidden');
     const clearMembroBtn = document.getElementById('clear-membro-btn');
 
-
-    // --- Funções de Renderização ---
+    // --- Funções de Renderização Básicas ---
     const formatarMoeda = (valor) => `R$ ${valor.toFixed(2).replace('.', ',')}`;
 
     const renderizarTabela = (lancamentos) => {
@@ -115,6 +117,7 @@ const iniciarFinanceiro = () => {
         }
     };
 
+    // --- FUNÇÕES DE RENDERIZAÇÃO DE GRÁFICOS ---
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
         if (tituloEl) tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
@@ -238,6 +241,139 @@ const iniciarFinanceiro = () => {
         });
     };
 
+    // --- LÓGICA DO MÓDULO DE FUNDOS E METAS ---
+    const calcularRitmoFundo = (fundo) => {
+        if (!fundo.prazo) return 'Prazo não definido';
+        const hoje = new Date();
+        const prazo = new Date(fundo.prazo);
+        const diasRestantes = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+        
+        if (diasRestantes <= 0) return 'Prazo encerrado';
+        
+        const faltante = fundo.meta - fundo.arrecadado;
+        if (faltante <= 0) return 'Meta atingida!';
+        
+        const porDia = faltante / diasRestantes;
+        const porMes = porDia * 30;
+        return `Faltam ${diasRestantes} dias. Necessário aprox. ${formatarMoeda(porMes)}/mês.`;
+    };
+
+    const renderizarFundos = (fundos) => {
+        const grid = document.getElementById('grid-fundos');
+        if(!grid) return;
+        grid.innerHTML = '';
+
+        if(fundos.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666; padding: 40px;">Nenhuma meta ou fundo cadastrado no momento.</p>';
+            return;
+        }
+
+        fundos.forEach(fundo => {
+            const porcentagem = Math.min((fundo.arrecadado / fundo.meta) * 100, 100).toFixed(1);
+            const statusClass = porcentagem >= 100 ? 'status-concluido' : 'status-ativo';
+            const statusText = porcentagem >= 100 ? 'Concluído' : 'Em Andamento';
+            const ritmoTexto = calcularRitmoFundo(fundo);
+
+            const card = document.createElement('div');
+            card.className = `card-fundo ${statusClass}`;
+            card.innerHTML = `
+                <div class="card-fundo-header">
+                    <h3>${fundo.nome}</h3>
+                    <span class="badge-status ${statusClass}">${statusText}</span>
+                </div>
+                <p style="font-size: 0.9rem; color: #777; margin-bottom: 10px;">${fundo.descricao}</p>
+                <p style="font-size: 0.8rem; color: #dc3545; margin-bottom: 15px;"><i class='bx bx-time-five'></i> ${ritmoTexto}</p>
+                
+                <div class="progresso-container">
+                    <div class="progresso-barra" style="width: ${porcentagem}%"></div>
+                </div>
+                <div class="progresso-texto">
+                    <span><strong>Arrecadado:</strong> ${formatarMoeda(fundo.arrecadado)}</span>
+                    <span><strong>Meta:</strong> ${formatarMoeda(fundo.meta)}</span>
+                </div>
+                <div style="text-align: right; margin-top: 5px; font-weight: bold; font-size: 0.95rem; color: #001f5d;">
+                    ${porcentagem}%
+                </div>
+            `;
+
+            card.addEventListener('click', () => abrirDetalhesFundo(fundo));
+            grid.appendChild(card);
+        });
+    };
+
+    const abrirDetalhesFundo = (fundo) => {
+        const modal = document.getElementById('modal-detalhes-fundo');
+        if(!modal) return;
+
+        document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
+        document.getElementById('fundo-valor-arrecadado').textContent = formatarMoeda(fundo.arrecadado);
+        document.getElementById('fundo-valor-meta').textContent = formatarMoeda(fundo.meta);
+        
+        const porcentagem = ((fundo.arrecadado / fundo.meta) * 100).toFixed(1);
+        document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
+
+        // Busca lançamentos que tenham o fundoId vinculado a esta meta
+        const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
+
+        const tabela = document.getElementById('tabela-fundo-lancamentos');
+        if(tabela) {
+            if(lancamentosDoFundo.length > 0) {
+                tabela.innerHTML = lancamentosDoFundo.map(l => {
+                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Anônimo';
+                    return `
+                        <tr>
+                            <td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                            <td>${membroNome}</td>
+                            <td style="color: #28a745; font-weight: bold;">+ ${formatarMoeda(l.valor)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                tabela.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento vinculado ainda.</td></tr>';
+            }
+        }
+
+        renderizarGraficoFundoEspecifico(lancamentosDoFundo);
+        modal.style.display = 'flex';
+    };
+
+    const renderizarGraficoFundoEspecifico = (lancamentos) => {
+        const canvas = document.getElementById('grafico-fundo-historico');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        const dadosPorMes = Array(12).fill(0);
+        lancamentos.forEach(l => {
+            const mes = new Date(l.data).getUTCMonth();
+            dadosPorMes[mes] += l.valor;
+        });
+
+        if(graficoFundoAtual) graficoFundoAtual.destroy();
+
+        graficoFundoAtual = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{
+                    label: 'Arrecadação Mensal',
+                    data: dadosPorMes,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    };
+
+    const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
+    if (modalDetalhesFundo) {
+        modalDetalhesFundo.querySelectorAll('[data-close]').forEach(el => {
+            el.addEventListener('click', () => modalDetalhesFundo.style.display = 'none');
+        });
+    }
+
     // --- Lógica de Filtros ---
     const aplicarFiltros = async (retornarArray = false) => {
         const ano = filtroAno.value;
@@ -255,7 +391,7 @@ const iniciarFinanceiro = () => {
             
             let lancamentosFiltrados = tipo === 'todos' ? lancamentos : lancamentos.filter(l => l.tipo === tipo);
 
-            // CÓDIGO INSERIDO: Remove da visualização o item que está aguardando o tempo de exclusão
+            // CORREÇÃO: Remove da visualização o item que está aguardando o tempo de exclusão
             if (itemParaExcluir) {
                 lancamentosFiltrados = lancamentosFiltrados.filter(l => l._id !== itemParaExcluir.lancamento._id);
             }
@@ -314,7 +450,6 @@ const iniciarFinanceiro = () => {
 
         const btnAplicar = document.getElementById('btn-aplicar-filtros');
         if (btnAplicar) {
-            // Remove listeners antigos para evitar duplicação
             const novoBtn = btnAplicar.cloneNode(true);
             btnAplicar.parentNode.replaceChild(novoBtn, btnAplicar);
             novoBtn.addEventListener('click', () => aplicarFiltros());
@@ -923,8 +1058,17 @@ const iniciarFinanceiro = () => {
             todosMembros = resMembros;
             categoriasConfig = resConfig.financeiro_categorias || { entradas: [], saidas: [] };
             
-            // DADO ADICIONADO AQUI: Guarda os dados globalmente para os cliques funcionarem
+            // CORREÇÃO: Variável populada para habilitar edições e interações corretas
             todosLancamentos = resLancamentosTodos;
+
+            // --- MOCK DE DADOS PARA FUNDOS (Serão substituídos por dados da API futuramente) ---
+            fundosAtivos = [
+                { _id: 'f1', nome: 'Reforma do Templo', descricao: 'Arrecadação para pintura e novos assentos.', meta: 15000, arrecadado: 8500, prazo: '2026-12-31' },
+                { _id: 'f2', nome: 'Missões', descricao: 'Apoio aos missionários em campo transcultural.', meta: 5000, arrecadado: 5000, prazo: '2026-08-15' },
+                { _id: 'f3', nome: 'Compra de Instrumentos', descricao: 'Nova bateria e mesa de som para o louvor.', meta: 8000, arrecadado: 1200, prazo: '2026-10-10' }
+            ];
+            renderizarFundos(fundosAtivos);
+            // ---------------------------------------------------------------------------------
 
             calcularBalancoGeral(resLancamentosTodos);
             popularFiltros(resLancamentosTodos);
