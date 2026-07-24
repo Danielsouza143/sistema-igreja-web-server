@@ -3,6 +3,7 @@ const iniciarFinanceiro = () => {
     let lancamentosSelecionados = new Set();
     let todosMembros = [];
     let lancamentoEmEdicaoId = null;
+    let fundoEmEdicaoId = null;
     let categoriasConfig = { entradas: [], saidas: [] };
     let graficoAnual = null;
     let graficoDespesasPizza = null;
@@ -10,14 +11,14 @@ const iniciarFinanceiro = () => {
     let itemParaExcluir = null;
     let graficoContribuicoesMembro = null;
     let membroEmVisualizacaoId = null; 
-
-    // --- VARIÁVEIS GLOBAIS DE FUNDOS ---
     let fundosAtivos = [];
     let graficoFundoAtual = null;
 
     // --- Seletores do DOM ---
     const modalLancamento = document.getElementById('modal-lancamento');
     const formLancamento = document.getElementById('form-lancamento');
+    const modalFundo = document.getElementById('modal-fundo');
+    const formFundo = document.getElementById('form-fundo');
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const filtroAno = document.getElementById('filtro-ano');
     const filtroMes = document.getElementById('filtro-mes');
@@ -52,7 +53,6 @@ const iniciarFinanceiro = () => {
         }
     };
 
-    // --- Seletores para a busca de membro no modal ---
     const buscaMembroModalInput = document.getElementById('busca-membro-modal');
     const buscaMembroResultadosModal = document.getElementById('busca-membro-resultados-modal');
     const membroIdHiddenInput = document.getElementById('membroId-hidden');
@@ -78,6 +78,7 @@ const iniciarFinanceiro = () => {
                 <td data-label="Data">${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td data-label="Descrição" class="celula-editavel" contenteditable="true" data-id="${l._id}" data-field="descricao">
                     ${l.descricao}
+                    ${l.fundoId ? '<i class="bx bx-target-lock" title="Vinculado a um Fundo" style="color:#28a745; margin-left: 5px;"></i>' : ''}
                     ${l.comprovanteUrl ? `<a href="${l.comprovanteUrl}" target="_blank" title="Ver Comprovante"><i class='bx bx-paperclip anexo-icon'></i></a>` : ''}
                 </td>
                 <td data-label="Categoria">${l.categoria}</td>
@@ -117,7 +118,6 @@ const iniciarFinanceiro = () => {
         }
     };
 
-    // --- FUNÇÕES DE RENDERIZAÇÃO DE GRÁFICOS ---
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
         if (tituloEl) tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
@@ -242,6 +242,28 @@ const iniciarFinanceiro = () => {
     };
 
     // --- LÓGICA DO MÓDULO DE FUNDOS E METAS ---
+    const carregarFundos = async () => {
+        try {
+            const response = await window.api.get('/api/financeiro/fundos');
+            fundosAtivos = response || [];
+            renderizarFundos(fundosAtivos);
+        } catch (error) {
+            console.error('Erro ao carregar fundos', error);
+        }
+    }
+
+    const popularSelectFundos = () => {
+        const selectFundo = document.getElementById('fundoId');
+        if (!selectFundo) return;
+        selectFundo.innerHTML = '<option value="">Não vincular a nenhum fundo</option>';
+        fundosAtivos.forEach(fundo => {
+            const option = document.createElement('option');
+            option.value = fundo._id;
+            option.textContent = fundo.nome;
+            selectFundo.appendChild(option);
+        });
+    };
+
     const calcularRitmoFundo = (fundo) => {
         if (!fundo.prazo) return 'Prazo não definido';
         const hoje = new Date();
@@ -255,7 +277,7 @@ const iniciarFinanceiro = () => {
         
         const porDia = faltante / diasRestantes;
         const porMes = porDia * 30;
-        return `Faltam ${diasRestantes} dias. Necessário aprox. ${formatarMoeda(porMes)}/mês.`;
+        return `Faltam ${diasRestantes} dias. Aprox. ${formatarMoeda(porMes)}/mês.`;
     };
 
     const renderizarFundos = (fundos) => {
@@ -281,8 +303,8 @@ const iniciarFinanceiro = () => {
                     <h3>${fundo.nome}</h3>
                     <span class="badge-status ${statusClass}">${statusText}</span>
                 </div>
-                <p style="font-size: 0.9rem; color: #777; margin-bottom: 10px;">${fundo.descricao}</p>
-                <p style="font-size: 0.8rem; color: #dc3545; margin-bottom: 15px;"><i class='bx bx-time-five'></i> ${ritmoTexto}</p>
+                <p class="fundo-desc">${fundo.descricao}</p>
+                <p class="fundo-ritmo"><i class='bx bx-time-five'></i> ${ritmoTexto}</p>
                 
                 <div class="progresso-container">
                     <div class="progresso-barra" style="width: ${porcentagem}%"></div>
@@ -291,15 +313,80 @@ const iniciarFinanceiro = () => {
                     <span><strong>Arrecadado:</strong> ${formatarMoeda(fundo.arrecadado)}</span>
                     <span><strong>Meta:</strong> ${formatarMoeda(fundo.meta)}</span>
                 </div>
-                <div style="text-align: right; margin-top: 5px; font-weight: bold; font-size: 0.95rem; color: #001f5d;">
+                <div class="progresso-porcentagem">
                     ${porcentagem}%
+                </div>
+                <div style="text-align: right; margin-top: 10px;">
+                    <i class='bx bxs-edit btn-editar-fundo' style="font-size: 1.2rem; color: #007bff; cursor: pointer; margin-right: 10px;" title="Editar"></i>
+                    <i class='bx bxs-trash btn-excluir-fundo' style="font-size: 1.2rem; color: #dc3545; cursor: pointer;" title="Excluir"></i>
                 </div>
             `;
 
-            card.addEventListener('click', () => abrirDetalhesFundo(fundo));
+            // Abre detalhes ao clicar no card (exceto se clicar no ícone de editar ou excluir)
+            card.addEventListener('click', (e) => {
+                if(!e.target.classList.contains('btn-editar-fundo') && !e.target.classList.contains('btn-excluir-fundo')) {
+                    abrirDetalhesFundo(fundo);
+                }
+            });
+
+            // Lógica Editar Fundo
+            card.querySelector('.btn-editar-fundo').addEventListener('click', (e) => {
+                e.stopPropagation();
+                abrirModalFundo(fundo);
+            });
+
+            // Lógica Excluir Fundo
+            card.querySelector('.btn-excluir-fundo').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if(confirm('Deseja realmente excluir este fundo? Os lançamentos vinculados não serão apagados, apenas desvinculados.')) {
+                    await window.api.delete(`/api/financeiro/fundos/${fundo._id}`);
+                    carregarFundos();
+                }
+            });
+
             grid.appendChild(card);
         });
     };
+
+    const abrirModalFundo = (fundo = null) => {
+        formFundo.reset();
+        fundoEmEdicaoId = null;
+        if(fundo) {
+            document.getElementById('modal-fundo-titulo').textContent = 'Editar Fundo / Meta';
+            fundoEmEdicaoId = fundo._id;
+            document.getElementById('fundo-nome').value = fundo.nome;
+            document.getElementById('fundo-descricao').value = fundo.descricao;
+            document.getElementById('fundo-meta').value = fundo.meta;
+            document.getElementById('fundo-prazo').value = fundo.prazo ? fundo.prazo.split('T')[0] : '';
+        } else {
+            document.getElementById('modal-fundo-titulo').textContent = 'Novo Fundo / Meta';
+        }
+        modalFundo.style.display = 'flex';
+    };
+
+    formFundo.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dados = {
+            nome: document.getElementById('fundo-nome').value,
+            descricao: document.getElementById('fundo-descricao').value,
+            meta: parseFloat(document.getElementById('fundo-meta').value),
+            prazo: document.getElementById('fundo-prazo').value
+        };
+
+        try {
+            if(fundoEmEdicaoId) {
+                await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
+            } else {
+                await window.api.post('/api/financeiro/fundos', dados);
+            }
+            modalFundo.style.display = 'none';
+            carregarFundos();
+            alert('Fundo salvo com sucesso!');
+        } catch(error) {
+            alert('Erro ao salvar fundo.');
+            console.error(error);
+        }
+    });
 
     const abrirDetalhesFundo = (fundo) => {
         const modal = document.getElementById('modal-detalhes-fundo');
@@ -312,7 +399,6 @@ const iniciarFinanceiro = () => {
         const porcentagem = ((fundo.arrecadado / fundo.meta) * 100).toFixed(1);
         document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
 
-        // Busca lançamentos que tenham o fundoId vinculado a esta meta
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
 
         const tabela = document.getElementById('tabela-fundo-lancamentos');
@@ -324,7 +410,9 @@ const iniciarFinanceiro = () => {
                         <tr>
                             <td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                             <td>${membroNome}</td>
-                            <td style="color: #28a745; font-weight: bold;">+ ${formatarMoeda(l.valor)}</td>
+                            <td style="color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                                ${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}
+                            </td>
                         </tr>
                     `;
                 }).join('');
@@ -345,7 +433,11 @@ const iniciarFinanceiro = () => {
         const dadosPorMes = Array(12).fill(0);
         lancamentos.forEach(l => {
             const mes = new Date(l.data).getUTCMonth();
-            dadosPorMes[mes] += l.valor;
+            if(l.tipo === 'entrada') {
+                dadosPorMes[mes] += l.valor;
+            } else {
+                dadosPorMes[mes] -= l.valor; // Se houver saída vinculada, diminui no gráfico
+            }
         });
 
         if(graficoFundoAtual) graficoFundoAtual.destroy();
@@ -373,6 +465,10 @@ const iniciarFinanceiro = () => {
             el.addEventListener('click', () => modalDetalhesFundo.style.display = 'none');
         });
     }
+    
+    document.getElementById('btn-nova-meta')?.addEventListener('click', () => abrirModalFundo());
+    modalFundo?.querySelector('[data-close]').addEventListener('click', () => modalFundo.style.display = 'none');
+
 
     // --- Lógica de Filtros ---
     const aplicarFiltros = async (retornarArray = false) => {
@@ -391,7 +487,6 @@ const iniciarFinanceiro = () => {
             
             let lancamentosFiltrados = tipo === 'todos' ? lancamentos : lancamentos.filter(l => l.tipo === tipo);
 
-            // CORREÇÃO: Remove da visualização o item que está aguardando o tempo de exclusão
             if (itemParaExcluir) {
                 lancamentosFiltrados = lancamentosFiltrados.filter(l => l._id !== itemParaExcluir.lancamento._id);
             }
@@ -416,10 +511,7 @@ const iniciarFinanceiro = () => {
     };
 
     const popularFiltros = (lancamentosIniciais) => {
-        if (!filtroAno || !filtroMes) {
-            console.error("Elementos de filtro não encontrados no DOM.");
-            return;
-        }
+        if (!filtroAno || !filtroMes) return;
 
         const anosNoBanco = [...new Set(lancamentosIniciais.map(l => new Date(l.data).getUTCFullYear()))];
         const hoje = new Date();
@@ -459,6 +551,8 @@ const iniciarFinanceiro = () => {
     // --- Lógica do Modal ---
     const abrirModal = (lancamento = null, duplicar = false) => {
         formLancamento.reset();
+        popularSelectFundos(); // Garante que os fundos estão no select
+        
         lancamentoEmEdicaoId = null;
         membroIdHiddenInput.value = '';
         buscaMembroModalInput.value = '';
@@ -475,6 +569,11 @@ const iniciarFinanceiro = () => {
             document.getElementById('data').value = lancamento.data.split('T')[0];
             document.getElementById('valor').value = lancamento.valor;
             document.getElementById('descricao').value = lancamento.descricao;
+            
+            // Popula Fundo
+            if(lancamento.fundoId && document.getElementById('fundoId')) {
+                document.getElementById('fundoId').value = lancamento.fundoId;
+            }
             
             atualizarCategoriasModal(lancamento.tipo, lancamento.categoria);
 
@@ -500,6 +599,10 @@ const iniciarFinanceiro = () => {
             document.getElementById('valor').value = lancamento.valor;
             document.getElementById('descricao').value = lancamento.descricao;
             
+            if(lancamento.fundoId && document.getElementById('fundoId')) {
+                document.getElementById('fundoId').value = lancamento.fundoId;
+            }
+
             atualizarCategoriasModal(lancamento.tipo, lancamento.categoria);
 
             if (lancamento.membroId) {
@@ -586,7 +689,6 @@ const iniciarFinanceiro = () => {
         buscaMembroModalInput.focus();
     });
 
-
     const modalDetalhes = document.getElementById('modal-detalhes-lancamento');
 
     const abrirModalDetalhes = (lancamento) => {
@@ -632,11 +734,7 @@ const iniciarFinanceiro = () => {
         modalDetalhes.style.display = 'flex';
     };
 
-    const fecharModalDetalhes = () => {
-        modalDetalhes.style.display = 'none';
-    }
-
-    modalDetalhes.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', fecharModalDetalhes));
+    modalDetalhes.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => modalDetalhes.style.display = 'none'));
 
     const preencherRecibo = (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Anônimo';
@@ -652,19 +750,14 @@ const iniciarFinanceiro = () => {
             alert('Membro não encontrado para gerar o recibo.');
             return;
         }
-
         preencherRecibo(lancamento, membro);
-
         const { jsPDF } = window.jspdf;
         const reciboElement = document.getElementById('recibo-template');
-
         const canvas = await html2canvas(reciboElement, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
-
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`Recibo_${lancamento.categoria}_${membro.nome.split(' ')[0]}.pdf`);
     };
@@ -675,10 +768,8 @@ const iniciarFinanceiro = () => {
             alert('Membro não encontrado para compartilhar o recibo.');
             return;
         }
-
         preencherRecibo(lancamento, membro);
         const reciboElement = document.getElementById('recibo-template');
-
         try {
             const canvas = await html2canvas(reciboElement, { scale: 2 });
             canvas.toBlob(async (blob) => {
@@ -689,7 +780,6 @@ const iniciarFinanceiro = () => {
                     title: 'Recibo de Contribuição',
                     text: `Olá ${membro.nome}, segue o seu recibo de contribuição. Deus abençoe!`,
                 };
-
                 if (navigator.canShare && navigator.canShare(shareData)) {
                     await navigator.share(shareData);
                 } else {
@@ -706,7 +796,7 @@ const iniciarFinanceiro = () => {
         }
     };
 
-    // --- Ações (Salvar, Editar, Excluir) ---
+    // --- Ações (Salvar Lançamento) ---
     formLancamento.addEventListener('submit', async (e) => {
         e.preventDefault();
         const comprovanteInput = document.getElementById('comprovante');
@@ -726,6 +816,8 @@ const iniciarFinanceiro = () => {
             return;
         }
 
+        const fundoElement = document.getElementById('fundoId');
+
         const dados = {
             tipo: document.getElementById('tipo').value,
             data: document.getElementById('data').value,
@@ -733,6 +825,7 @@ const iniciarFinanceiro = () => {
             categoria: document.getElementById('categoria').value,
             descricao: document.getElementById('descricao').value,
             membroId: membroIdHiddenInput.value || null,
+            fundoId: fundoElement && fundoElement.value ? fundoElement.value : null, // Inclui o Fundo
             comprovanteUrl: comprovanteUrl
         };
 
@@ -744,14 +837,12 @@ const iniciarFinanceiro = () => {
             }
             
             fecharModal();
-            await carregarDados();
+            await carregarDados(); // Recarrega tudo e recalcula os fundos
             alert('Lançamento salvo com sucesso!');
 
             if (membroEmVisualizacaoId) {
                 const membroAtualizado = todosMembros.find(m => m._id === membroEmVisualizacaoId);
-                if (membroAtualizado) {
-                    exibirHistoricoMembro(membroAtualizado);
-                }
+                if (membroAtualizado) exibirHistoricoMembro(membroAtualizado);
             }
         } catch (error) {
             console.error('Erro ao salvar:', error);
@@ -759,7 +850,6 @@ const iniciarFinanceiro = () => {
         }
     });
 
-    // --- LÓGICA DE EDIÇÃO EM LINHA ---
     const salvarEdicaoEmLinha = async (evento) => {
         const celula = evento.target;
         const id = celula.dataset.id;
@@ -792,7 +882,7 @@ const iniciarFinanceiro = () => {
             const index = todosLancamentos.findIndex(l => l._id === id);
             todosLancamentos[index] = { ...todosLancamentos[index], ...dadosAtualizados };
             aplicarFiltros();
-
+            carregarFundos(); // Atualiza os fundos caso o valor alterado pertença a um
         } catch (error) {
             console.error('Erro na edição em linha:', error);
             alert('Falha ao salvar a alteração.');
@@ -819,35 +909,24 @@ const iniciarFinanceiro = () => {
         }
     }, true);
 
-    // --- LÓGICA DO MENU DE CONTEXTO ---
     tabelaCorpo.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const tr = e.target.closest('tr');
         if (!tr || !tr.dataset.id) return;
-
         rightClickedRowId = tr.dataset.id;
-
-        const x = e.pageX;
-        const y = e.pageY;
         contextMenu.style.display = 'block';
-        contextMenu.style.left = `${x}px`;
-        contextMenu.style.top = `${y}px`;
+        contextMenu.style.left = `${e.pageX}px`;
+        contextMenu.style.top = `${e.pageY}px`;
     });
 
     window.addEventListener('click', (e) => {
-        if (contextMenu.style.display === 'block') {
-            contextMenu.style.display = 'none';
-        }
+        if (contextMenu.style.display === 'block') contextMenu.style.display = 'none';
         if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
             const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
-            if (tabelaLancamentos) {
-                tabelaLancamentos.classList.remove('modo-selecao');
-            }
+            if (tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
             lancamentosSelecionados.clear();
             const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
-            if(checkboxSelecionarTodos) {
-                checkboxSelecionarTodos.checked = false;
-            }
+            if(checkboxSelecionarTodos) checkboxSelecionarTodos.checked = false;
             tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
             tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
             atualizarEstadoExclusaoLote();
@@ -880,26 +959,16 @@ const iniciarFinanceiro = () => {
         const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
         if (lancamento) {
             const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
-            navigator.clipboard.writeText(texto).then(() => {
-                alert('Dados do lançamento copiados para a área de transferência!');
-            }).catch(err => {
-                console.error('Erro ao copiar texto: ', err);
-                alert('Não foi possível copiar os dados.');
-            });
+            navigator.clipboard.writeText(texto).then(() => alert('Dados do lançamento copiados para a área de transferência!'));
         }
     });
 
     document.getElementById('context-imprimir').addEventListener('click', () => {
         if (!rightClickedRowId) return;
         const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-        if (lancamento) {
-            gerarReciboPDF(lancamento);
-        } else {
-            alert('Lançamento não encontrado.');
-        }
+        if (lancamento) gerarReciboPDF(lancamento);
     });
 
-    // --- LÓGICA DE SELEÇÃO E EXCLUSÃO EM LOTE ---
     const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
     const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
@@ -910,9 +979,7 @@ const iniciarFinanceiro = () => {
             btnExcluirSelecionados.textContent = `Excluir ${lancamentosSelecionados.size} Iten(s)`;
         } else {
             btnExcluirSelecionados.classList.add('hidden');
-            if(tabelaLancamentos) {
-                tabelaLancamentos.classList.remove('modo-selecao');
-            }
+            if(tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
         }
     };
 
@@ -940,26 +1007,21 @@ const iniciarFinanceiro = () => {
         if (tabelaLancamentos && tabelaLancamentos.classList.contains('modo-selecao')) {
             if (target.closest('a, [contenteditable]')) return;
             const checkbox = tr.querySelector('.checkbox-lancamento');
-            if (checkbox) {
-                if (target.type !== 'checkbox') {
-                    checkbox.checked = !checkbox.checked;
-                }
+            if (checkbox && target.type !== 'checkbox') {
+                checkbox.checked = !checkbox.checked;
                 checkbox.dispatchEvent(new Event('change', { bubbles: true }));
             }
-        } else {
-            if (!target.closest('a, i, [contenteditable], input')) {
-                const id = tr.dataset.id;
-                const lancamento = todosLancamentos.find(l => l._id === id);
-                if(lancamento) abrirModalDetalhes(lancamento);
-            }
+        } else if (!target.closest('a, i, [contenteditable], input')) {
+            const id = tr.dataset.id;
+            const lancamento = todosLancamentos.find(l => l._id === id);
+            if(lancamento) abrirModalDetalhes(lancamento);
         }
     });
 
     if(checkboxSelecionarTodos) {
         checkboxSelecionarTodos.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
-            const checkboxes = tabelaCorpo.querySelectorAll('.checkbox-lancamento');
-            checkboxes.forEach(checkbox => {
+            tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(checkbox => {
                 const id = checkbox.dataset.id;
                 const tr = checkbox.closest('tr');
                 checkbox.checked = isChecked;
@@ -992,7 +1054,6 @@ const iniciarFinanceiro = () => {
         });
     }
 
-    // --- LÓGICA DE EXCLUSÃO COM DESFAZER ---
     const toast = document.getElementById('toast-desfazer');
     const btnDesfazer = document.getElementById('btn-desfazer');
 
@@ -1001,7 +1062,6 @@ const iniciarFinanceiro = () => {
             clearTimeout(exclusaoTimeout);
             if (itemParaExcluir) excluirLancamento(itemParaExcluir.lancamento._id, false);
         }
-
         const itemIndex = todosLancamentos.findIndex(l => l._id === id);
         if (itemIndex === -1) return;
 
@@ -1021,13 +1081,10 @@ const iniciarFinanceiro = () => {
 
     btnDesfazer.addEventListener('click', () => {
         if (!itemParaExcluir) return;
-
         clearTimeout(exclusaoTimeout);
         toast.classList.remove('show');
-
         todosLancamentos.splice(itemParaExcluir.index, 0, itemParaExcluir.lancamento);
         aplicarFiltros();
-
         itemParaExcluir = null;
         exclusaoTimeout = null;
     });
@@ -1041,7 +1098,6 @@ const iniciarFinanceiro = () => {
             }
         } catch (error) {
             console.error('Erro ao excluir:', error);
-            alert('Não foi possível excluir o lançamento.');
             if (recarregar) await carregarDados();
         }
     };
@@ -1057,23 +1113,13 @@ const iniciarFinanceiro = () => {
 
             todosMembros = resMembros;
             categoriasConfig = resConfig.financeiro_categorias || { entradas: [], saidas: [] };
-            
-            // CORREÇÃO: Variável populada para habilitar edições e interações corretas
             todosLancamentos = resLancamentosTodos;
 
-            // --- MOCK DE DADOS PARA FUNDOS (Serão substituídos por dados da API futuramente) ---
-            fundosAtivos = [
-                { _id: 'f1', nome: 'Reforma do Templo', descricao: 'Arrecadação para pintura e novos assentos.', meta: 15000, arrecadado: 8500, prazo: '2026-12-31' },
-                { _id: 'f2', nome: 'Missões', descricao: 'Apoio aos missionários em campo transcultural.', meta: 5000, arrecadado: 5000, prazo: '2026-08-15' },
-                { _id: 'f3', nome: 'Compra de Instrumentos', descricao: 'Nova bateria e mesa de som para o louvor.', meta: 8000, arrecadado: 1200, prazo: '2026-10-10' }
-            ];
-            renderizarFundos(fundosAtivos);
-            // ---------------------------------------------------------------------------------
+            await carregarFundos(); // Carrega os fundos da API e atualiza a view
 
             calcularBalancoGeral(resLancamentosTodos);
             popularFiltros(resLancamentosTodos);
             
-            // Filtro automático inicial: Mês Atual
             await aplicarFiltros();
 
         } catch (error) {
@@ -1217,7 +1263,6 @@ const iniciarFinanceiro = () => {
         };
     };
 
-    // --- Lógica de Exportação para PDF ---
     document.getElementById('btn-exportar-pdf').addEventListener('click', async () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -1268,7 +1313,6 @@ const iniciarFinanceiro = () => {
         doc.save(`Relatorio_Financeiro_${ano}.pdf`);
     });
 
-    // --- Lógica das Abas ---
     const abasLink = document.querySelectorAll('.abas-financeiro .aba-link');
     abasLink.forEach(aba => {
         aba.addEventListener('click', () => {
@@ -1279,7 +1323,6 @@ const iniciarFinanceiro = () => {
         });
     });
 
-    // Inicializa a página
     carregarDados();
 };
 
