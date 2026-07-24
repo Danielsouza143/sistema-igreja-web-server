@@ -181,5 +181,60 @@ router.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
     const filePath = req.file.location;
     res.status(200).json({ filePath: filePath });
 });
+// GET /api/financeiro/fundos - Listar fundos calculando o progresso
+router.get('/fundos', async (req, res) => {
+    try {
+        const fundos = await Fundo.find({ tenantId: req.tenant.id }).lean();
+        
+        // Calcula o arrecadado de cada fundo (Entradas - Saídas vinculadas ao fundo)
+        for (let fundo of fundos) {
+            const lancamentos = await Lancamento.find({ fundoId: fundo._id, tenantId: req.tenant.id });
+            const entradas = lancamentos.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
+            const saidas = lancamentos.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
+            
+            fundo.arrecadado = entradas - saidas;
+        }
+        
+        res.json(fundos);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar fundos.', error: error.message });
+    }
+});
 
+// POST /api/financeiro/fundos - Criar novo fundo
+router.post('/fundos', async (req, res) => {
+    try {
+        const novoFundo = new Fundo({ ...req.body, tenantId: req.tenant.id });
+        await novoFundo.save();
+        res.status(201).json(novoFundo);
+    } catch (error) {
+        res.status(400).json({ message: 'Erro ao criar fundo.', error: error.message });
+    }
+});
+
+// PUT /api/financeiro/fundos/:id - Editar fundo
+router.put('/fundos/:id', async (req, res) => {
+    try {
+        const fundo = await Fundo.findOneAndUpdate(
+            { _id: req.params.id, tenantId: req.tenant.id },
+            req.body,
+            { new: true }
+        );
+        res.json(fundo);
+    } catch (error) {
+        res.status(400).json({ message: 'Erro ao atualizar fundo.', error: error.message });
+    }
+});
+
+// DELETE /api/financeiro/fundos/:id - Excluir fundo
+router.delete('/fundos/:id', async (req, res) => {
+    try {
+        await Fundo.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
+        // Desvincula os lançamentos desse fundo para não apagar o dinheiro do caixa, apenas o projeto
+        await Lancamento.updateMany({ fundoId: req.params.id, tenantId: req.tenant.id }, { fundoId: null });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao excluir fundo.', error: error.message });
+    }
+});
 export default router;
