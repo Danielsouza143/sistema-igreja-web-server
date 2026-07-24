@@ -908,7 +908,7 @@ const iniciarFinanceiro = () => {
     };
 
     // --- Carregamento Inicial ---
-    const carregarDados = async () => {
+        const carregarDados = async () => {
         try {
             const [resMembros, resConfig, resLancamentosTodos] = await Promise.all([
                 window.api.get('/api/membros'),
@@ -919,6 +919,9 @@ const iniciarFinanceiro = () => {
             todosMembros = resMembros;
             categoriasConfig = resConfig.financeiro_categorias || { entradas: [], saidas: [] };
             
+            // 👇 ADICIONE ESTA LINHA: Guarda os dados globalmente para os cliques funcionarem
+            todosLancamentos = resLancamentosTodos;
+
             calcularBalancoGeral(resLancamentosTodos);
             popularFiltros(resLancamentosTodos);
             
