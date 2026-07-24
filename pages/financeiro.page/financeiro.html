@@ -219,6 +219,7 @@
 <!-- MÓDULOS E OVERLAYS FORA DO MAIN -->
 
 <!-- Modal de Detalhes do Fundo -->
+<!-- Modal de Detalhes do Fundo -->
 <div id="modal-detalhes-fundo" class="modal-overlay" style="display: none;">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -226,6 +227,13 @@
             <button type="button" class="btn-close" data-close>&times;</button>
         </div>
         <div class="modal-body">
+            
+            <!-- NOVOS BOTÕES DE AÇÃO DO FUNDO -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="btn-nova-arrecadacao-fundo" class="btn-principal"><i class='bx bx-plus'></i> Nova Arrecadação</button>
+                <button id="btn-transferir-caixa" class="btn-secundario"><i class='bx bx-transfer'></i> Transferir do Caixa</button>
+            </div>
+
             <div class="fundo-header-stats">
                 <div class="stat-box">
                     <span>Arrecadado</span>
@@ -254,7 +262,7 @@
                     <thead>
                         <tr>
                             <th>Data</th>
-                            <th>Membro</th>
+                            <th>Membro/Origem</th>
                             <th>Valor</th>
                         </tr>
                     </thead>
@@ -262,6 +270,11 @@
                 </table>
             </div>
         </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-secundario" data-close>Fechar</button>
+        </div>
+    </div>
+</div>
         <div class="modal-actions">
             <button type="button" class="btn-secundario" data-close>Fechar</button>
         </div>
