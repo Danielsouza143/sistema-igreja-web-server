@@ -253,7 +253,12 @@ const iniciarFinanceiro = () => {
         try {
             const lancamentos = await window.api.get(`/api/financeiro/lancamentos?${queryParams.toString()}`);
             
-            const lancamentosFiltrados = tipo === 'todos' ? lancamentos : lancamentos.filter(l => l.tipo === tipo);
+            let lancamentosFiltrados = tipo === 'todos' ? lancamentos : lancamentos.filter(l => l.tipo === tipo);
+
+            // CÓDIGO INSERIDO: Remove da visualização o item que está aguardando o tempo de exclusão
+            if (itemParaExcluir) {
+                lancamentosFiltrados = lancamentosFiltrados.filter(l => l._id !== itemParaExcluir.lancamento._id);
+            }
 
             if (retornarArray) return lancamentosFiltrados;
 
@@ -839,7 +844,6 @@ const iniciarFinanceiro = () => {
         btnExcluirSelecionados.addEventListener('click', async () => {
             if (confirm(`Tem certeza que deseja excluir os ${lancamentosSelecionados.size} lançamentos selecionados?`)) {
                 try {
-                    // CORREÇÃO: Usar o método .delete que existe no objeto window.api
                     await window.api.delete('/api/financeiro/lancamentos/lote', { ids: [...lancamentosSelecionados] });
                     lancamentosSelecionados.clear();
                     atualizarEstadoExclusaoLote();
@@ -908,7 +912,7 @@ const iniciarFinanceiro = () => {
     };
 
     // --- Carregamento Inicial ---
-        const carregarDados = async () => {
+    const carregarDados = async () => {
         try {
             const [resMembros, resConfig, resLancamentosTodos] = await Promise.all([
                 window.api.get('/api/membros'),
@@ -919,7 +923,7 @@ const iniciarFinanceiro = () => {
             todosMembros = resMembros;
             categoriasConfig = resConfig.financeiro_categorias || { entradas: [], saidas: [] };
             
-            // 👇 ADICIONE ESTA LINHA: Guarda os dados globalmente para os cliques funcionarem
+            // DADO ADICIONADO AQUI: Guarda os dados globalmente para os cliques funcionarem
             todosLancamentos = resLancamentosTodos;
 
             calcularBalancoGeral(resLancamentosTodos);
@@ -934,9 +938,6 @@ const iniciarFinanceiro = () => {
             if (corpo) corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Falha ao carregar dados do servidor.</td></tr>';
         }
     };
-
-    // Remove event listeners antigos que usavam os filtros deletados
-    // [filtroAno, filtroMes, filtroCategoria, filtroTipo].forEach(filtro => { ... }); -> REMOVIDO
 
     // --- Lógica da Aba de Dízimos ---
     const buscaMembroInput = document.getElementById('busca-membro-input');
@@ -988,8 +989,7 @@ const iniciarFinanceiro = () => {
         doc.text(`Ano de Referência: ${anoCorrente}`, 105, 30, { align: 'center' });
 
         doc.setFontSize(11);
-        doc.text(`Declaramos para os devidos fins que o(a) irmão(ã) ${membro.nome},
-`, 14, 50);
+        doc.text(`Declaramos para os devidos fins que o(a) irmão(ã) ${membro.nome},\n`, 14, 50);
         doc.text(`membro desta igreja, contribuiu durante o ano de ${anoCorrente} com o valor total de:`, 14, 57);
         
         doc.setFontSize(16);
