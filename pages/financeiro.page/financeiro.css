@@ -1204,30 +1204,32 @@ body > .context-menu li i {
    MÓDULO: FUNDOS E METAS
    ========================================================================== */
 
-/* Container da aba */
+/* ==========================================================================
+   MÓDULO: FUNDOS E METAS
+   ========================================================================== */
+
+/* Ajuste para remover o espaço enorme no topo */
 #aba-fundos {
-    padding: 20px;
-    background-color: #f4f7f6;
-    border-radius: 8px;
+    padding: 0 20px 20px 20px; /* Zera o padding do topo */
+    margin-top: 0; /* Zera a margem do topo */
 }
 
-/* Cabeçalho da aba */
 #aba-fundos .header-acoes {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 0; /* Garante que não haja espaço extra acima do header */
     margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: 1px solid #e0e0e0;
 }
 
 #aba-fundos .header-acoes h2 {
-    margin: 0;
-    color: #001f5d; /* Azul escuro padrão */
+    margin-top: 0; /* Remove a margem enorme padrão que o navegador dá ao H2 */
+    color: #001f5d;
     font-size: 1.6rem;
     font-weight: 600;
 }
-
 /* Botão Criar Novo Fundo */
 #btn-nova-meta {
     background-color: #4b6cb7;
