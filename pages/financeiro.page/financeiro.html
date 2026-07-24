@@ -29,6 +29,7 @@
     <div class="abas-financeiro">
         <button class="aba-link active" data-aba="lancamentos">Lançamentos</button>
         <button class="aba-link" data-aba="dizimos">Dízimos e Ofertas</button>
+        <button class="aba-link" data-aba="aba-fundos"><i class='bx bx-target-lock'></i> Fundos e Metas</button>
     </div>
 
     <div id="lancamentos" class="aba-conteudo active">
@@ -197,6 +198,61 @@
     </section>
 </div>
 </main>
+<!-- Aba de Fundos e Metas -->
+<div id="aba-fundos" class="aba-conteudo">
+    <div class="header-acoes">
+        <h2>Metas de Arrecadação</h2>
+        <button id="btn-nova-meta" class="btn-primario"><i class='bx bx-plus'></i> Criar Novo Fundo</button>
+    </div>
+
+    <!-- Visão Geral: Grid de Cards -->
+    <div id="grid-fundos" class="grid-fundos">
+        <!-- Os cards serão injetados aqui pelo JS -->
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Fundo -->
+<div id="modal-detalhes-fundo" class="modal hidden">
+    <div class="modal-content modal-largo">
+        <span class="close-modal" data-close>&times;</span>
+        <h2 id="fundo-titulo-detalhe">Nome do Fundo</h2>
+        <div class="fundo-header-stats">
+            <div class="stat-box">
+                <span>Arrecadado</span>
+                <h3 id="fundo-valor-arrecadado">R$ 0,00</h3>
+            </div>
+            <div class="stat-box">
+                <span>Meta</span>
+                <h3 id="fundo-valor-meta">R$ 0,00</h3>
+            </div>
+            <div class="stat-box">
+                <span>Progresso</span>
+                <h3 id="fundo-porcentagem">0%</h3>
+            </div>
+        </div>
+        
+        <div class="graficos-fundo">
+            <div class="grafico-container">
+                <h4>Fluxo de Entradas do Fundo</h4>
+                <canvas id="grafico-fundo-historico"></canvas>
+            </div>
+        </div>
+
+        <div class="tabela-container mt-20">
+            <h4>Últimos Lançamentos Vinculados</h4>
+            <table class="tabela-lancamentos">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Membro</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-fundo-lancamentos"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
     
 <div id="modal-lancamento" class="modal-overlay">
     <div class="modal-content">
