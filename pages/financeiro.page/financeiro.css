@@ -1259,6 +1259,7 @@ body > .context-menu li i {
 }
 
 /* Estilo do Card individual */
+/* Estilo do Card individual */
 .card-fundo {
     background: #ffffff;
     border-radius: 12px;
@@ -1266,7 +1267,7 @@ body > .context-menu li i {
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 6px solid #28a745;
+    border-left: 6px solid #007bff; /* Azul para Em Andamento */
     display: flex;
     flex-direction: column;
 }
@@ -1277,10 +1278,29 @@ body > .context-menu li i {
 }
 
 .card-fundo.status-concluido {
-    border-left-color: #6c757d;
-    background-color: #fbfbfb;
+    border-left-color: #28a745; /* Fica verde apenas na borda quando conclui */
+    background-color: #ffffff; /* Mantém branco */
 }
 
+/* Badges de Status ajustadas */
+.badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.status-ativo .badge-status { 
+    background-color: #e9f5ff; 
+    color: #007bff; 
+}
+.status-concluido .badge-status { 
+    background-color: #e6f4ea; 
+    color: #1e8e3e; 
+}
 /* Cabeçalho dentro do Card */
 .card-fundo-header {
     display: flex;
