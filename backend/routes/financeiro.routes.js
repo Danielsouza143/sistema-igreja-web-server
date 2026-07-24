@@ -1,9 +1,9 @@
 import express from 'express';
 import Lancamento from '../models/lancamento.model.js';
+import Fundo from '../models/fundo.model.js';
 import { s3Upload, s3Delete, getS3KeyFromUrl, getSignedUrlForObject } from '../utils/s3-upload.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { createNotification } from '../utils/notification.service.js';
-import Fundo from '../models/fundo.model.js';
 
 const router = express.Router();
 const upload = s3Upload('comprovantes', false);
@@ -32,7 +32,6 @@ router.get('/lancamentos', async (req, res) => {
             }
             query.data = { $gte: start, $lte: end };
         } else if (mes && mes !== 'todos') {
-            // Se escolher mês mas não ano (improvável pela UI, mas seguro), usa o ano atual
             const anoAtual = new Date().getUTCFullYear();
             const mesInt = parseInt(mes) - 1;
             const start = new Date(Date.UTC(anoAtual, mesInt, 1, 0, 0, 0));
@@ -40,7 +39,7 @@ router.get('/lancamentos', async (req, res) => {
             query.data = { $gte: start, $lte: end };
         }
 
-        // Filtro por Múltiplas Categorias (Array ou String separada por vírgula)
+        // Filtro por Múltiplas Categorias
         if (categorias) {
             let catsArray = Array.isArray(categorias) ? categorias : categorias.split(',').map(c => c.trim()).filter(Boolean);
             if (catsArray.length > 0) {
@@ -63,7 +62,7 @@ router.get('/lancamentos', async (req, res) => {
     }
 });
 
-// POST /api/financeiro/lancamentos - Criar um novo lançamento para o tenant
+// POST /api/financeiro/lancamentos - Criar um novo lançamento
 router.post('/lancamentos', async (req, res) => {
     try {
         const novoLancamento = new Lancamento({
@@ -85,7 +84,7 @@ router.post('/lancamentos', async (req, res) => {
     }
 });
 
-// GET /api/financeiro/lancamentos/:id - Obter um lançamento específico do tenant
+// GET /api/financeiro/lancamentos/:id - Obter um lançamento específico
 router.get('/lancamentos/:id', async (req, res) => {
     try {
         const lancamento = await Lancamento.findOne({ _id: req.params.id, tenantId: req.tenant.id }).lean();
@@ -102,7 +101,7 @@ router.get('/lancamentos/:id', async (req, res) => {
     }
 });
 
-// PUT /api/financeiro/lancamentos/:id - Atualizar um lançamento do tenant
+// PUT /api/financeiro/lancamentos/:id - Atualizar um lançamento
 router.put('/lancamentos/:id', upload.single('comprovante'), async (req, res) => {
     try {
         const { comprovanteUrl, ...updateData } = req.body;
@@ -135,7 +134,7 @@ router.put('/lancamentos/:id', upload.single('comprovante'), async (req, res) =>
     }
 });
 
-// DELETE /api/financeiro/lancamentos/:id - Excluir um lançamento do tenant
+// DELETE /api/financeiro/lancamentos/:id - Excluir um lançamento
 router.delete('/lancamentos/:id', async (req, res) => {
     try {
         const lancamento = await Lancamento.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
@@ -151,7 +150,7 @@ router.delete('/lancamentos/:id', async (req, res) => {
     }
 });
 
-// DELETE /api/financeiro/lancamentos/lote - Excluir múltiplos lançamentos do tenant
+// DELETE /api/financeiro/lancamentos/lote - Excluir múltiplos lançamentos
 router.delete('/lancamentos/lote', async (req, res) => {
     const { ids } = req.body;
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -173,7 +172,7 @@ router.delete('/lancamentos/lote', async (req, res) => {
     }
 });
 
-// POST /api/financeiro/upload-comprovante - Rota para upload do arquivo (já protegida pelo router.use)
+// POST /api/financeiro/upload-comprovante - Rota para upload
 router.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
@@ -181,12 +180,16 @@ router.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
     const filePath = req.file.location;
     res.status(200).json({ filePath: filePath });
 });
+
+// ==========================================
+// ROTAS DE FUNDOS E METAS
+// ==========================================
+
 // GET /api/financeiro/fundos - Listar fundos calculando o progresso
 router.get('/fundos', async (req, res) => {
     try {
         const fundos = await Fundo.find({ tenantId: req.tenant.id }).lean();
         
-        // Calcula o arrecadado de cada fundo (Entradas - Saídas vinculadas ao fundo)
         for (let fundo of fundos) {
             const lancamentos = await Lancamento.find({ fundoId: fundo._id, tenantId: req.tenant.id });
             const entradas = lancamentos.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
@@ -230,11 +233,12 @@ router.put('/fundos/:id', async (req, res) => {
 router.delete('/fundos/:id', async (req, res) => {
     try {
         await Fundo.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
-        // Desvincula os lançamentos desse fundo para não apagar o dinheiro do caixa, apenas o projeto
+        // Desvincula os lançamentos desse fundo (não exclui o dinheiro do caixa)
         await Lancamento.updateMany({ fundoId: req.params.id, tenantId: req.tenant.id }, { fundoId: null });
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ message: 'Erro ao excluir fundo.', error: error.message });
     }
 });
+
 export default router;
