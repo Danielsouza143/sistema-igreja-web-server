@@ -22,7 +22,8 @@ const lancamentoSchema = new Schema({
 }, {
     timestamps: true,
     collection: 'lancamentos'
-});
+fundoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Fundo', default: null } 
+}, { collection: 'lancamentos' });
 
 const Lancamento = model('Lancamento', lancamentoSchema);
 export default Lancamento;
