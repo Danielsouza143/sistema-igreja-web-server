@@ -11,7 +11,7 @@ if (typeof handleLogout === 'undefined') {
     };
 }
 
-const iniciarMenu = () => {
+var iniciarMenu = () => {
     // --- LÓGICA DE IDENTIDADE DA IGREJA (MOVIDA DE CHURCH-IDENTITY.JS) ---
     class ChurchIdentity {
         static async loadAndApplyIdentity() {
