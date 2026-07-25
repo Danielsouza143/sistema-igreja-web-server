@@ -1,4 +1,4 @@
-const iniciarFinanceiro = () => {
+var iniciarFinanceiro = () => {
     let todosLancamentos = [];
     let lancamentosSelecionados = new Set();
     let todosMembros = [];
@@ -246,7 +246,7 @@ const iniciarFinanceiro = () => {
         }
 
         if (contribuicoesAno.length === 0) {
-            container.innerHTML = '<p class="aviso-grafico-vazio">Nenhuma contribuição registrada neste ano para exibir o gráfico.</p>';
+            container.innerHTML = '<p class="aviso-grafico-vazio">Nenhuma contribuição registrada neste ano.</p>';
             return;
         }
 
@@ -324,7 +324,7 @@ const iniciarFinanceiro = () => {
         let mesesRestantes = (prazo.getFullYear() - hoje.getFullYear()) * 12 + (prazo.getMonth() - hoje.getMonth());
         
         if (mesesRestantes <= 0) {
-            return `Faltam ${diasRestantes} dias. Necessário ${formatarMoeda(faltante)} nesta reta final.`;
+            return `Faltam ${diasRestantes} dias. Necessário ${formatarMoeda(faltante)} na reta final.`;
         }
         
         const porMes = faltante / mesesRestantes;
@@ -462,6 +462,7 @@ const iniciarFinanceiro = () => {
         const porcentagem = ((fundo.arrecadado / (fundo.meta || 1)) * 100).toFixed(1);
         document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
 
+        // Busca lançamentos vinculados a esta meta
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
 
         const tabela = document.getElementById('tabela-fundo-lancamentos');
@@ -488,18 +489,19 @@ const iniciarFinanceiro = () => {
         modal.style.display = 'flex';
     };
 
+    // Ações dos novos botões do Modal Detalhes do Fundo
     const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
     if(btnNovaArrec) {
         btnNovaArrec.addEventListener('click', () => {
-            document.getElementById('modal-detalhes-fundo').style.display = 'none'; 
-            abrirModal(); 
+            document.getElementById('modal-detalhes-fundo').style.display = 'none'; // Fecha detalhes
+            abrirModal(); // Abre modal de lançamento
             setTimeout(() => {
                 document.getElementById('tipo').value = 'entrada';
                 atualizarCategoriasModal('entrada');
                 const fundoSelect = document.getElementById('fundoId');
                 if(fundoSelect && fundoEmVisualizacao) {
                     fundoSelect.value = fundoEmVisualizacao._id;
-                    fundoSelect.dispatchEvent(new Event('change')); 
+                    fundoSelect.dispatchEvent(new Event('change')); // Dispara evento para liberar busca de membro
                 }
             }, 100);
         });
@@ -519,6 +521,7 @@ const iniciarFinanceiro = () => {
 
             if(confirm(`Confirmar transferência de ${formatarMoeda(valorTransferencia)} para o fundo?`)) {
                 try {
+                    // 1. Cria a Saída do Caixa Geral
                     await window.api.post('/api/financeiro/lancamentos', {
                         tipo: 'saida',
                         data: new Date().toISOString().split('T')[0],
@@ -528,6 +531,7 @@ const iniciarFinanceiro = () => {
                         fundoId: null
                     });
 
+                    // 2. Cria a Entrada no Fundo
                     await window.api.post('/api/financeiro/lancamentos', {
                         tipo: 'entrada',
                         data: new Date().toISOString().split('T')[0],
@@ -539,7 +543,7 @@ const iniciarFinanceiro = () => {
 
                     alert('Transferência realizada com sucesso!');
                     document.getElementById('modal-detalhes-fundo').style.display = 'none';
-                    carregarDados(); 
+                    carregarDados(); // Atualiza tudo
                 } catch (err) {
                     console.error(err);
                     alert('Erro ao transferir saldo.');
@@ -559,7 +563,7 @@ const iniciarFinanceiro = () => {
             if(l.tipo === 'entrada') {
                 dadosPorMes[mes] += l.valor;
             } else {
-                dadosPorMes[mes] -= l.valor; 
+                dadosPorMes[mes] -= l.valor; // Se houver saída, subtrai
             }
         });
 
@@ -590,7 +594,7 @@ const iniciarFinanceiro = () => {
     }
     
     document.getElementById('btn-nova-meta')?.addEventListener('click', () => abrirModalFundo());
-    modalFundo?.querySelector('[data-close]')?.addEventListener('click', () => modalFundo.style.display = 'none');
+    modalFundo?.querySelector('[data-close]').addEventListener('click', () => modalFundo.style.display = 'none');
 
     // --- Lógica de Filtros ---
     const aplicarFiltros = async (retornarArray = false) => {
@@ -646,7 +650,7 @@ const iniciarFinanceiro = () => {
         filtroAno.innerHTML = '<option value="todos">Todos os Anos</option>' + 
                              anosNoBanco.sort((a, b) => b - a).map(ano => `<option value="${ano}">${ano}</option>`).join('');
         
-        // CORREÇÃO: Puxar tudo por padrão ao entrar na tela para nada parecer zerado.
+        // CORREÇÃO: Exibe todos os dados do banco na visão inicial por padrão
         filtroAno.value = 'todos';
         filtroMes.value = 'todos';
 
@@ -671,6 +675,13 @@ const iniciarFinanceiro = () => {
             novoBtn.addEventListener('click', () => aplicarFiltros());
         }
     };
+
+    // FUNÇÕES INJETADAS PARA O FIX: BUSCA DE MEMBROS E VARIÁVEIS INICIAIS
+    // (O erro ReferenceError reclamou dessas variáveis abaixo:)
+    const buscaMembroInput = document.getElementById('busca-membro-input');
+    const buscaResultados = document.getElementById('busca-membro-resultados');
+    const historicoContainer = document.getElementById('historico-membro-container');
+    const avisoInicial = document.getElementById('aviso-inicial-dizimos');
 
     const toggleMembroSearch = () => {
         const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value : '';
@@ -782,6 +793,7 @@ const iniciarFinanceiro = () => {
     const selFundo = document.getElementById('fundoId');
     if(selFundo) selFundo.addEventListener('change', toggleMembroSearch);
 
+    // --- Lógica de busca de membro no modal ---
     if(buscaMembroModalInput) {
         buscaMembroModalInput.addEventListener('input', () => {
             const termo = buscaMembroModalInput.value.toLowerCase();
@@ -892,14 +904,19 @@ const iniciarFinanceiro = () => {
             alert('Membro não encontrado para gerar o recibo.');
             return;
         }
+
         preencherRecibo(lancamento, membro);
+
         const { jsPDF } = window.jspdf;
         const reciboElement = document.getElementById('recibo-template');
+
         const canvas = await html2canvas(reciboElement, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
+
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`Recibo_${lancamento.categoria}_${membro.nome.split(' ')[0]}.pdf`);
     };
@@ -910,8 +927,10 @@ const iniciarFinanceiro = () => {
             alert('Membro não encontrado para compartilhar o recibo.');
             return;
         }
+
         preencherRecibo(lancamento, membro);
         const reciboElement = document.getElementById('recibo-template');
+
         try {
             const canvas = await html2canvas(reciboElement, { scale: 2 });
             canvas.toBlob(async (blob) => {
@@ -922,6 +941,7 @@ const iniciarFinanceiro = () => {
                     title: 'Recibo de Contribuição',
                     text: `Olá ${membro.nome}, segue o seu recibo de contribuição. Deus abençoe!`,
                 };
+
                 if (navigator.canShare && navigator.canShare(shareData)) {
                     await navigator.share(shareData);
                 } else {
@@ -1057,6 +1077,7 @@ const iniciarFinanceiro = () => {
             e.preventDefault();
             const tr = e.target.closest('tr');
             if (!tr || !tr.dataset.id) return;
+
             rightClickedRowId = tr.dataset.id;
             if(contextMenu) {
                 contextMenu.style.display = 'block';
