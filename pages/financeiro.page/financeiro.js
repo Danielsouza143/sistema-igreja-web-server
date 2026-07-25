@@ -22,7 +22,7 @@ var iniciarFinanceiro = () => {
     let graficoFundoAtual = null;
 
     // ==========================================
-    // 2. SELETORES DO DOM
+    // 2. SELETORES DO DOM E BOTÕES
     // ==========================================
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
@@ -62,6 +62,20 @@ var iniciarFinanceiro = () => {
     const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
     const toast = document.getElementById('toast-desfazer');
     const btnDesfazer = document.getElementById('btn-desfazer');
+
+    // BOTÕES QUE FALTAVAM E CAUSAVAM O CRASH:
+    const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
+    const btnNovaMeta = document.getElementById('btn-nova-meta');
+    const btnSelecionar = document.getElementById('context-selecionar');
+    const btnEditarCtx = document.getElementById('context-editar');
+    const btnExcluirCtx = document.getElementById('context-excluir');
+    const btnCopiarCtx = document.getElementById('context-copiar');
+    const btnImprimirCtx = document.getElementById('context-imprimir');
+    const btnExportarPdf = document.getElementById('btn-exportar-pdf');
+    const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
+    const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
+    const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
+    const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
 
     // ==========================================
     // 3. FUNÇÕES UTILITÁRIAS (Moeda, Data, etc)
@@ -127,15 +141,11 @@ var iniciarFinanceiro = () => {
     // ==========================================
     const configurarAbas = () => {
         const abasLink = document.querySelectorAll('.abas-financeiro .aba-link');
-        
-        // Verifica se tem aba salva na memória do navegador
         const abaSalva = localStorage.getItem('abaFinanceiroAtiva') || 'lancamentos';
         
-        // Desativa todas
         document.querySelectorAll('.abas-financeiro .aba-link').forEach(a => a.classList.remove('active'));
         document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('active'));
         
-        // Ativa a que estava salva
         const abaParaAtivar = document.querySelector(`.abas-financeiro .aba-link[data-aba="${abaSalva}"]`);
         const conteudoParaAtivar = document.getElementById(abaSalva);
         
@@ -144,7 +154,6 @@ var iniciarFinanceiro = () => {
             conteudoParaAtivar.classList.add('active');
         }
 
-        // Lógica de clique nas abas
         abasLink.forEach(aba => {
             aba.addEventListener('click', () => {
                 document.querySelector('.abas-financeiro .aba-link.active')?.classList.remove('active');
@@ -154,7 +163,6 @@ var iniciarFinanceiro = () => {
                 const idAba = aba.dataset.aba;
                 document.getElementById(idAba)?.classList.add('active');
                 
-                // Salva a aba escolhida na memória
                 localStorage.setItem('abaFinanceiroAtiva', idAba);
             });
         });
@@ -230,7 +238,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 5. RENDERIZAÇÃO: GRÁFICOS (BLINDADOS)
+    // 5. RENDERIZAÇÃO: GRÁFICOS
     // ==========================================
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
@@ -252,7 +260,6 @@ var iniciarFinanceiro = () => {
         const canvas = document.getElementById('grafico-mensal');
         if (!canvas) return;
 
-        // DESTRUIÇÃO SEGURA
         if (graficoAnual) {
             graficoAnual.destroy();
             graficoAnual = null;
@@ -277,13 +284,11 @@ var iniciarFinanceiro = () => {
         const canvas = document.getElementById('grafico-despesas-pizza');
         if(!canvas) return;
 
-        // DESTRUIÇÃO SEGURA (Evita Canvas is already in use)
         if (graficoDespesasPizza) {
             graficoDespesasPizza.destroy();
             graficoDespesasPizza = null;
         }
 
-        // Busca ou remove mensagem antiga de vazio
         const container = canvas.parentElement;
         const oldMsg = container.querySelector('.aviso-vazio');
         if(oldMsg) oldMsg.remove();
@@ -323,7 +328,6 @@ var iniciarFinanceiro = () => {
 
         const contribuicoesAno = contribuicoes.filter(c => new Date(c.data).getUTCFullYear() === anoCorrente);
 
-        // DESTRUIÇÃO SEGURA
         if (graficoContribuicoesMembro) {
             graficoContribuicoesMembro.destroy();
             graficoContribuicoesMembro = null;
@@ -405,12 +409,9 @@ var iniciarFinanceiro = () => {
         if (faltante <= 0) return 'Meta atingida! Parabéns!';
         if (diasRestantes <= 0) return `Prazo encerrado. Faltou ${formatarMoeda(faltante)}.`;
         
-        // Calcula a diferença exata de meses entre hoje e o prazo
         let mesesRestantes = (prazo.getFullYear() - hoje.getFullYear()) * 12 + (prazo.getMonth() - hoje.getMonth());
-        // Ajuste caso não tenha completado um mês inteiro de diferença
         if (hoje.getDate() > prazo.getDate()) mesesRestantes--; 
-        
-        mesesRestantes = Math.max(mesesRestantes, 0); // Impede meses negativos
+        mesesRestantes = Math.max(mesesRestantes, 0); 
 
         if (mesesRestantes < 1) {
             return `Faltam ${diasRestantes} dias. Necessário ${formatarMoeda(faltante)} na reta final.`;
@@ -541,7 +542,6 @@ var iniciarFinanceiro = () => {
 
     const abrirDetalhesFundo = (fundo) => {
         if(!modalDetalhesFundo) return;
-        
         fundoEmVisualizacao = fundo; 
 
         document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
@@ -577,11 +577,51 @@ var iniciarFinanceiro = () => {
         modalDetalhesFundo.style.display = 'flex';
     };
 
+    if(btnNovaArrec) {
+        btnNovaArrec.addEventListener('click', () => {
+            if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
+            abrirModal(); 
+            setTimeout(() => {
+                if(selectTipo) selectTipo.value = 'entrada';
+                atualizarCategoriasModal('entrada');
+                if(selectFundo && fundoEmVisualizacao) {
+                    selectFundo.value = fundoEmVisualizacao._id;
+                    selectFundo.dispatchEvent(new Event('change')); 
+                }
+            }, 100);
+        });
+    }
+
+    if(btnTransferirCaixa) {
+        btnTransferirCaixa.addEventListener('click', async () => {
+            if(!fundoEmVisualizacao) return;
+            const valorStr = prompt(`Quanto do saldo em caixa deseja transferir para "${fundoEmVisualizacao.nome}"?\n\nDigite apenas números (Ex: 150,50):`);
+            if(!valorStr) return;
+            
+            const valorTransferencia = parseFloat(valorStr.replace(',', '.'));
+            if(isNaN(valorTransferencia) || valorTransferencia <= 0) return alert("Valor inválido.");
+
+            if(confirm(`Confirmar transferência de ${formatarMoeda(valorTransferencia)} para o fundo?`)) {
+                try {
+                    await window.api.post('/api/financeiro/lancamentos', {
+                        tipo: 'saida', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Transferência de Fundo', descricao: `Transferência para o projeto: ${fundoEmVisualizacao.nome}`, fundoId: null
+                    });
+                    await window.api.post('/api/financeiro/lancamentos', {
+                        tipo: 'entrada', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Aporte de Caixa', descricao: 'Aporte recebido do caixa geral', fundoId: fundoEmVisualizacao._id
+                    });
+
+                    alert('Transferência realizada!');
+                    if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none';
+                    carregarDados(); 
+                } catch (err) { alert('Erro ao transferir saldo.'); }
+            }
+        });
+    }
+
     const renderizarGraficoFundoEspecifico = (lancamentos) => {
         const canvas = document.getElementById('grafico-fundo-historico');
         if(!canvas) return;
         
-        // DESTRUIÇÃO SEGURA
         if(graficoFundoAtual) {
             graficoFundoAtual.destroy();
             graficoFundoAtual = null;
@@ -615,49 +655,6 @@ var iniciarFinanceiro = () => {
             options: { responsive: true, maintainAspectRatio: false }
         });
     };
-
-    const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
-    if(btnNovaArrec) {
-        btnNovaArrec.addEventListener('click', () => {
-            if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
-            abrirModal(); 
-            setTimeout(() => {
-                if(selectTipo) selectTipo.value = 'entrada';
-                atualizarCategoriasModal('entrada');
-                if(selectFundo && fundoEmVisualizacao) {
-                    selectFundo.value = fundoEmVisualizacao._id;
-                    selectFundo.dispatchEvent(new Event('change')); 
-                }
-            }, 100);
-        });
-    }
-
-    const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
-    if(btnTransferirCaixa) {
-        btnTransferirCaixa.addEventListener('click', async () => {
-            if(!fundoEmVisualizacao) return;
-            const valorStr = prompt(`Quanto do saldo em caixa deseja transferir para "${fundoEmVisualizacao.nome}"?\n\nDigite apenas números (Ex: 150,50):`);
-            if(!valorStr) return;
-            
-            const valorTransferencia = parseFloat(valorStr.replace(',', '.'));
-            if(isNaN(valorTransferencia) || valorTransferencia <= 0) return alert("Valor inválido.");
-
-            if(confirm(`Confirmar transferência de ${formatarMoeda(valorTransferencia)} para o fundo?`)) {
-                try {
-                    await window.api.post('/api/financeiro/lancamentos', {
-                        tipo: 'saida', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Transferência de Fundo', descricao: `Transferência para o projeto: ${fundoEmVisualizacao.nome}`, fundoId: null
-                    });
-                    await window.api.post('/api/financeiro/lancamentos', {
-                        tipo: 'entrada', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Aporte de Caixa', descricao: 'Aporte recebido do caixa geral', fundoId: fundoEmVisualizacao._id
-                    });
-
-                    alert('Transferência realizada!');
-                    if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none';
-                    carregarDados(); 
-                } catch (err) { alert('Erro ao transferir saldo.'); }
-            }
-        });
-    }
 
     // ==========================================
     // 7. LÓGICA DE FILTROS E PESQUISAS
@@ -711,14 +708,14 @@ var iniciarFinanceiro = () => {
         const anosNoBanco = [...new Set((lancamentosIniciais || []).map(l => new Date(l.data).getUTCFullYear()))];
         const hoje = new Date();
         const anoAtual = hoje.getFullYear();
-        const mesAtual = hoje.getMonth() + 1; // getMonth() é base zero (Jan = 0), então somamos 1
+        const mesAtual = hoje.getMonth() + 1; 
 
         if (!anosNoBanco.includes(anoAtual)) anosNoBanco.push(anoAtual);
         
         filtroAno.innerHTML = '<option value="todos">Todos os Anos</option>' + 
                              anosNoBanco.sort((a, b) => b - a).map(ano => `<option value="${ano}">${ano}</option>`).join('');
         
-        // EXIBIR POR PADRÃO MÊS E ANO ATUAIS
+        // PADRÃO: INICIA COM O MÊS ATUAL NA TELA DE LANÇAMENTOS
         filtroAno.value = anoAtual.toString();
         filtroMes.value = mesAtual.toString();
 
@@ -1085,8 +1082,47 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 9. EVENT LISTENERS E CHAMADAS HTTP
+    // 9. CARREGAMENTO E EVENT LISTENERS
     // ==========================================
+    const carregarDados = async () => {
+        try {
+            try {
+                const resMembros = await window.api.get(`/api/membros?_t=${Date.now()}`);
+                todosMembros = Array.isArray(resMembros) ? resMembros : [];
+            } catch (err) {
+                console.warn("Aviso: Falha ao carregar membros.", err);
+                todosMembros = [];
+            }
+
+            try {
+                const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
+                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
+            } catch (err) {
+                console.warn("Aviso: Falha ao carregar configs.", err);
+                categoriasConfig = { entradas: [], saidas: [] };
+            }
+
+            try {
+                // BLINDAGEM DE CACHE PARA BUSCAR TODOS OS LANÇAMENTOS
+                const resLancamentosTodos = await window.api.get(`/api/financeiro/lancamentos?ano=todos&_t=${Date.now()}`);
+                todosLancamentos = Array.isArray(resLancamentosTodos) ? resLancamentosTodos : [];
+            } catch (err) {
+                console.error("Erro Crítico: Falha ao carregar lançamentos.", err);
+                todosLancamentos = [];
+            }
+
+            await carregarFundos();
+
+            calcularBalancoGeral(todosLancamentos);
+            popularFiltros(todosLancamentos);
+            
+            await aplicarFiltros();
+
+        } catch (error) {
+            console.error("Erro fatal no carregamento inicial da página:", error);
+            if (tabelaCorpo) tabelaCorpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Houve um problema de conexão com o servidor. Recarregue a página.</td></tr>';
+        }
+    };
 
     if(formLancamento) {
         formLancamento.addEventListener('submit', async (e) => {
@@ -1142,6 +1178,32 @@ var iniciarFinanceiro = () => {
         });
     }
 
+    if(formFundo) {
+        formFundo.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const dados = {
+                nome: document.getElementById('fundo-nome').value,
+                descricao: document.getElementById('fundo-descricao').value,
+                meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'),
+                prazo: document.getElementById('fundo-prazo').value
+            };
+
+            try {
+                if(fundoEmEdicaoId) {
+                    await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
+                } else {
+                    await window.api.post('/api/financeiro/fundos', dados);
+                }
+                if(modalFundo) modalFundo.style.display = 'none';
+                await carregarDados();
+                alert('Fundo salvo com sucesso!');
+            } catch(error) {
+                alert('Erro ao salvar fundo.');
+                console.error(error);
+            }
+        });
+    }
+
     if(tabelaCorpo) {
         tabelaCorpo.addEventListener('click', (e) => {
             const id = e.target.dataset.id;
@@ -1173,60 +1235,7 @@ var iniciarFinanceiro = () => {
                 contextMenu.style.top = `${e.pageY}px`;
             }
         });
-    }
 
-    if(btnSelecionar) {
-        btnSelecionar.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            if (tabelaLancamentos) tabelaLancamentos.classList.add('modo-selecao');
-            if (tabelaCorpo) {
-                const checkbox = tabelaCorpo.querySelector(`.checkbox-lancamento[data-id="${rightClickedRowId}"]`);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.checked = true;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-        });
-    }
-
-    if(btnEditarCtx) {
-        btnEditarCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if(lancamento) abrirModal(lancamento);
-        });
-    }
-
-    if(btnExcluirCtx) {
-        btnExcluirCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            iniciarExclusaoComDesfazer(rightClickedRowId);
-        });
-    }
-
-    if(btnCopiarCtx) {
-        btnCopiarCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if (lancamento) {
-                const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
-                navigator.clipboard.writeText(texto).then(() => alert('Dados copiados!'));
-            }
-        });
-    }
-
-    if(btnImprimirCtx) {
-        btnImprimirCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if (lancamento) {
-                // Implementação simplificada para usar o gerador existente
-                alert("Use o botão de detalhes para imprimir o recibo.");
-            }
-        });
-    }
-
-    if(tabelaCorpo) {
         tabelaCorpo.addEventListener('change', (e) => {
             if (e.target.classList.contains('checkbox-lancamento')) {
                 const id = e.target.dataset.id;
@@ -1239,26 +1248,6 @@ var iniciarFinanceiro = () => {
                     tr.classList.remove('selecionada');
                 }
                 atualizarEstadoExclusaoLote();
-            }
-        });
-
-        tabelaCorpo.addEventListener('click', (e) => {
-            const target = e.target;
-            if (target.closest('.acoes-item')) return;
-            const tr = target.closest('tr');
-            if (!tr) return;
-
-            if (tabelaLancamentos && tabelaLancamentos.classList.contains('modo-selecao')) {
-                if (target.closest('a, [contenteditable]')) return;
-                const checkbox = tr.querySelector('.checkbox-lancamento');
-                if (checkbox && target.type !== 'checkbox') {
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            } else if (!target.closest('a, i, [contenteditable], input')) {
-                const id = tr.dataset.id;
-                const lancamento = todosLancamentos.find(l => l._id === id);
-                if(lancamento) abrirModalDetalhes(lancamento);
             }
         });
     }
@@ -1312,6 +1301,144 @@ var iniciarFinanceiro = () => {
         });
     }
 
+    if(btnNovoLancamento) btnNovoLancamento.addEventListener('click', () => abrirModal());
+    if(selectTipo) selectTipo.addEventListener('change', (e) => { atualizarCategoriasModal(e.target.value); toggleMembroSearch(); });
+    if(selectCategoria) selectCategoria.addEventListener('change', toggleMembroSearch);
+    if(selectFundo) selectFundo.addEventListener('change', toggleMembroSearch);
+    if(btnNovaMeta) btnNovaMeta.addEventListener('click', () => abrirModalFundo());
+    
+    if(btnAplicarFiltros) {
+        const novoBtn = btnAplicarFiltros.cloneNode(true);
+        btnAplicarFiltros.parentNode.replaceChild(novoBtn, btnAplicarFiltros);
+        novoBtn.addEventListener('click', () => aplicarFiltros());
+    }
+
+    if(buscaMembroModalInput) {
+        buscaMembroModalInput.addEventListener('input', () => {
+            const termo = buscaMembroModalInput.value.toLowerCase();
+            if (termo.length < 2) {
+                if(buscaMembroResultadosModal) buscaMembroResultadosModal.classList.remove('active');
+                return;
+            }
+            const membrosFiltrados = todosMembros.filter(m => 
+                m.nome.toLowerCase().includes(termo) || (m.cpf && m.cpf.replace(/\D/g, '').includes(termo))
+            );
+            if (membrosFiltrados.length > 0 && buscaMembroResultadosModal) {
+                buscaMembroResultadosModal.innerHTML = membrosFiltrados.map(m => 
+                    `<div class="resultado-item" data-id="${m._id}" data-nome="${m.nome}">${m.nome} - ${m.cpf || 'CPF não cadastrado'}</div>`
+                ).join('');
+                buscaMembroResultadosModal.classList.add('active');
+            } else if (buscaMembroResultadosModal) {
+                buscaMembroResultadosModal.innerHTML = '<div class="resultado-item-none">Nenhum membro encontrado</div>';
+                buscaMembroResultadosModal.classList.add('active');
+            }
+        });
+    }
+
+    if(buscaMembroResultadosModal) {
+        buscaMembroResultadosModal.addEventListener('click', (e) => {
+            const item = e.target.closest('.resultado-item');
+            if (item && buscaMembroModalInput && membroIdHiddenInput) {
+                buscaMembroModalInput.value = item.dataset.nome;
+                membroIdHiddenInput.value = item.dataset.id;
+                buscaMembroResultadosModal.classList.remove('active');
+                buscaMembroModalInput.disabled = true;
+                if(clearMembroBtn) clearMembroBtn.classList.remove('hidden');
+            }
+        });
+    }
+
+    if(clearMembroBtn) {
+        clearMembroBtn.addEventListener('click', () => {
+            if(buscaMembroModalInput) {
+                buscaMembroModalInput.value = '';
+                buscaMembroModalInput.disabled = false;
+                buscaMembroModalInput.focus();
+            }
+            if(membroIdHiddenInput) membroIdHiddenInput.value = '';
+            clearMembroBtn.classList.add('hidden');
+        });
+    }
+
+    if(buscaMembroInput) {
+        buscaMembroInput.addEventListener('input', () => {
+            const termo = buscaMembroInput.value.toLowerCase();
+            if (termo.length < 2) {
+                if(buscaResultados) buscaResultados.classList.remove('active');
+                return;
+            }
+            const membrosFiltrados = todosMembros.filter(m => m.nome.toLowerCase().includes(termo));
+            if (membrosFiltrados.length > 0 && buscaResultados) {
+                buscaResultados.innerHTML = membrosFiltrados.map(m => `<div class="resultado-item" data-id="${m._id}">${m.nome}</div>`).join('');
+                buscaResultados.classList.add('active');
+            } else if(buscaResultados) {
+                buscaResultados.classList.remove('active');
+            }
+        });
+    }
+
+    if(buscaResultados) {
+        buscaResultados.addEventListener('click', (e) => {
+            if (e.target.classList.contains('resultado-item')) {
+                const membroId = e.target.dataset.id;
+                const membro = todosMembros.find(m => m._id === membroId);
+                exibirHistoricoMembro(membro);
+                if(buscaMembroInput) buscaMembroInput.value = '';
+                buscaResultados.classList.remove('active');
+            }
+        });
+    }
+
+    if(btnSelecionar) {
+        btnSelecionar.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            if (tabelaLancamentos) tabelaLancamentos.classList.add('modo-selecao');
+            if (tabelaCorpo) {
+                const checkbox = tabelaCorpo.querySelector(`.checkbox-lancamento[data-id="${rightClickedRowId}"]`);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+    }
+
+    if(btnEditarCtx) {
+        btnEditarCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if(lancamento) abrirModal(lancamento);
+        });
+    }
+
+    if(btnExcluirCtx) {
+        btnExcluirCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            iniciarExclusaoComDesfazer(rightClickedRowId);
+        });
+    }
+
+    if(btnCopiarCtx) {
+        btnCopiarCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if (lancamento) {
+                const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
+                navigator.clipboard.writeText(texto).then(() => alert('Dados copiados!'));
+            }
+        });
+    }
+
+    if(btnImprimirCtx) {
+        btnImprimirCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if (lancamento) {
+                alert("Use o botão de detalhes para imprimir o recibo.");
+            }
+        });
+    }
+
     if(btnExportarPdf) {
         btnExportarPdf.addEventListener('click', async () => {
             const { jsPDF } = window.jspdf;
@@ -1362,49 +1489,7 @@ var iniciarFinanceiro = () => {
         });
     }
 
-    // ==========================================
-    // CARREGAMENTO INICIAL
-    // ==========================================
-    const carregarDados = async () => {
-        try {
-            try {
-                const resMembros = await window.api.get('/api/membros');
-                todosMembros = Array.isArray(resMembros) ? resMembros : [];
-            } catch (err) {
-                console.warn("Aviso: Falha ao carregar membros.", err);
-                todosMembros = [];
-            }
-
-            try {
-                const resConfig = await window.api.get('/api/configs');
-                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-            } catch (err) {
-                console.warn("Aviso: Falha ao carregar configs.", err);
-                categoriasConfig = { entradas: [], saidas: [] };
-            }
-
-            try {
-                const resLancamentosTodos = await window.api.get(`/api/financeiro/lancamentos?ano=todos&_t=${Date.now()}`);
-                todosLancamentos = Array.isArray(resLancamentosTodos) ? resLancamentosTodos : [];
-            } catch (err) {
-                console.error("Erro Crítico: Falha ao carregar lançamentos.", err);
-                todosLancamentos = [];
-            }
-
-            await carregarFundos();
-
-            calcularBalancoGeral(todosLancamentos);
-            popularFiltros(todosLancamentos);
-            
-            await aplicarFiltros();
-
-        } catch (error) {
-            console.error("Erro fatal no carregamento inicial da página:", error);
-            if (tabelaCorpo) tabelaCorpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Houve um problema de conexão com o servidor. Recarregue a página.</td></tr>';
-        }
-    };
-
-    // START
+    // Iniciar Fluxo
     carregarDados();
 };
 
