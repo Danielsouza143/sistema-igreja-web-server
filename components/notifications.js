@@ -1,4 +1,4 @@
-const initNotifications = () => {
+var initNotifications = () => {
     const bellIcon = document.querySelector('.menu-notifications i');
     const badge = document.querySelector('.notification-badge');
     const notificationList = document.querySelector('.notifications-list');
