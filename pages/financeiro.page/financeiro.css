@@ -1156,8 +1156,7 @@ body > .context-menu li i {
     font-weight: bold;
 }
 
-.status-ativo { background: #e6f4ea; color: #28a745; }
-.status-concluido { background: #e2e3e5; color: #383d41; }
+
 
 /* Barra de Progresso */
 .progresso-container {
