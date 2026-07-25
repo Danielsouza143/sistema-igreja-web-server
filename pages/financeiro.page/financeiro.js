@@ -1,13 +1,13 @@
 var iniciarFinanceiro = () => {
     // ==========================================
-    // 1. VARIÁVEIS GLOBAIS DE ESTADO E LIMPEZA
+    // 1. VARIÁVEIS GLOBAIS DE ESTADO
     // ==========================================
     let todosLancamentos = [];
     let lancamentosSelecionados = new Set();
     let todosMembros = [];
     let fundosAtivos = [];
     let categoriasConfig = { entradas: [], saidas: [] };
-    let tenantInfo = null; // Guardará as informações da Igreja
+    let tenantInfo = null; // Memória para os dados da Igreja (Nome, CNPJ, Logo)
 
     let lancamentoEmEdicaoId = null;
     let fundoEmEdicaoId = null;
@@ -22,38 +22,8 @@ var iniciarFinanceiro = () => {
     let graficoContribuicoesMembro = null;
     let graficoFundoAtual = null;
 
-    const fecharMenusGlobais = (e) => {
-        const cbContainer = document.getElementById('categorias-checkboxes');
-        if (cbContainer && !e.target.closest('#multi-select-categoria')) {
-            cbContainer.classList.remove('active');
-        }
-        const contextMenu = document.getElementById('context-menu');
-        if (contextMenu && contextMenu.style.display === 'block') {
-            contextMenu.style.display = 'none';
-        }
-        if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
-            const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
-            if (tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
-            
-            const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
-            if(checkboxSelecionarTodos) checkboxSelecionarTodos.checked = false;
-            
-            const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
-            if(tabelaCorpo) {
-                tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
-                tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
-            }
-            
-            const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
-            if(btnExcluirSelecionados) btnExcluirSelecionados.classList.add('hidden');
-        }
-    };
-
-    window.removeEventListener('click', fecharMenusGlobais);
-    window.addEventListener('click', fecharMenusGlobais);
-
     // ==========================================
-    // 2. SELETORES DO DOM
+    // 2. SELETORES DO DOM E BOTÕES
     // ==========================================
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
@@ -96,12 +66,12 @@ var iniciarFinanceiro = () => {
 
     const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
     const btnNovaMeta = document.getElementById('btn-nova-meta');
-    const btnExportarPdf = document.getElementById('btn-exportar-pdf');
     const btnSelecionar = document.getElementById('context-selecionar');
     const btnEditarCtx = document.getElementById('context-editar');
     const btnExcluirCtx = document.getElementById('context-excluir');
     const btnCopiarCtx = document.getElementById('context-copiar');
     const btnImprimirCtx = document.getElementById('context-imprimir');
+    const btnExportarPdf = document.getElementById('btn-exportar-pdf');
     const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
     const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
     const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
@@ -144,6 +114,12 @@ var iniciarFinanceiro = () => {
     };
 
     document.onclick = (e) => {
+        if (categoriasCheckboxes && !e.target.closest('#multi-select-categoria')) {
+            categoriasCheckboxes.classList.remove('active');
+        }
+        if (contextMenu && contextMenu.style.display === 'block') {
+            contextMenu.style.display = 'none';
+        }
         if (e.target.matches('[data-close]') || e.target.closest('[data-close]')) {
             const modalOverlay = e.target.closest('.modal-overlay') || e.target.closest('.modal');
             if (modalOverlay) modalOverlay.style.display = 'none';
@@ -353,7 +329,6 @@ var iniciarFinanceiro = () => {
             renderizarFundos(fundosAtivos);
             popularSelectFundos(); 
         } catch (error) {
-            console.error('Erro ao carregar fundos:', error);
             fundosAtivos = [];
             renderizarFundos(fundosAtivos);
         }
@@ -647,8 +622,151 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 8. MODAIS, EVENTOS DE TABELA E EXCLUSÕES
+    // 8. MODAIS, GERAÇÃO DE PDF E EVENTOS
     // ==========================================
+    
+    // --> Função Responsável por Buscar os Dados da Igreja e Preencher o Recibo
+    const preencherRecibo = async (lancamento, membro) => {
+        document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Não Identificado';
+        document.getElementById('recibo-valor').textContent = formatarMoeda(lancamento.valor);
+        document.getElementById('recibo-descricao').textContent = lancamento.descricao;
+        document.getElementById('recibo-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        document.getElementById('recibo-categoria').textContent = lancamento.categoria;
+
+        if (!tenantInfo) {
+            try {
+                tenantInfo = await window.api.get('/api/tenants/current');
+            } catch (e) {
+                console.error("Erro ao buscar info da igreja");
+            }
+        }
+
+        if (tenantInfo) {
+            const elNomeIgreja = document.getElementById('recibo-nome-igreja');
+            const elCnpjIgreja = document.getElementById('recibo-cnpj-igreja');
+            const logoImg = document.getElementById('recibo-logo-igreja');
+            const logoIcon = document.getElementById('recibo-logo-icone');
+
+            if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.name || 'Nossa Igreja';
+            if (elCnpjIgreja) elCnpjIgreja.textContent = tenantInfo.cnpj ? `CNPJ: ${tenantInfo.cnpj}` : '';
+            
+            if (tenantInfo.config && tenantInfo.config.logoUrl) {
+                if(logoImg) { 
+                    logoImg.src = tenantInfo.config.logoUrl; 
+                    logoImg.style.display = 'block'; 
+                }
+                if(logoIcon) logoIcon.style.display = 'none';
+            } else {
+                if(logoImg) logoImg.style.display = 'none';
+                if(logoIcon) logoIcon.style.display = 'block';
+            }
+        }
+    };
+
+    const gerarReciboPDF = async (lancamento) => {
+        const membro = todosMembros.find(m => m._id === lancamento.membroId);
+        await preencherRecibo(lancamento, membro);
+
+        const { jsPDF } = window.jspdf;
+        const reciboElement = document.getElementById('recibo-template');
+
+        // Delay rápido para dar tempo de carregar a imagem da logo externa
+        setTimeout(async () => {
+            // useCORS garante que a imagem vinda de fora (AWS S3) seja impressa no PDF
+            const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`Recibo_${lancamento.categoria}_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.pdf`);
+        }, 500);
+    };
+
+    const compartilharRecibo = async (lancamento) => {
+        const membro = todosMembros.find(m => m._id === lancamento.membroId);
+        await preencherRecibo(lancamento, membro);
+        
+        const reciboElement = document.getElementById('recibo-template');
+
+        setTimeout(async () => {
+            try {
+                const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true });
+                canvas.toBlob(async (blob) => {
+                    const fileName = `Recibo_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.png`;
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    const shareData = {
+                        files: [file],
+                        title: 'Recibo de Contribuição',
+                        text: `Olá ${membro ? membro.nome : ''}, segue o seu recibo.`,
+                    };
+
+                    if (navigator.canShare && navigator.canShare(shareData)) {
+                        await navigator.share(shareData);
+                    } else {
+                        alert('O compartilhamento não é suportado neste navegador. O recibo será baixado.');
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = fileName;
+                        link.click();
+                    }
+                }, 'image/png');
+            } catch (error) {
+                alert('Ocorreu um erro ao tentar compartilhar o recibo.');
+            }
+        }, 500);
+    };
+
+    const abrirModalDetalhes = (lancamento) => {
+        if(!modalDetalhes) return;
+        document.getElementById('detalhes-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        document.getElementById('detalhes-tipo').textContent = lancamento.tipo.charAt(0).toUpperCase() + lancamento.tipo.slice(1);
+        document.getElementById('detalhes-valor').textContent = formatarMoeda(lancamento.valor);
+        document.getElementById('detalhes-categoria').textContent = lancamento.categoria;
+        document.getElementById('detalhes-descricao').textContent = lancamento.descricao;
+
+        if (lancamento.membroId) {
+            const membro = todosMembros.find(m => m._id === lancamento.membroId);
+            document.getElementById('detalhes-membro').textContent = membro ? membro.nome : 'Não encontrado';
+            document.getElementById('detalhes-membro-container').classList.remove('hidden');
+        } else {
+            document.getElementById('detalhes-membro-container').classList.add('hidden');
+        }
+
+        const previewContainer = document.getElementById('detalhes-comprovante-preview');
+        if (lancamento.comprovanteUrl) {
+            if (lancamento.comprovanteUrl.endsWith('.pdf')) {
+                previewContainer.innerHTML = `<iframe src="${lancamento.comprovanteUrl}" width="100%" height="400px"></iframe>`;
+            } else {
+                previewContainer.innerHTML = `<img src="${lancamento.comprovanteUrl}" alt="Comprovante">`;
+            }
+        } else {
+            previewContainer.innerHTML = '<span>Nenhum comprovante carregado</span>';
+        }
+
+        const btnImprimir = document.getElementById('detalhes-btn-imprimir');
+        const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
+        
+        // MOSTRA OS BOTÕES PARA TODAS AS ENTRADAS E RECEITAS
+        if (lancamento.tipo === 'entrada') {
+            if(btnImprimir) {
+                btnImprimir.classList.remove('hidden');
+                btnImprimir.onclick = () => gerarReciboPDF(lancamento);
+            }
+            if(btnCompartilhar) {
+                btnCompartilhar.classList.remove('hidden');
+                btnCompartilhar.onclick = () => compartilharRecibo(lancamento);
+            }
+        } else {
+            if(btnImprimir) btnImprimir.classList.add('hidden');
+            if(btnCompartilhar) btnCompartilhar.classList.add('hidden');
+        }
+
+        modalDetalhes.style.display = 'flex';
+    };
+
     const abrirModal = (lancamento = null, duplicar = false) => {
         if(formLancamento) formLancamento.reset();
         popularSelectFundos(); 
@@ -718,53 +836,6 @@ var iniciarFinanceiro = () => {
         if (categoriaSelecionada) selectCategoria.value = categoriaSelecionada;
     };
 
-    const abrirModalDetalhes = (lancamento) => {
-        if(!modalDetalhes) return;
-        document.getElementById('detalhes-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-        document.getElementById('detalhes-tipo').textContent = lancamento.tipo.charAt(0).toUpperCase() + lancamento.tipo.slice(1);
-        document.getElementById('detalhes-valor').textContent = formatarMoeda(lancamento.valor);
-        document.getElementById('detalhes-categoria').textContent = lancamento.categoria;
-        document.getElementById('detalhes-descricao').textContent = lancamento.descricao;
-
-        if (lancamento.membroId) {
-            const membro = todosMembros.find(m => m._id === lancamento.membroId);
-            document.getElementById('detalhes-membro').textContent = membro ? membro.nome : 'Não encontrado';
-            document.getElementById('detalhes-membro-container').classList.remove('hidden');
-        } else {
-            document.getElementById('detalhes-membro-container').classList.add('hidden');
-        }
-
-        const previewContainer = document.getElementById('detalhes-comprovante-preview');
-        if (lancamento.comprovanteUrl) {
-            if (lancamento.comprovanteUrl.endsWith('.pdf')) {
-                previewContainer.innerHTML = `<iframe src="${lancamento.comprovanteUrl}" width="100%" height="400px"></iframe>`;
-            } else {
-                previewContainer.innerHTML = `<img src="${lancamento.comprovanteUrl}" alt="Comprovante">`;
-            }
-        } else {
-            previewContainer.innerHTML = '<span>Nenhum comprovante carregado</span>';
-        }
-
-        const btnImprimir = document.getElementById('detalhes-btn-imprimir');
-        const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
-        const isContribuicao = lancamento.categoria.toLowerCase().includes('dízimo') || lancamento.categoria.toLowerCase().includes('oferta');
-
-        if (isContribuicao && lancamento.membroId) {
-            if(btnImprimir) {
-                btnImprimir.classList.remove('hidden');
-                btnImprimir.onclick = () => gerarReciboPDF(lancamento);
-            }
-            if(btnCompartilhar) {
-                btnCompartilhar.classList.remove('hidden');
-                btnCompartilhar.onclick = () => compartilharRecibo(lancamento);
-            }
-        } else {
-            if(btnImprimir) btnImprimir.classList.add('hidden');
-            if(btnCompartilhar) btnCompartilhar.classList.add('hidden');
-        }
-        modalDetalhes.style.display = 'flex';
-    };
-
     const salvarEdicaoEmLinha = async (evento) => {
         const celula = evento.target;
         const id = celula.dataset.id;
@@ -818,13 +889,16 @@ var iniciarFinanceiro = () => {
         }
         const itemIndex = todosLancamentos.findIndex(l => l._id === id);
         if (itemIndex === -1) return;
+
         itemParaExcluir = { lancamento: todosLancamentos[itemIndex], index: itemIndex };
         todosLancamentos.splice(itemIndex, 1);
         aplicarFiltros();
+
         if(toast) {
             document.getElementById('toast-mensagem').textContent = 'Lançamento excluído.';
             toast.classList.add('show');
         }
+
         exclusaoTimeout = setTimeout(() => {
             excluirLancamento(itemParaExcluir.lancamento._id, false);
             itemParaExcluir = null;
@@ -841,99 +915,6 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    // ==========================================
-    // 9. GERAÇÃO DE RECIBOS E PDF COM DADOS DO TENANT
-    // ==========================================
-    const carregarEPreencherRecibo = async (lancamento, membro) => {
-        document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Anônimo';
-        document.getElementById('recibo-valor').textContent = formatarMoeda(lancamento.valor);
-        document.getElementById('recibo-descricao').textContent = lancamento.descricao;
-        document.getElementById('recibo-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-        document.getElementById('recibo-categoria').textContent = lancamento.categoria;
-
-        // Puxa os dados da Igreja atual, se ainda não carregou
-        if(!tenantInfo) {
-            try {
-                tenantInfo = await window.api.get('/api/tenants/current');
-            } catch(err) {
-                console.error('Não foi possível carregar os dados da Igreja.');
-            }
-        }
-
-        // Substitui os dados da Igreja no Recibo
-        if(tenantInfo) {
-            document.getElementById('recibo-nome-igreja').textContent = tenantInfo.name || 'Nossa Igreja';
-            document.getElementById('recibo-cnpj-igreja').textContent = tenantInfo.cnpj ? `CNPJ: ${tenantInfo.cnpj}` : '';
-            
-            const logoImg = document.getElementById('recibo-logo-igreja');
-            const logoIcon = document.getElementById('recibo-logo-icone');
-            
-            if(tenantInfo.config && tenantInfo.config.logoUrl) {
-                logoImg.src = tenantInfo.config.logoUrl;
-                logoImg.style.display = 'block';
-                logoIcon.style.display = 'none';
-            } else {
-                logoImg.style.display = 'none';
-                logoIcon.style.display = 'block';
-            }
-        }
-    };
-
-    const gerarReciboPDF = async (lancamento) => {
-        const membro = todosMembros.find(m => m._id === lancamento.membroId);
-        if (!membro) return alert('Apenas contribuições de membros cadastrados podem gerar recibo.');
-        
-        await carregarEPreencherRecibo(lancamento, membro);
-
-        const { jsPDF } = window.jspdf;
-        const reciboElement = document.getElementById('recibo-template');
-
-        // Um pequeno tempo para garantir que a imagem (logo) carregou antes do PDF ser desenhado
-        setTimeout(async () => {
-            const canvas = await html2canvas(reciboElement, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Recibo_${lancamento.categoria}_${membro.nome.split(' ')[0]}.pdf`);
-        }, 500);
-    };
-
-    const compartilharRecibo = async (lancamento) => {
-        const membro = todosMembros.find(m => m._id === lancamento.membroId);
-        if (!membro) return alert('Apenas contribuições de membros cadastrados podem gerar recibo.');
-        
-        await carregarEPreencherRecibo(lancamento, membro);
-        const reciboElement = document.getElementById('recibo-template');
-
-        setTimeout(async () => {
-            try {
-                const canvas = await html2canvas(reciboElement, { scale: 2 });
-                canvas.toBlob(async (blob) => {
-                    const fileName = `Recibo_${membro.nome.split(' ')[0]}.png`;
-                    const file = new File([blob], fileName, { type: 'image/png' });
-                    const shareData = {
-                        files: [file],
-                        title: 'Recibo de Contribuição',
-                        text: `Olá ${membro.nome}, segue o seu recibo de contribuição. Deus abençoe!`,
-                    };
-                    if (navigator.canShare && navigator.canShare(shareData)) {
-                        await navigator.share(shareData);
-                    } else {
-                        alert('O compartilhamento não é suportado neste navegador. O recibo será baixado.');
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = fileName;
-                        link.click();
-                    }
-                }, 'image/png');
-            } catch (error) {
-                console.error('Erro ao gerar ou compartilhar recibo:', error);
-            }
-        }, 500);
-    };
-
     const imprimirRelatorioAnualMembro = (membro, contribuicoes) => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -946,9 +927,11 @@ var iniciarFinanceiro = () => {
         doc.text('Declaração Anual de Contribuições', 105, 22, { align: 'center' });
         doc.setFontSize(12);
         doc.text(`Ano de Referência: ${anoCorrente}`, 105, 30, { align: 'center' });
+
         doc.setFontSize(11);
         doc.text(`Declaramos para os devidos fins que o(a) irmão(ã) ${membro.nome},\n`, 14, 50);
         doc.text(`membro desta igreja, contribuiu durante o ano de ${anoCorrente} com o valor total de:`, 14, 57);
+        
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.text(formatarMoeda(totalContribuido), 105, 70, { align: 'center' });
@@ -1049,7 +1032,9 @@ var iniciarFinanceiro = () => {
         try {
             try {
                 tenantInfo = await window.api.get('/api/tenants/current');
-            } catch(e) {}
+            } catch(e) {
+                console.warn("Não foi possível carregar a Igreja", e);
+            }
 
             try {
                 const resMembros = await window.api.get(`/api/membros?_t=${Date.now()}`);
@@ -1224,64 +1209,55 @@ var iniciarFinanceiro = () => {
             if (!rightClickedRowId) return;
             const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
             if (lancamento) {
-                const isContribuicao = lancamento.categoria.toLowerCase().includes('dízimo') || lancamento.categoria.toLowerCase().includes('oferta');
-                if (isContribuicao && lancamento.membroId) {
+                if(lancamento.tipo === 'entrada') {
                     gerarReciboPDF(lancamento);
                 } else {
-                    alert("Apenas contribuições de membros permitem emissão de recibo via atalho.");
+                    alert("A emissão de recibos está disponível apenas para entradas/receitas.");
                 }
             }
         };
     }
 
-    if(btnExportarPdf) {
-        btnExportarPdf.onclick = async () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const lancamentosFiltrados = await aplicarFiltros(true);
-            const ano = filtroAno ? filtroAno.value : 'todos';
-            const titulo = `Relatório Financeiro - Ano ${ano === 'todos' ? 'Geral' : ano}`;
+    const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
+    const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
 
-            doc.setFontSize(18);
-            doc.text(titulo, 14, 22);
-
-            const tableRows = lancamentosFiltrados.map(l => [
-                new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
-                l.descricao,
-                l.categoria,
-                l.tipo === 'entrada' ? 'Entrada' : 'Saída',
-                formatarMoeda(l.valor)
-            ]);
-
-            doc.autoTable({
-                head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor']],
-                body: tableRows,
-                startY: 30,
-                headStyles: { fillColor: [0, 31, 93] },
-                columnStyles: { 4: { halign: 'right' } }
+    if(checkboxSelecionarTodos) {
+        checkboxSelecionarTodos.onchange = (e) => {
+            const isChecked = e.target.checked;
+            if(!tabelaCorpo) return;
+            tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(checkbox => {
+                const id = checkbox.dataset.id;
+                const tr = checkbox.closest('tr');
+                checkbox.checked = isChecked;
+                if (isChecked) { lancamentosSelecionados.add(id); tr.classList.add('selecionada'); } 
+                else { lancamentosSelecionados.delete(id); tr.classList.remove('selecionada'); }
             });
+            atualizarEstadoExclusaoLote();
+        };
+    }
 
-            // Somar apenas o que NÃO é Fundo
-            const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
-            const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
-            const balanco = receitas - despesas;
-            const finalY = doc.lastAutoTable.finalY + 10;
+    if(btnExcluirSelecionados) {
+        btnExcluirSelecionados.onclick = async () => {
+            if (confirm(`Tem certeza que deseja excluir os ${lancamentosSelecionados.size} lançamentos selecionados?`)) {
+                try {
+                    await window.api.delete('/api/financeiro/lancamentos/lote', { ids: [...lancamentosSelecionados] });
+                    lancamentosSelecionados.clear();
+                    atualizarEstadoExclusaoLote();
+                    await carregarDados();
+                } catch (error) { alert('Não foi possível excluir.'); }
+            }
+        };
+    }
 
-            doc.setFontSize(12);
-            doc.text('Resumo do Período (Caixa Geral)', 14, finalY);
-            doc.autoTable({
-                startY: finalY + 2,
-                theme: 'grid',
-                body: [
-                    ['Total de Receitas', formatarMoeda(receitas)],
-                    ['Total de Despesas', formatarMoeda(despesas)],
-                    ['Balanço', formatarMoeda(balanco)]
-                ],
-                bodyStyles: { fontStyle: 'bold' },
-                columnStyles: { 1: { halign: 'right' } }
-            });
-
-            doc.save(`Relatorio_Financeiro_${ano}.pdf`);
+    if(btnDesfazer) {
+        btnDesfazer.onclick = () => {
+            if (!itemParaExcluir) return;
+            clearTimeout(exclusaoTimeout);
+            if(toast) toast.classList.remove('show');
+            todosLancamentos.splice(itemParaExcluir.index, 0, itemParaExcluir.lancamento);
+            aplicarFiltros();
+            itemParaExcluir = null;
+            exclusaoTimeout = null;
         };
     }
 
@@ -1298,7 +1274,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // Modal Pesquisa de Membros
     if(buscaMembroModalInput) {
         buscaMembroModalInput.oninput = () => {
             const termo = buscaMembroModalInput.value.toLowerCase();
@@ -1372,31 +1347,54 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    if(checkboxSelecionarTodos) {
-        checkboxSelecionarTodos.onchange = (e) => {
-            const isChecked = e.target.checked;
-            if(!tabelaCorpo) return;
-            tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(checkbox => {
-                const id = checkbox.dataset.id;
-                const tr = checkbox.closest('tr');
-                checkbox.checked = isChecked;
-                if (isChecked) { lancamentosSelecionados.add(id); tr.classList.add('selecionada'); } 
-                else { lancamentosSelecionados.delete(id); tr.classList.remove('selecionada'); }
-            });
-            atualizarEstadoExclusaoLote();
-        };
-    }
+    if(btnExportarPdf) {
+        btnExportarPdf.onclick = async () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const lancamentosFiltrados = await aplicarFiltros(true);
+            const ano = filtroAno ? filtroAno.value : 'todos';
+            const titulo = `Relatório Financeiro - Ano ${ano === 'todos' ? 'Geral' : ano}`;
 
-    if(btnExcluirSelecionados) {
-        btnExcluirSelecionados.onclick = async () => {
-            if (confirm(`Tem certeza que deseja excluir os ${lancamentosSelecionados.size} lançamentos selecionados?`)) {
-                try {
-                    await window.api.delete('/api/financeiro/lancamentos/lote', { ids: [...lancamentosSelecionados] });
-                    lancamentosSelecionados.clear();
-                    atualizarEstadoExclusaoLote();
-                    await carregarDados();
-                } catch (error) { alert('Não foi possível excluir.'); }
-            }
+            doc.setFontSize(18);
+            doc.text(titulo, 14, 22);
+
+            const tableRows = lancamentosFiltrados.map(l => [
+                new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+                l.descricao,
+                l.categoria,
+                l.tipo === 'entrada' ? 'Entrada' : 'Saída',
+                formatarMoeda(l.valor)
+            ]);
+
+            doc.autoTable({
+                head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor']],
+                body: tableRows,
+                startY: 30,
+                headStyles: { fillColor: [0, 31, 93] },
+                columnStyles: { 4: { halign: 'right' } }
+            });
+
+            // Somar apenas o que NÃO é Fundo
+            const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
+            const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
+            const balanco = receitas - despesas;
+            const finalY = doc.lastAutoTable.finalY + 10;
+
+            doc.setFontSize(12);
+            doc.text('Resumo do Período (Caixa Geral)', 14, finalY);
+            doc.autoTable({
+                startY: finalY + 2,
+                theme: 'grid',
+                body: [
+                    ['Total de Receitas', formatarMoeda(receitas)],
+                    ['Total de Despesas', formatarMoeda(despesas)],
+                    ['Balanço', formatarMoeda(balanco)]
+                ],
+                bodyStyles: { fontStyle: 'bold' },
+                columnStyles: { 1: { halign: 'right' } }
+            });
+
+            doc.save(`Relatorio_Financeiro_${ano}.pdf`);
         };
     }
 
