@@ -16,11 +16,6 @@ var iniciarFinanceiro = () => {
     let rightClickedRowId = null;
     let exclusaoTimeout = null;
 
-    let graficoAnual = null;
-    let graficoDespesasPizza = null;
-    let graficoContribuicoesMembro = null;
-    let graficoFundoAtual = null;
-
     // ==========================================
     // 2. SELETORES DO DOM E BOTÕES
     // ==========================================
@@ -63,7 +58,7 @@ var iniciarFinanceiro = () => {
     const toast = document.getElementById('toast-desfazer');
     const btnDesfazer = document.getElementById('btn-desfazer');
 
-    // BOTÕES QUE FALTAVAM E CAUSAVAM O CRASH:
+    // BOTÕES DE AÇÃO
     const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
     const btnNovaMeta = document.getElementById('btn-nova-meta');
     const btnSelecionar = document.getElementById('context-selecionar');
@@ -127,7 +122,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // FECHAMENTO UNIVERSAL DE MODAIS (INFALÍVEL)
+    // FECHAMENTO UNIVERSAL DE MODAIS
     // ==========================================
     document.addEventListener('click', (e) => {
         if (e.target.matches('[data-close]') || e.target.closest('[data-close]')) {
@@ -137,7 +132,7 @@ var iniciarFinanceiro = () => {
     });
 
     // ==========================================
-    // MEMÓRIA DE ABAS (Para não sair da aba atual)
+    // MEMÓRIA DE ABAS
     // ==========================================
     const configurarAbas = () => {
         const abasLink = document.querySelectorAll('.abas-financeiro .aba-link');
@@ -238,11 +233,18 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 5. RENDERIZAÇÃO: GRÁFICOS
+    // 5. RENDERIZAÇÃO: GRÁFICOS (BLINDADOS)
     // ==========================================
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
         if (tituloEl) tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
+
+        const canvas = document.getElementById('grafico-mensal');
+        if (!canvas) return;
+
+        // DESTRUIÇÃO NATIVA DO CHART.JS
+        let chartExistente = Chart.getChart('grafico-mensal');
+        if (chartExistente) chartExistente.destroy();
 
         const dadosPorMes = Array(12).fill(null).map(() => ({ entradas: 0, saidas: 0 }));
 
@@ -257,16 +259,8 @@ var iniciarFinanceiro = () => {
         const dadosEntradas = dadosPorMes.map(d => d.entradas);
         const dadosSaidas = dadosPorMes.map(d => d.saidas);
 
-        const canvas = document.getElementById('grafico-mensal');
-        if (!canvas) return;
-
-        if (graficoAnual) {
-            graficoAnual.destroy();
-            graficoAnual = null;
-        }
-
         const ctx = canvas.getContext('2d');
-        graficoAnual = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -280,15 +274,14 @@ var iniciarFinanceiro = () => {
     };
     
     const renderizarGraficoDespesasPizza = (lancamentos) => {
-        const despesas = (lancamentos || []).filter(l => l.tipo === 'saida');
         const canvas = document.getElementById('grafico-despesas-pizza');
         if(!canvas) return;
 
-        if (graficoDespesasPizza) {
-            graficoDespesasPizza.destroy();
-            graficoDespesasPizza = null;
-        }
+        // DESTRUIÇÃO NATIVA DO CHART.JS
+        let chartExistente = Chart.getChart('grafico-despesas-pizza');
+        if (chartExistente) chartExistente.destroy();
 
+        const despesas = (lancamentos || []).filter(l => l.tipo === 'saida');
         const container = canvas.parentElement;
         const oldMsg = container.querySelector('.aviso-vazio');
         if(oldMsg) oldMsg.remove();
@@ -311,7 +304,7 @@ var iniciarFinanceiro = () => {
         const cores = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#17a2b8', '#6f42c1'];
 
         const ctx = canvas.getContext('2d');
-        graficoDespesasPizza = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'pie',
             data: { labels, datasets: [{ data, backgroundColor: cores, borderColor: '#fff', borderWidth: 2 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
@@ -321,18 +314,16 @@ var iniciarFinanceiro = () => {
     const renderizarGraficoContribuicoes = (contribuicoes) => {
         const canvas = document.getElementById('grafico-contribuicoes-membro');
         if(!canvas) return;
+
+        // DESTRUIÇÃO NATIVA DO CHART.JS
+        let chartExistente = Chart.getChart('grafico-contribuicoes-membro');
+        if (chartExistente) chartExistente.destroy();
         
         const anoCorrente = new Date().getFullYear();
         const elGraficoAno = document.getElementById('grafico-ano-membro');
         if(elGraficoAno) elGraficoAno.textContent = anoCorrente;
 
         const contribuicoesAno = contribuicoes.filter(c => new Date(c.data).getUTCFullYear() === anoCorrente);
-
-        if (graficoContribuicoesMembro) {
-            graficoContribuicoesMembro.destroy();
-            graficoContribuicoesMembro = null;
-        }
-
         const container = canvas.parentElement;
         const oldMsg = container.querySelector('.aviso-vazio');
         if(oldMsg) oldMsg.remove();
@@ -351,7 +342,7 @@ var iniciarFinanceiro = () => {
         });
         
         const ctx = canvas.getContext('2d');
-        graficoContribuicoesMembro = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
@@ -542,6 +533,7 @@ var iniciarFinanceiro = () => {
 
     const abrirDetalhesFundo = (fundo) => {
         if(!modalDetalhesFundo) return;
+        
         fundoEmVisualizacao = fundo; 
 
         document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
@@ -622,10 +614,9 @@ var iniciarFinanceiro = () => {
         const canvas = document.getElementById('grafico-fundo-historico');
         if(!canvas) return;
         
-        if(graficoFundoAtual) {
-            graficoFundoAtual.destroy();
-            graficoFundoAtual = null;
-        }
+        // DESTRUIÇÃO NATIVA DO CHART.JS
+        let chartExistente = Chart.getChart('grafico-fundo-historico');
+        if (chartExistente) chartExistente.destroy();
 
         const ctx = canvas.getContext('2d');
         const dadosPorMes = Array(12).fill(0);
@@ -639,7 +630,7 @@ var iniciarFinanceiro = () => {
             }
         });
 
-        graficoFundoAtual = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
@@ -655,6 +646,7 @@ var iniciarFinanceiro = () => {
             options: { responsive: true, maintainAspectRatio: false }
         });
     };
+
 
     // ==========================================
     // 7. LÓGICA DE FILTROS E PESQUISAS
@@ -1082,7 +1074,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 9. CARREGAMENTO E EVENT LISTENERS
+    // 9. CARREGAMENTO INICIAL
     // ==========================================
     const carregarDados = async () => {
         try {
@@ -1123,6 +1115,10 @@ var iniciarFinanceiro = () => {
             if (tabelaCorpo) tabelaCorpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Houve um problema de conexão com o servidor. Recarregue a página.</td></tr>';
         }
     };
+
+    // ==========================================
+    // 10. EVENT LISTENERS
+    // ==========================================
 
     if(formLancamento) {
         formLancamento.addEventListener('submit', async (e) => {
@@ -1178,32 +1174,6 @@ var iniciarFinanceiro = () => {
         });
     }
 
-    if(formFundo) {
-        formFundo.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dados = {
-                nome: document.getElementById('fundo-nome').value,
-                descricao: document.getElementById('fundo-descricao').value,
-                meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'),
-                prazo: document.getElementById('fundo-prazo').value
-            };
-
-            try {
-                if(fundoEmEdicaoId) {
-                    await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
-                } else {
-                    await window.api.post('/api/financeiro/fundos', dados);
-                }
-                if(modalFundo) modalFundo.style.display = 'none';
-                await carregarDados();
-                alert('Fundo salvo com sucesso!');
-            } catch(error) {
-                alert('Erro ao salvar fundo.');
-                console.error(error);
-            }
-        });
-    }
-
     if(tabelaCorpo) {
         tabelaCorpo.addEventListener('click', (e) => {
             const id = e.target.dataset.id;
@@ -1235,7 +1205,59 @@ var iniciarFinanceiro = () => {
                 contextMenu.style.top = `${e.pageY}px`;
             }
         });
+    }
 
+    if(btnSelecionar) {
+        btnSelecionar.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            if (tabelaLancamentos) tabelaLancamentos.classList.add('modo-selecao');
+            if (tabelaCorpo) {
+                const checkbox = tabelaCorpo.querySelector(`.checkbox-lancamento[data-id="${rightClickedRowId}"]`);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+    }
+
+    if(btnEditarCtx) {
+        btnEditarCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if(lancamento) abrirModal(lancamento);
+        });
+    }
+
+    if(btnExcluirCtx) {
+        btnExcluirCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            iniciarExclusaoComDesfazer(rightClickedRowId);
+        });
+    }
+
+    if(btnCopiarCtx) {
+        btnCopiarCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if (lancamento) {
+                const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
+                navigator.clipboard.writeText(texto).then(() => alert('Dados copiados!'));
+            }
+        });
+    }
+
+    if(btnImprimirCtx) {
+        btnImprimirCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if (lancamento) {
+                alert("Use o botão de detalhes para imprimir o recibo.");
+            }
+        });
+    }
+
+    if(tabelaCorpo) {
         tabelaCorpo.addEventListener('change', (e) => {
             if (e.target.classList.contains('checkbox-lancamento')) {
                 const id = e.target.dataset.id;
@@ -1248,6 +1270,26 @@ var iniciarFinanceiro = () => {
                     tr.classList.remove('selecionada');
                 }
                 atualizarEstadoExclusaoLote();
+            }
+        });
+
+        tabelaCorpo.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.closest('.acoes-item')) return;
+            const tr = target.closest('tr');
+            if (!tr) return;
+
+            if (tabelaLancamentos && tabelaLancamentos.classList.contains('modo-selecao')) {
+                if (target.closest('a, [contenteditable]')) return;
+                const checkbox = tr.querySelector('.checkbox-lancamento');
+                if (checkbox && target.type !== 'checkbox') {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (!target.closest('a, i, [contenteditable], input')) {
+                const id = tr.dataset.id;
+                const lancamento = todosLancamentos.find(l => l._id === id);
+                if(lancamento) abrirModalDetalhes(lancamento);
             }
         });
     }
@@ -1308,9 +1350,10 @@ var iniciarFinanceiro = () => {
     if(btnNovaMeta) btnNovaMeta.addEventListener('click', () => abrirModalFundo());
     
     if(btnAplicarFiltros) {
-        const novoBtn = btnAplicarFiltros.cloneNode(true);
-        btnAplicarFiltros.parentNode.replaceChild(novoBtn, btnAplicarFiltros);
-        novoBtn.addEventListener('click', () => aplicarFiltros());
+        btnAplicarFiltros.addEventListener('click', (e) => {
+            e.preventDefault(); // Previne o reload de formulário/submit caso exista
+            aplicarFiltros();
+        });
     }
 
     if(buscaMembroModalInput) {
@@ -1385,56 +1428,6 @@ var iniciarFinanceiro = () => {
                 exibirHistoricoMembro(membro);
                 if(buscaMembroInput) buscaMembroInput.value = '';
                 buscaResultados.classList.remove('active');
-            }
-        });
-    }
-
-    if(btnSelecionar) {
-        btnSelecionar.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            if (tabelaLancamentos) tabelaLancamentos.classList.add('modo-selecao');
-            if (tabelaCorpo) {
-                const checkbox = tabelaCorpo.querySelector(`.checkbox-lancamento[data-id="${rightClickedRowId}"]`);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.checked = true;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-        });
-    }
-
-    if(btnEditarCtx) {
-        btnEditarCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if(lancamento) abrirModal(lancamento);
-        });
-    }
-
-    if(btnExcluirCtx) {
-        btnExcluirCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            iniciarExclusaoComDesfazer(rightClickedRowId);
-        });
-    }
-
-    if(btnCopiarCtx) {
-        btnCopiarCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if (lancamento) {
-                const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
-                navigator.clipboard.writeText(texto).then(() => alert('Dados copiados!'));
-            }
-        });
-    }
-
-    if(btnImprimirCtx) {
-        btnImprimirCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if (lancamento) {
-                alert("Use o botão de detalhes para imprimir o recibo.");
             }
         });
     }
