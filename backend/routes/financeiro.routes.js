@@ -240,5 +240,17 @@ router.delete('/fundos/:id', async (req, res) => {
         res.status(500).json({ message: 'Erro ao excluir fundo.', error: error.message });
     }
 });
-
+// GET /api/tenants/current - Obter dados do Tenant atual (da sessão do usuário)
+router.get('/current', protect, async (req, res) => {
+    try {
+        const tenant = await Tenant.findById(req.tenant.id).select('name cnpj address config');
+        if (!tenant) {
+            return res.status(404).json({ message: 'Igreja (Tenant) não encontrada.' });
+        }
+        res.status(200).json(tenant);
+    } catch (error) {
+        console.error('Erro ao buscar dados do tenant atual:', error);
+        res.status(500).json({ message: 'Erro ao buscar dados da igreja.' });
+    }
+});
 export default router;
