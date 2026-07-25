@@ -22,11 +22,10 @@ var iniciarFinanceiro = () => {
     let graficoFundoAtual = null;
 
     // ==========================================
-    // 2. SELETORES DO DOM (BLINDAGEM CONTRA ERROS)
+    // 2. SELETORES DO DOM
     // ==========================================
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
-    
     const filtroAno = document.getElementById('filtro-ano');
     const filtroMes = document.getElementById('filtro-mes');
     const filtroTipo = document.getElementById('filtro-tipo');
@@ -63,20 +62,6 @@ var iniciarFinanceiro = () => {
     const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
     const toast = document.getElementById('toast-desfazer');
     const btnDesfazer = document.getElementById('btn-desfazer');
-    
-    // BOTÕES DE AÇÃO REPARADOS (Declarados corretamente)
-    const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
-    const btnNovaMeta = document.getElementById('btn-nova-meta');
-    const btnExportarPdf = document.getElementById('btn-exportar-pdf');
-    const btnSelecionar = document.getElementById('context-selecionar');
-    const btnEditarCtx = document.getElementById('context-editar');
-    const btnExcluirCtx = document.getElementById('context-excluir');
-    const btnCopiarCtx = document.getElementById('context-copiar');
-    const btnImprimirCtx = document.getElementById('context-imprimir');
-    const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
-    const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
-    const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
-    const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
 
     // ==========================================
     // 3. FUNÇÕES UTILITÁRIAS (Moeda, Data, etc)
@@ -112,6 +97,9 @@ var iniciarFinanceiro = () => {
         if (categoriasCheckboxes && !e.target.closest('#multi-select-categoria')) {
             categoriasCheckboxes.classList.remove('active');
         }
+        if (contextMenu && contextMenu.style.display === 'block') {
+            contextMenu.style.display = 'none';
+        }
     });
 
     const atualizarTextoCategorias = () => {
@@ -119,14 +107,59 @@ var iniciarFinanceiro = () => {
         const textSpan = document.getElementById('selected-categories-text');
         if (!textSpan) return;
         
-        if (checkboxes.length === 0) {
-            textSpan.textContent = 'Todas as Categorias';
-        } else if (checkboxes.length === 1) {
-            textSpan.textContent = checkboxes[0].value;
-        } else {
-            textSpan.textContent = `${checkboxes.length} selecionadas`;
-        }
+        if (checkboxes.length === 0) textSpan.textContent = 'Todas as Categorias';
+        else if (checkboxes.length === 1) textSpan.textContent = checkboxes[0].value;
+        else textSpan.textContent = `${checkboxes.length} selecionadas`;
     };
+
+    // ==========================================
+    // FECHAMENTO UNIVERSAL DE MODAIS (INFALÍVEL)
+    // ==========================================
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('[data-close]') || e.target.closest('[data-close]')) {
+            const modalOverlay = e.target.closest('.modal-overlay') || e.target.closest('.modal');
+            if (modalOverlay) modalOverlay.style.display = 'none';
+        }
+    });
+
+    // ==========================================
+    // MEMÓRIA DE ABAS (Para não sair da aba atual)
+    // ==========================================
+    const configurarAbas = () => {
+        const abasLink = document.querySelectorAll('.abas-financeiro .aba-link');
+        
+        // Verifica se tem aba salva na memória do navegador
+        const abaSalva = localStorage.getItem('abaFinanceiroAtiva') || 'lancamentos';
+        
+        // Desativa todas
+        document.querySelectorAll('.abas-financeiro .aba-link').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('active'));
+        
+        // Ativa a que estava salva
+        const abaParaAtivar = document.querySelector(`.abas-financeiro .aba-link[data-aba="${abaSalva}"]`);
+        const conteudoParaAtivar = document.getElementById(abaSalva);
+        
+        if(abaParaAtivar && conteudoParaAtivar) {
+            abaParaAtivar.classList.add('active');
+            conteudoParaAtivar.classList.add('active');
+        }
+
+        // Lógica de clique nas abas
+        abasLink.forEach(aba => {
+            aba.addEventListener('click', () => {
+                document.querySelector('.abas-financeiro .aba-link.active')?.classList.remove('active');
+                document.querySelector('.aba-conteudo.active')?.classList.remove('active');
+                
+                aba.classList.add('active');
+                const idAba = aba.dataset.aba;
+                document.getElementById(idAba)?.classList.add('active');
+                
+                // Salva a aba escolhida na memória
+                localStorage.setItem('abaFinanceiroAtiva', idAba);
+            });
+        });
+    };
+    configurarAbas();
 
     // ==========================================
     // 4. RENDERIZAÇÃO: TABELAS E DASHBOARD
@@ -143,9 +176,8 @@ var iniciarFinanceiro = () => {
         lancamentos.forEach(l => {
             const tr = document.createElement('tr');
             tr.dataset.id = l._id;
-            if (lancamentosSelecionados.has(l._id)) {
-                tr.classList.add('selecionada');
-            }
+            if (lancamentosSelecionados.has(l._id)) tr.classList.add('selecionada');
+            
             tr.innerHTML = `
                 <td class="coluna-checkbox"><input type="checkbox" class="checkbox-lancamento" data-id="${l._id}" ${lancamentosSelecionados.has(l._id) ? 'checked' : ''}></td>
                 <td data-label="Data">${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
@@ -198,7 +230,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 5. RENDERIZAÇÃO: GRÁFICOS
+    // 5. RENDERIZAÇÃO: GRÁFICOS (BLINDADOS)
     // ==========================================
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
@@ -209,11 +241,8 @@ var iniciarFinanceiro = () => {
         (lancamentos || []).forEach(l => {
             const data = new Date(l.data);
             const mesIdx = data.getUTCMonth();
-            if (l.tipo === 'entrada') {
-                dadosPorMes[mesIdx].entradas += l.valor;
-            } else {
-                dadosPorMes[mesIdx].saidas += l.valor;
-            }
+            if (l.tipo === 'entrada') dadosPorMes[mesIdx].entradas += l.valor;
+            else dadosPorMes[mesIdx].saidas += l.valor;
         });
 
         const labels = (['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']);
@@ -222,8 +251,14 @@ var iniciarFinanceiro = () => {
 
         const canvas = document.getElementById('grafico-mensal');
         if (!canvas) return;
+
+        // DESTRUIÇÃO SEGURA
+        if (graficoAnual) {
+            graficoAnual.destroy();
+            graficoAnual = null;
+        }
+
         const ctx = canvas.getContext('2d');
-        if (graficoAnual) graficoAnual.destroy();
         graficoAnual = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -239,17 +274,27 @@ var iniciarFinanceiro = () => {
     
     const renderizarGraficoDespesasPizza = (lancamentos) => {
         const despesas = (lancamentos || []).filter(l => l.tipo === 'saida');
-        const pizzaContainer = document.getElementById('grafico-pizza-container');
-        if(!pizzaContainer) return;
+        const canvas = document.getElementById('grafico-despesas-pizza');
+        if(!canvas) return;
+
+        // DESTRUIÇÃO SEGURA (Evita Canvas is already in use)
+        if (graficoDespesasPizza) {
+            graficoDespesasPizza.destroy();
+            graficoDespesasPizza = null;
+        }
+
+        // Busca ou remove mensagem antiga de vazio
+        const container = canvas.parentElement;
+        const oldMsg = container.querySelector('.aviso-vazio');
+        if(oldMsg) oldMsg.remove();
 
         if (despesas.length === 0) {
-            pizzaContainer.innerHTML = '<p style="text-align:center; padding: 40px 20px; color: #888;">Nenhuma despesa nos filtros selecionados.</p>';
-            if (graficoDespesasPizza) graficoDespesasPizza.destroy();
+            canvas.style.display = 'none';
+            container.insertAdjacentHTML('beforeend', '<p class="aviso-vazio" style="text-align:center; padding: 40px 20px; color: #888;">Nenhuma despesa nos filtros selecionados.</p>');
             return;
         }
-        if (!pizzaContainer.querySelector('canvas')) {
-            pizzaContainer.innerHTML = '<canvas id="grafico-despesas-pizza"></canvas>';
-        }
+        
+        canvas.style.display = 'block';
 
         const despesasPorCategoria = despesas.reduce((acc, l) => {
             acc[l.categoria] = (acc[l.categoria] || 0) + l.valor;
@@ -260,26 +305,17 @@ var iniciarFinanceiro = () => {
         const data = Object.values(despesasPorCategoria);
         const cores = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#17a2b8', '#6f42c1'];
 
-        const ctx = document.getElementById('grafico-despesas-pizza').getContext('2d');
-        if (graficoDespesasPizza) graficoDespesasPizza.destroy();
+        const ctx = canvas.getContext('2d');
         graficoDespesasPizza = new Chart(ctx, {
             type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: cores,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
+            data: { labels, datasets: [{ data, backgroundColor: cores, borderColor: '#fff', borderWidth: 2 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
     };
 
     const renderizarGraficoContribuicoes = (contribuicoes) => {
-        const container = document.getElementById('grafico-contribuicoes-container');
-        if(!container) return;
+        const canvas = document.getElementById('grafico-contribuicoes-membro');
+        if(!canvas) return;
         
         const anoCorrente = new Date().getFullYear();
         const elGraficoAno = document.getElementById('grafico-ano-membro');
@@ -287,32 +323,34 @@ var iniciarFinanceiro = () => {
 
         const contribuicoesAno = contribuicoes.filter(c => new Date(c.data).getUTCFullYear() === anoCorrente);
 
+        // DESTRUIÇÃO SEGURA
         if (graficoContribuicoesMembro) {
             graficoContribuicoesMembro.destroy();
+            graficoContribuicoesMembro = null;
         }
+
+        const container = canvas.parentElement;
+        const oldMsg = container.querySelector('.aviso-vazio');
+        if(oldMsg) oldMsg.remove();
 
         if (contribuicoesAno.length === 0) {
-            container.innerHTML = '<p class="aviso-grafico-vazio">Nenhuma contribuição registrada neste ano.</p>';
+            canvas.style.display = 'none';
+            container.insertAdjacentHTML('beforeend', '<p class="aviso-vazio" style="text-align:center; padding: 40px 20px; color: #888;">Nenhuma contribuição registrada neste ano.</p>');
             return;
         }
-
-        if (!container.querySelector('canvas')) {
-            container.innerHTML = '<canvas id="grafico-contribuicoes-membro"></canvas>';
-        }
+        canvas.style.display = 'block';
 
         const dadosPorMes = Array(12).fill(0);
         contribuicoesAno.forEach(c => {
             const mes = new Date(c.data).getUTCMonth();
             dadosPorMes[mes] += c.valor;
         });
-
-        const labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         
-        const ctx = document.getElementById('grafico-contribuicoes-membro').getContext('2d');
+        const ctx = canvas.getContext('2d');
         graficoContribuicoesMembro = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
                 datasets: [{
                     label: `Contribuições em ${anoCorrente}`,
                     data: dadosPorMes,
@@ -322,7 +360,7 @@ var iniciarFinanceiro = () => {
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatarMoeda(value) } } }, plugins: { legend: { display: false } }
+                responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } }
             }
         });
     };
@@ -367,14 +405,19 @@ var iniciarFinanceiro = () => {
         if (faltante <= 0) return 'Meta atingida! Parabéns!';
         if (diasRestantes <= 0) return `Prazo encerrado. Faltou ${formatarMoeda(faltante)}.`;
         
+        // Calcula a diferença exata de meses entre hoje e o prazo
         let mesesRestantes = (prazo.getFullYear() - hoje.getFullYear()) * 12 + (prazo.getMonth() - hoje.getMonth());
+        // Ajuste caso não tenha completado um mês inteiro de diferença
+        if (hoje.getDate() > prazo.getDate()) mesesRestantes--; 
         
-        if (mesesRestantes <= 0) {
+        mesesRestantes = Math.max(mesesRestantes, 0); // Impede meses negativos
+
+        if (mesesRestantes < 1) {
             return `Faltam ${diasRestantes} dias. Necessário ${formatarMoeda(faltante)} na reta final.`;
         }
         
         const porMes = faltante / mesesRestantes;
-        return `Faltam ${diasRestantes} dias. Aprox. ${formatarMoeda(porMes)}/mês.`;
+        return `Faltam ${diasRestantes} dias. Aprox. ${formatarMoeda(porMes)} / mês.`;
     };
 
     const renderizarFundos = (fundos) => {
@@ -537,9 +580,16 @@ var iniciarFinanceiro = () => {
     const renderizarGraficoFundoEspecifico = (lancamentos) => {
         const canvas = document.getElementById('grafico-fundo-historico');
         if(!canvas) return;
-        const ctx = canvas.getContext('2d');
         
+        // DESTRUIÇÃO SEGURA
+        if(graficoFundoAtual) {
+            graficoFundoAtual.destroy();
+            graficoFundoAtual = null;
+        }
+
+        const ctx = canvas.getContext('2d');
         const dadosPorMes = Array(12).fill(0);
+        
         lancamentos.forEach(l => {
             const mes = new Date(l.data).getUTCMonth();
             if(l.tipo === 'entrada') {
@@ -548,8 +598,6 @@ var iniciarFinanceiro = () => {
                 dadosPorMes[mes] -= l.valor; 
             }
         });
-
-        if(graficoFundoAtual) graficoFundoAtual.destroy();
 
         graficoFundoAtual = new Chart(ctx, {
             type: 'line',
@@ -568,13 +616,56 @@ var iniciarFinanceiro = () => {
         });
     };
 
+    const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
+    if(btnNovaArrec) {
+        btnNovaArrec.addEventListener('click', () => {
+            if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
+            abrirModal(); 
+            setTimeout(() => {
+                if(selectTipo) selectTipo.value = 'entrada';
+                atualizarCategoriasModal('entrada');
+                if(selectFundo && fundoEmVisualizacao) {
+                    selectFundo.value = fundoEmVisualizacao._id;
+                    selectFundo.dispatchEvent(new Event('change')); 
+                }
+            }, 100);
+        });
+    }
+
+    const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
+    if(btnTransferirCaixa) {
+        btnTransferirCaixa.addEventListener('click', async () => {
+            if(!fundoEmVisualizacao) return;
+            const valorStr = prompt(`Quanto do saldo em caixa deseja transferir para "${fundoEmVisualizacao.nome}"?\n\nDigite apenas números (Ex: 150,50):`);
+            if(!valorStr) return;
+            
+            const valorTransferencia = parseFloat(valorStr.replace(',', '.'));
+            if(isNaN(valorTransferencia) || valorTransferencia <= 0) return alert("Valor inválido.");
+
+            if(confirm(`Confirmar transferência de ${formatarMoeda(valorTransferencia)} para o fundo?`)) {
+                try {
+                    await window.api.post('/api/financeiro/lancamentos', {
+                        tipo: 'saida', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Transferência de Fundo', descricao: `Transferência para o projeto: ${fundoEmVisualizacao.nome}`, fundoId: null
+                    });
+                    await window.api.post('/api/financeiro/lancamentos', {
+                        tipo: 'entrada', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Aporte de Caixa', descricao: 'Aporte recebido do caixa geral', fundoId: fundoEmVisualizacao._id
+                    });
+
+                    alert('Transferência realizada!');
+                    if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none';
+                    carregarDados(); 
+                } catch (err) { alert('Erro ao transferir saldo.'); }
+            }
+        });
+    }
+
     // ==========================================
-    // 7. LÓGICA GERAL, FILTROS E INICIALIZAÇÃO
+    // 7. LÓGICA DE FILTROS E PESQUISAS
     // ==========================================
     const aplicarFiltros = async (retornarArray = false) => {
-        const ano = (filtroAno && filtroAno.value) ? filtroAno.value : 'todos';
-        const mes = (filtroMes && filtroMes.value) ? filtroMes.value : 'todos';
-        const tipo = (filtroTipo && filtroTipo.value) ? filtroTipo.value : 'todos';
+        const ano = filtroAno ? filtroAno.value : 'todos';
+        const mes = filtroMes ? filtroMes.value : 'todos';
+        const tipo = filtroTipo ? filtroTipo.value : 'todos';
         
         const checkboxes = document.querySelectorAll('.categoria-checkbox:checked');
         const categoriasSelecionadas = Array.from(checkboxes).map(cb => cb.value);
@@ -620,14 +711,16 @@ var iniciarFinanceiro = () => {
         const anosNoBanco = [...new Set((lancamentosIniciais || []).map(l => new Date(l.data).getUTCFullYear()))];
         const hoje = new Date();
         const anoAtual = hoje.getFullYear();
+        const mesAtual = hoje.getMonth() + 1; // getMonth() é base zero (Jan = 0), então somamos 1
 
         if (!anosNoBanco.includes(anoAtual)) anosNoBanco.push(anoAtual);
         
         filtroAno.innerHTML = '<option value="todos">Todos os Anos</option>' + 
                              anosNoBanco.sort((a, b) => b - a).map(ano => `<option value="${ano}">${ano}</option>`).join('');
         
-        filtroAno.value = 'todos';
-        filtroMes.value = 'todos';
+        // EXIBIR POR PADRÃO MÊS E ANO ATUAIS
+        filtroAno.value = anoAtual.toString();
+        filtroMes.value = mesAtual.toString();
 
         const categoriasConfigSet = new Set([...(categoriasConfig?.entradas || []), ...(categoriasConfig?.saidas || [])]);
         const categoriasLancamentosSet = new Set((lancamentosIniciais || []).map(l => l.categoria));
@@ -651,6 +744,9 @@ var iniciarFinanceiro = () => {
         if(grupoMembro) grupoMembro.classList.toggle('hidden', !isContribuicao);
     };
 
+    // ==========================================
+    // 8. MODAIS, EVENTOS E EXCLUSÕES
+    // ==========================================
     const abrirModal = (lancamento = null, duplicar = false) => {
         if(formLancamento) formLancamento.reset();
         popularSelectFundos(); 
@@ -715,6 +811,7 @@ var iniciarFinanceiro = () => {
                     if(clearMembroBtn) clearMembroBtn.classList.remove('hidden');
                 }
             }
+
         } else { 
             document.getElementById('modal-titulo').textContent = 'Novo Lançamento';
             document.getElementById('data').value = new Date().toISOString().split('T')[0];
@@ -735,6 +832,54 @@ var iniciarFinanceiro = () => {
         if (categoriaSelecionada) {
             selectCategoria.value = categoriaSelecionada;
         }
+    };
+
+    const abrirModalDetalhes = (lancamento) => {
+        if(!modalDetalhes) return;
+        document.getElementById('detalhes-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        document.getElementById('detalhes-tipo').textContent = lancamento.tipo.charAt(0).toUpperCase() + lancamento.tipo.slice(1);
+        document.getElementById('detalhes-valor').textContent = formatarMoeda(lancamento.valor);
+        document.getElementById('detalhes-categoria').textContent = lancamento.categoria;
+        document.getElementById('detalhes-descricao').textContent = lancamento.descricao;
+
+        if (lancamento.membroId) {
+            const membro = todosMembros.find(m => m._id === lancamento.membroId);
+            document.getElementById('detalhes-membro').textContent = membro ? membro.nome : 'Não encontrado';
+            document.getElementById('detalhes-membro-container').classList.remove('hidden');
+        } else {
+            document.getElementById('detalhes-membro-container').classList.add('hidden');
+        }
+
+        const previewContainer = document.getElementById('detalhes-comprovante-preview');
+        if (lancamento.comprovanteUrl) {
+            if (lancamento.comprovanteUrl.endsWith('.pdf')) {
+                previewContainer.innerHTML = `<iframe src="${lancamento.comprovanteUrl}" width="100%" height="400px"></iframe>`;
+            } else {
+                previewContainer.innerHTML = `<img src="${lancamento.comprovanteUrl}" alt="Comprovante">`;
+            }
+        } else {
+            previewContainer.innerHTML = '<span>Nenhum comprovante carregado</span>';
+        }
+
+        const btnImprimir = document.getElementById('detalhes-btn-imprimir');
+        const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
+        const isContribuicao = lancamento.categoria.toLowerCase().includes('dízimo') || lancamento.categoria.toLowerCase().includes('oferta');
+
+        if (isContribuicao && lancamento.membroId) {
+            if(btnImprimir) {
+                btnImprimir.classList.remove('hidden');
+                btnImprimir.onclick = () => gerarReciboPDF(lancamento);
+            }
+            if(btnCompartilhar) {
+                btnCompartilhar.classList.remove('hidden');
+                btnCompartilhar.onclick = () => compartilharRecibo(lancamento);
+            }
+        } else {
+            if(btnImprimir) btnImprimir.classList.add('hidden');
+            if(btnCompartilhar) btnCompartilhar.classList.add('hidden');
+        }
+
+        modalDetalhes.style.display = 'flex';
     };
 
     const salvarEdicaoEmLinha = async (evento) => {
@@ -878,7 +1023,9 @@ var iniciarFinanceiro = () => {
         membroEmVisualizacaoId = membro._id;
         if(avisoInicial) avisoInicial.classList.add('hidden');
         if(historicoContainer) historicoContainer.classList.remove('hidden');
-        document.getElementById('historico-membro-nome').textContent = membro.nome;
+        
+        const elNome = document.getElementById('historico-membro-nome');
+        if(elNome) elNome.textContent = membro.nome;
 
         const contribuicoes = todosLancamentos.filter(l => l.membroId === membro._id && (l.categoria.includes('Dízimo') || l.categoria.includes('Oferta')));
         const corpoHistorico = document.getElementById('tabela-historico-corpo');
@@ -892,21 +1039,27 @@ var iniciarFinanceiro = () => {
                     <td>${formatarMoeda(c.valor)}</td>
                 </tr>
             `).join('');
-            document.getElementById('aviso-sem-historico').classList.add('hidden');
+            const avisoSemHist = document.getElementById('aviso-sem-historico');
+            if(avisoSemHist) avisoSemHist.classList.add('hidden');
         } else if(corpoHistorico) {
             corpoHistorico.innerHTML = '';
-            document.getElementById('aviso-sem-historico').classList.remove('hidden');
+            const avisoSemHist = document.getElementById('aviso-sem-historico');
+            if(avisoSemHist) avisoSemHist.classList.remove('hidden');
         }
 
         const totalGeral = contribuicoes.reduce((acc, c) => acc + c.valor, 0);
-        document.getElementById('total-geral-historico').textContent = formatarMoeda(totalGeral);
+        const elTotalHist = document.getElementById('total-geral-historico');
+        if(elTotalHist) elTotalHist.textContent = formatarMoeda(totalGeral);
 
         const anoCorrente = new Date().getFullYear();
-        document.getElementById('ano-corrente-historico').textContent = anoCorrente;
+        const elAnoCorr = document.getElementById('ano-corrente-historico');
+        if(elAnoCorr) elAnoCorr.textContent = anoCorrente;
+        
         const totalAnual = contribuicoes
             .filter(c => new Date(c.data).getUTCFullYear() === anoCorrente)
             .reduce((acc, c) => acc + c.valor, 0);
-        document.getElementById('total-anual-membro').textContent = formatarMoeda(totalAnual);
+        const elTotalAnual = document.getElementById('total-anual-membro');
+        if(elTotalAnual) elTotalAnual.textContent = formatarMoeda(totalAnual);
         
         renderizarGraficoContribuicoes(contribuicoes);
 
@@ -931,139 +1084,9 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    // --- CARREGAMENTO INICIAL PRINCIPAL ---
-    const carregarDados = async () => {
-        try {
-            try {
-                const resMembros = await window.api.get('/api/membros');
-                todosMembros = Array.isArray(resMembros) ? resMembros : [];
-            } catch (err) {
-                console.warn("Aviso: Falha ao carregar membros.", err);
-                todosMembros = [];
-            }
-
-            try {
-                const resConfig = await window.api.get('/api/configs');
-                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-            } catch (err) {
-                console.warn("Aviso: Falha ao carregar configs.", err);
-                categoriasConfig = { entradas: [], saidas: [] };
-            }
-
-            try {
-                // BLINDAGEM DE CACHE PARA BUSCAR TODOS OS LANÇAMENTOS
-                const resLancamentosTodos = await window.api.get(`/api/financeiro/lancamentos?ano=todos&_t=${Date.now()}`);
-                todosLancamentos = Array.isArray(resLancamentosTodos) ? resLancamentosTodos : [];
-            } catch (err) {
-                console.error("Erro Crítico: Falha ao carregar lançamentos.", err);
-                todosLancamentos = [];
-            }
-
-            await carregarFundos();
-
-            calcularBalancoGeral(todosLancamentos);
-            popularFiltros(todosLancamentos);
-            
-            await aplicarFiltros();
-
-        } catch (error) {
-            console.error("Erro fatal no carregamento inicial da página:", error);
-            if (tabelaCorpo) tabelaCorpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Houve um problema de conexão com o servidor. Recarregue a página.</td></tr>';
-        }
-    };
-
     // ==========================================
-    // 8. EVENT LISTENERS E ATIVAÇÕES
+    // 9. EVENT LISTENERS E CHAMADAS HTTP
     // ==========================================
-
-    if(btnNovoLancamento) btnNovoLancamento.addEventListener('click', () => abrirModal());
-    if(modalLancamento) modalLancamento.querySelector('[data-close]')?.addEventListener('click', fecharModal);
-    if(selectTipo) selectTipo.addEventListener('change', (e) => { atualizarCategoriasModal(e.target.value); toggleMembroSearch(); });
-    if(selectCategoria) selectCategoria.addEventListener('change', toggleMembroSearch);
-    if(selectFundo) selectFundo.addEventListener('change', toggleMembroSearch);
-    if(btnNovaMeta) btnNovaMeta.addEventListener('click', () => abrirModalFundo());
-    if(modalFundo) modalFundo.querySelector('[data-close]')?.addEventListener('click', () => modalFundo.style.display = 'none');
-    if(btnAplicarFiltros) {
-        const novoBtn = btnAplicarFiltros.cloneNode(true);
-        btnAplicarFiltros.parentNode.replaceChild(novoBtn, btnAplicarFiltros);
-        novoBtn.addEventListener('click', () => aplicarFiltros());
-    }
-
-    if(buscaMembroModalInput) {
-        buscaMembroModalInput.addEventListener('input', () => {
-            const termo = buscaMembroModalInput.value.toLowerCase();
-            if (termo.length < 2) {
-                if(buscaMembroResultadosModal) buscaMembroResultadosModal.classList.remove('active');
-                return;
-            }
-            const membrosFiltrados = todosMembros.filter(m => 
-                m.nome.toLowerCase().includes(termo) || (m.cpf && m.cpf.replace(/\D/g, '').includes(termo))
-            );
-            if (membrosFiltrados.length > 0 && buscaMembroResultadosModal) {
-                buscaMembroResultadosModal.innerHTML = membrosFiltrados.map(m => 
-                    `<div class="resultado-item" data-id="${m._id}" data-nome="${m.nome}">${m.nome} - ${m.cpf || 'CPF não cadastrado'}</div>`
-                ).join('');
-                buscaMembroResultadosModal.classList.add('active');
-            } else if (buscaMembroResultadosModal) {
-                buscaMembroResultadosModal.innerHTML = '<div class="resultado-item-none">Nenhum membro encontrado</div>';
-                buscaMembroResultadosModal.classList.add('active');
-            }
-        });
-    }
-
-    if(buscaMembroResultadosModal) {
-        buscaMembroResultadosModal.addEventListener('click', (e) => {
-            const item = e.target.closest('.resultado-item');
-            if (item && buscaMembroModalInput && membroIdHiddenInput) {
-                buscaMembroModalInput.value = item.dataset.nome;
-                membroIdHiddenInput.value = item.dataset.id;
-                buscaMembroResultadosModal.classList.remove('active');
-                buscaMembroModalInput.disabled = true;
-                if(clearMembroBtn) clearMembroBtn.classList.remove('hidden');
-            }
-        });
-    }
-
-    if(clearMembroBtn) {
-        clearMembroBtn.addEventListener('click', () => {
-            if(buscaMembroModalInput) {
-                buscaMembroModalInput.value = '';
-                buscaMembroModalInput.disabled = false;
-                buscaMembroModalInput.focus();
-            }
-            if(membroIdHiddenInput) membroIdHiddenInput.value = '';
-            clearMembroBtn.classList.add('hidden');
-        });
-    }
-
-    if(buscaMembroInput) {
-        buscaMembroInput.addEventListener('input', () => {
-            const termo = buscaMembroInput.value.toLowerCase();
-            if (termo.length < 2) {
-                if(buscaResultados) buscaResultados.classList.remove('active');
-                return;
-            }
-            const membrosFiltrados = todosMembros.filter(m => m.nome.toLowerCase().includes(termo));
-            if (membrosFiltrados.length > 0 && buscaResultados) {
-                buscaResultados.innerHTML = membrosFiltrados.map(m => `<div class="resultado-item" data-id="${m._id}">${m.nome}</div>`).join('');
-                buscaResultados.classList.add('active');
-            } else if(buscaResultados) {
-                buscaResultados.classList.remove('active');
-            }
-        });
-    }
-
-    if(buscaResultados) {
-        buscaResultados.addEventListener('click', (e) => {
-            if (e.target.classList.contains('resultado-item')) {
-                const membroId = e.target.dataset.id;
-                const membro = todosMembros.find(m => m._id === membroId);
-                exibirHistoricoMembro(membro);
-                if(buscaMembroInput) buscaMembroInput.value = '';
-                buscaResultados.classList.remove('active');
-            }
-        });
-    }
 
     if(formLancamento) {
         formLancamento.addEventListener('submit', async (e) => {
@@ -1119,32 +1142,6 @@ var iniciarFinanceiro = () => {
         });
     }
 
-    if(formFundo) {
-        formFundo.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dados = {
-                nome: document.getElementById('fundo-nome').value,
-                descricao: document.getElementById('fundo-descricao').value,
-                meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'),
-                prazo: document.getElementById('fundo-prazo').value
-            };
-
-            try {
-                if(fundoEmEdicaoId) {
-                    await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
-                } else {
-                    await window.api.post('/api/financeiro/fundos', dados);
-                }
-                if(modalFundo) modalFundo.style.display = 'none';
-                carregarFundos();
-                alert('Fundo salvo com sucesso!');
-            } catch(error) {
-                alert('Erro ao salvar fundo.');
-                console.error(error);
-            }
-        });
-    }
-
     if(tabelaCorpo) {
         tabelaCorpo.addEventListener('click', (e) => {
             const id = e.target.dataset.id;
@@ -1176,7 +1173,60 @@ var iniciarFinanceiro = () => {
                 contextMenu.style.top = `${e.pageY}px`;
             }
         });
+    }
 
+    if(btnSelecionar) {
+        btnSelecionar.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            if (tabelaLancamentos) tabelaLancamentos.classList.add('modo-selecao');
+            if (tabelaCorpo) {
+                const checkbox = tabelaCorpo.querySelector(`.checkbox-lancamento[data-id="${rightClickedRowId}"]`);
+                if (checkbox && !checkbox.checked) {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+    }
+
+    if(btnEditarCtx) {
+        btnEditarCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if(lancamento) abrirModal(lancamento);
+        });
+    }
+
+    if(btnExcluirCtx) {
+        btnExcluirCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            iniciarExclusaoComDesfazer(rightClickedRowId);
+        });
+    }
+
+    if(btnCopiarCtx) {
+        btnCopiarCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if (lancamento) {
+                const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
+                navigator.clipboard.writeText(texto).then(() => alert('Dados copiados!'));
+            }
+        });
+    }
+
+    if(btnImprimirCtx) {
+        btnImprimirCtx.addEventListener('click', () => {
+            if (!rightClickedRowId) return;
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
+            if (lancamento) {
+                // Implementação simplificada para usar o gerador existente
+                alert("Use o botão de detalhes para imprimir o recibo.");
+            }
+        });
+    }
+
+    if(tabelaCorpo) {
         tabelaCorpo.addEventListener('change', (e) => {
             if (e.target.classList.contains('checkbox-lancamento')) {
                 const id = e.target.dataset.id;
@@ -1189,6 +1239,26 @@ var iniciarFinanceiro = () => {
                     tr.classList.remove('selecionada');
                 }
                 atualizarEstadoExclusaoLote();
+            }
+        });
+
+        tabelaCorpo.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.closest('.acoes-item')) return;
+            const tr = target.closest('tr');
+            if (!tr) return;
+
+            if (tabelaLancamentos && tabelaLancamentos.classList.contains('modo-selecao')) {
+                if (target.closest('a, [contenteditable]')) return;
+                const checkbox = tr.querySelector('.checkbox-lancamento');
+                if (checkbox && target.type !== 'checkbox') {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (!target.closest('a, i, [contenteditable], input')) {
+                const id = tr.dataset.id;
+                const lancamento = todosLancamentos.find(l => l._id === id);
+                if(lancamento) abrirModalDetalhes(lancamento);
             }
         });
     }
@@ -1242,125 +1312,99 @@ var iniciarFinanceiro = () => {
         });
     }
 
-    if(btnNovaArrec) {
-        btnNovaArrec.addEventListener('click', () => {
-            if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
-            abrirModal(); 
-            setTimeout(() => {
-                if(selectTipo) selectTipo.value = 'entrada';
-                atualizarCategoriasModal('entrada');
-                if(selectFundo && fundoEmVisualizacao) {
-                    selectFundo.value = fundoEmVisualizacao._id;
-                    selectFundo.dispatchEvent(new Event('change')); 
-                }
-            }, 100);
+    if(btnExportarPdf) {
+        btnExportarPdf.addEventListener('click', async () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const lancamentosFiltrados = await aplicarFiltros(true);
+            const ano = filtroAno ? filtroAno.value : 'todos';
+            const titulo = `Relatório Financeiro - Ano ${ano === 'todos' ? 'Geral' : ano}`;
+
+            doc.setFontSize(18);
+            doc.text(titulo, 14, 22);
+
+            const tableRows = lancamentosFiltrados.map(l => [
+                new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+                l.descricao,
+                l.categoria,
+                l.tipo === 'entrada' ? 'Entrada' : 'Saída',
+                formatarMoeda(l.valor)
+            ]);
+
+            doc.autoTable({
+                head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor']],
+                body: tableRows,
+                startY: 30,
+                headStyles: { fillColor: [0, 31, 93] },
+                columnStyles: { 4: { halign: 'right' } }
+            });
+
+            const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
+            const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
+            const balanco = receitas - despesas;
+            const finalY = doc.lastAutoTable.finalY + 10;
+
+            doc.setFontSize(12);
+            doc.text('Resumo do Período', 14, finalY);
+            doc.autoTable({
+                startY: finalY + 2,
+                theme: 'grid',
+                body: [
+                    ['Total de Receitas', formatarMoeda(receitas)],
+                    ['Total de Despesas', formatarMoeda(despesas)],
+                    ['Balanço', formatarMoeda(balanco)]
+                ],
+                bodyStyles: { fontStyle: 'bold' },
+                columnStyles: { 1: { halign: 'right' } }
+            });
+
+            doc.save(`Relatorio_Financeiro_${ano}.pdf`);
         });
     }
 
-    if(btnTransferirCaixa) {
-        btnTransferirCaixa.addEventListener('click', async () => {
-            if(!fundoEmVisualizacao) return;
-            const valorStr = prompt(`Quanto do saldo em caixa deseja transferir para "${fundoEmVisualizacao.nome}"?\n\nDigite apenas números (Ex: 150,50):`);
-            if(!valorStr) return;
+    // ==========================================
+    // CARREGAMENTO INICIAL
+    // ==========================================
+    const carregarDados = async () => {
+        try {
+            try {
+                const resMembros = await window.api.get('/api/membros');
+                todosMembros = Array.isArray(resMembros) ? resMembros : [];
+            } catch (err) {
+                console.warn("Aviso: Falha ao carregar membros.", err);
+                todosMembros = [];
+            }
+
+            try {
+                const resConfig = await window.api.get('/api/configs');
+                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
+            } catch (err) {
+                console.warn("Aviso: Falha ao carregar configs.", err);
+                categoriasConfig = { entradas: [], saidas: [] };
+            }
+
+            try {
+                const resLancamentosTodos = await window.api.get(`/api/financeiro/lancamentos?ano=todos&_t=${Date.now()}`);
+                todosLancamentos = Array.isArray(resLancamentosTodos) ? resLancamentosTodos : [];
+            } catch (err) {
+                console.error("Erro Crítico: Falha ao carregar lançamentos.", err);
+                todosLancamentos = [];
+            }
+
+            await carregarFundos();
+
+            calcularBalancoGeral(todosLancamentos);
+            popularFiltros(todosLancamentos);
             
-            const valorTransferencia = parseFloat(valorStr.replace(',', '.'));
-            if(isNaN(valorTransferencia) || valorTransferencia <= 0) return alert("Valor inválido.");
+            await aplicarFiltros();
 
-            if(confirm(`Confirmar transferência de ${formatarMoeda(valorTransferencia)} para o fundo?`)) {
-                try {
-                    await window.api.post('/api/financeiro/lancamentos', {
-                        tipo: 'saida', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Transferência de Fundo', descricao: `Transferência para o projeto: ${fundoEmVisualizacao.nome}`, fundoId: null
-                    });
-                    await window.api.post('/api/financeiro/lancamentos', {
-                        tipo: 'entrada', data: new Date().toISOString().split('T')[0], valor: valorTransferencia, categoria: 'Aporte de Caixa', descricao: 'Aporte recebido do caixa geral', fundoId: fundoEmVisualizacao._id
-                    });
-
-                    alert('Transferência realizada!');
-                    if(modalDetalhesFundo) modalDetalhesFundo.style.display = 'none';
-                    carregarDados(); 
-                } catch (err) { alert('Erro ao transferir saldo.'); }
-            }
-        });
-    }
-
-    window.addEventListener('click', (e) => {
-        if (contextMenu && contextMenu.style.display === 'block') contextMenu.style.display = 'none';
-        if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
-            if (tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
-            lancamentosSelecionados.clear();
-            if(checkboxSelecionarTodos) checkboxSelecionarTodos.checked = false;
-            if(tabelaCorpo) {
-                tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
-                tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
-            }
-            atualizarEstadoExclusaoLote();
+        } catch (error) {
+            console.error("Erro fatal no carregamento inicial da página:", error);
+            if (tabelaCorpo) tabelaCorpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: red;">Houve um problema de conexão com o servidor. Recarregue a página.</td></tr>';
         }
-    });
+    };
 
-    if(btnSelecionar) {
-        btnSelecionar.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            if (tabelaLancamentos) tabelaLancamentos.classList.add('modo-selecao');
-            if (tabelaCorpo) {
-                const checkbox = tabelaCorpo.querySelector(`.checkbox-lancamento[data-id="${rightClickedRowId}"]`);
-                if (checkbox && !checkbox.checked) {
-                    checkbox.checked = true;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-        });
-    }
-
-    if(btnEditarCtx) {
-        btnEditarCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if(lancamento) abrirModal(lancamento);
-        });
-    }
-
-    if(btnExcluirCtx) {
-        btnExcluirCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            iniciarExclusaoComDesfazer(rightClickedRowId);
-        });
-    }
-
-    if(btnCopiarCtx) {
-        btnCopiarCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if (lancamento) {
-                const texto = `Data: ${new Date(lancamento.data).toLocaleDateString('pt-BR')}\tValor: ${formatarMoeda(lancamento.valor)}\tCategoria: ${lancamento.categoria}\tDescrição: ${lancamento.descricao}`;
-                navigator.clipboard.writeText(texto).then(() => alert('Dados copiados!'));
-            }
-        });
-    }
-
-    if(btnImprimirCtx) {
-        btnImprimirCtx.addEventListener('click', () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if (lancamento) gerarReciboPDF(lancamento);
-        });
-    }
-
-    const abasLink = document.querySelectorAll('.abas-financeiro .aba-link');
-    abasLink.forEach(aba => {
-        aba.addEventListener('click', () => {
-            const activeLink = document.querySelector('.abas-financeiro .aba-link.active');
-            if(activeLink) activeLink.classList.remove('active');
-            
-            const activeConteudo = document.querySelector('.aba-conteudo.active');
-            if(activeConteudo) activeConteudo.classList.remove('active');
-            
-            aba.classList.add('active');
-            const targetAba = document.getElementById(aba.dataset.aba);
-            if(targetAba) targetAba.classList.add('active');
-        });
-    });
-
-    // Iniciar Fluxo
+    // START
     carregarDados();
 };
 
