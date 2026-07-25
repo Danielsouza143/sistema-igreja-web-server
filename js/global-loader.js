@@ -1,4 +1,4 @@
-const iniciarGlobalLoader = () => {
+var iniciarGlobalLoader = () => {
 
     /**
      * Lógica para o modo de Supervisão (Impersonation)
