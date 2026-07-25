@@ -246,7 +246,7 @@ var iniciarFinanceiro = () => {
         }
 
         if (contribuicoesAno.length === 0) {
-            container.innerHTML = '<p class="aviso-grafico-vazio">Nenhuma contribuição registrada neste ano.</p>';
+            container.innerHTML = '<p class="aviso-grafico-vazio">Nenhuma contribuição registrada neste ano para exibir o gráfico.</p>';
             return;
         }
 
@@ -284,7 +284,8 @@ var iniciarFinanceiro = () => {
     // --- LÓGICA DO MÓDULO DE FUNDOS E METAS ---
     const carregarFundos = async () => {
         try {
-            const response = await window.api.get('/api/financeiro/fundos');
+            // AQUI ESTÁ O CACHE BUSTING QUE IMPEDE O BUG DO F5
+            const response = await window.api.get(`/api/financeiro/fundos?_t=${Date.now()}`);
             fundosAtivos = Array.isArray(response) ? response : [];
             renderizarFundos(fundosAtivos);
         } catch (error) {
@@ -309,7 +310,6 @@ var iniciarFinanceiro = () => {
     const calcularRitmoFundo = (fundo) => {
         if (!fundo.prazo) return 'Prazo não definido';
         
-        // Isola apenas o YYYY-MM-DD para evitar conflito de fuso horário
         const prazoStr = typeof fundo.prazo === 'string' ? fundo.prazo.split('T')[0] : fundo.prazo;
         const prazo = new Date(prazoStr + 'T23:59:59'); 
         const hoje = new Date();
@@ -320,7 +320,6 @@ var iniciarFinanceiro = () => {
         if (faltante <= 0) return 'Meta atingida! Parabéns!';
         if (diasRestantes <= 0) return `Prazo encerrado. Faltou ${formatarMoeda(faltante)}.`;
         
-        // Cálculo preciso de diferença de meses pelo calendário
         let mesesRestantes = (prazo.getFullYear() - hoje.getFullYear()) * 12 + (prazo.getMonth() - hoje.getMonth());
         
         if (mesesRestantes <= 0) {
@@ -347,7 +346,6 @@ var iniciarFinanceiro = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            // Renomeado para evitar conflito com status global CSS
             const cardStatusClass = porcentagemNum >= 100 ? 'meta-concluida' : 'meta-andamento';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
@@ -462,7 +460,6 @@ var iniciarFinanceiro = () => {
         const porcentagem = ((fundo.arrecadado / (fundo.meta || 1)) * 100).toFixed(1);
         document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
 
-        // Busca lançamentos vinculados a esta meta
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
 
         const tabela = document.getElementById('tabela-fundo-lancamentos');
@@ -489,19 +486,18 @@ var iniciarFinanceiro = () => {
         modal.style.display = 'flex';
     };
 
-    // Ações dos novos botões do Modal Detalhes do Fundo
     const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
     if(btnNovaArrec) {
         btnNovaArrec.addEventListener('click', () => {
-            document.getElementById('modal-detalhes-fundo').style.display = 'none'; // Fecha detalhes
-            abrirModal(); // Abre modal de lançamento
+            document.getElementById('modal-detalhes-fundo').style.display = 'none'; 
+            abrirModal(); 
             setTimeout(() => {
                 document.getElementById('tipo').value = 'entrada';
                 atualizarCategoriasModal('entrada');
                 const fundoSelect = document.getElementById('fundoId');
                 if(fundoSelect && fundoEmVisualizacao) {
                     fundoSelect.value = fundoEmVisualizacao._id;
-                    fundoSelect.dispatchEvent(new Event('change')); // Dispara evento para liberar busca de membro
+                    fundoSelect.dispatchEvent(new Event('change')); 
                 }
             }, 100);
         });
@@ -521,7 +517,6 @@ var iniciarFinanceiro = () => {
 
             if(confirm(`Confirmar transferência de ${formatarMoeda(valorTransferencia)} para o fundo?`)) {
                 try {
-                    // 1. Cria a Saída do Caixa Geral
                     await window.api.post('/api/financeiro/lancamentos', {
                         tipo: 'saida',
                         data: new Date().toISOString().split('T')[0],
@@ -531,7 +526,6 @@ var iniciarFinanceiro = () => {
                         fundoId: null
                     });
 
-                    // 2. Cria a Entrada no Fundo
                     await window.api.post('/api/financeiro/lancamentos', {
                         tipo: 'entrada',
                         data: new Date().toISOString().split('T')[0],
@@ -543,7 +537,7 @@ var iniciarFinanceiro = () => {
 
                     alert('Transferência realizada com sucesso!');
                     document.getElementById('modal-detalhes-fundo').style.display = 'none';
-                    carregarDados(); // Atualiza tudo
+                    carregarDados(); 
                 } catch (err) {
                     console.error(err);
                     alert('Erro ao transferir saldo.');
@@ -563,7 +557,7 @@ var iniciarFinanceiro = () => {
             if(l.tipo === 'entrada') {
                 dadosPorMes[mes] += l.valor;
             } else {
-                dadosPorMes[mes] -= l.valor; // Se houver saída, subtrai
+                dadosPorMes[mes] -= l.valor; 
             }
         });
 
@@ -594,7 +588,7 @@ var iniciarFinanceiro = () => {
     }
     
     document.getElementById('btn-nova-meta')?.addEventListener('click', () => abrirModalFundo());
-    modalFundo?.querySelector('[data-close]').addEventListener('click', () => modalFundo.style.display = 'none');
+    modalFundo?.querySelector('[data-close]')?.addEventListener('click', () => modalFundo.style.display = 'none');
 
     // --- Lógica de Filtros ---
     const aplicarFiltros = async (retornarArray = false) => {
@@ -609,8 +603,9 @@ var iniciarFinanceiro = () => {
         if (categoriasSelecionadas.length > 0) queryParams.append('categorias', categoriasSelecionadas.join(','));
 
         try {
-            const lancamentos = await window.api.get(`/api/financeiro/lancamentos?${queryParams.toString()}`);
-            if (!lancamentos) return [];
+            // AQUI ESTÁ O SEGUNDO CACHE BUSTING (Para Lançamentos)
+            let lancamentos = await window.api.get(`/api/financeiro/lancamentos?${queryParams.toString()}&_t=${Date.now()}`);
+            if (!Array.isArray(lancamentos)) lancamentos = [];
 
             let lancamentosFiltrados = tipo === 'todos' ? lancamentos : lancamentos.filter(l => l.tipo === tipo);
 
@@ -625,7 +620,7 @@ var iniciarFinanceiro = () => {
             renderizarGraficoDespesasPizza(lancamentosFiltrados);
             
             if (ano !== 'todos') {
-                const resAno = await window.api.get(`/api/financeiro/lancamentos?ano=${ano}`);
+                const resAno = await window.api.get(`/api/financeiro/lancamentos?ano=${ano}&_t=${Date.now()}`);
                 renderizarGraficoAnual(resAno || [], ano);
             } else {
                 renderizarGraficoAnual(lancamentos, 'Geral');
@@ -650,7 +645,7 @@ var iniciarFinanceiro = () => {
         filtroAno.innerHTML = '<option value="todos">Todos os Anos</option>' + 
                              anosNoBanco.sort((a, b) => b - a).map(ano => `<option value="${ano}">${ano}</option>`).join('');
         
-        // CORREÇÃO: Exibe todos os dados do banco na visão inicial por padrão
+        // Puxar tudo por padrão ao entrar na tela 
         filtroAno.value = 'todos';
         filtroMes.value = 'todos';
 
@@ -675,13 +670,6 @@ var iniciarFinanceiro = () => {
             novoBtn.addEventListener('click', () => aplicarFiltros());
         }
     };
-
-    // FUNÇÕES INJETADAS PARA O FIX: BUSCA DE MEMBROS E VARIÁVEIS INICIAIS
-    // (O erro ReferenceError reclamou dessas variáveis abaixo:)
-    const buscaMembroInput = document.getElementById('busca-membro-input');
-    const buscaResultados = document.getElementById('busca-membro-resultados');
-    const historicoContainer = document.getElementById('historico-membro-container');
-    const avisoInicial = document.getElementById('aviso-inicial-dizimos');
 
     const toggleMembroSearch = () => {
         const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value : '';
@@ -793,7 +781,6 @@ var iniciarFinanceiro = () => {
     const selFundo = document.getElementById('fundoId');
     if(selFundo) selFundo.addEventListener('change', toggleMembroSearch);
 
-    // --- Lógica de busca de membro no modal ---
     if(buscaMembroModalInput) {
         buscaMembroModalInput.addEventListener('input', () => {
             const termo = buscaMembroModalInput.value.toLowerCase();
@@ -1303,7 +1290,6 @@ var iniciarFinanceiro = () => {
     // --- Carregamento Inicial Blindado Contra Crash de API ---
     const carregarDados = async () => {
         try {
-            // Isolando a chamada de membros para que se falhar, não afete o restante
             try {
                 const resMembros = await window.api.get('/api/membros');
                 todosMembros = Array.isArray(resMembros) ? resMembros : [];
@@ -1312,7 +1298,6 @@ var iniciarFinanceiro = () => {
                 todosMembros = [];
             }
 
-            // Isolando a chamada de configurações
             try {
                 const resConfig = await window.api.get('/api/configs');
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
@@ -1321,9 +1306,9 @@ var iniciarFinanceiro = () => {
                 categoriasConfig = { entradas: [], saidas: [] };
             }
 
-            // Isolando a chamada de lançamentos gerais
             try {
-                const resLancamentosTodos = await window.api.get('/api/financeiro/lancamentos?ano=todos');
+                // FORÇANDO LIMPEZA DE CACHE DO NAVEGADOR COM _t
+                const resLancamentosTodos = await window.api.get(`/api/financeiro/lancamentos?ano=todos&_t=${Date.now()}`);
                 todosLancamentos = Array.isArray(resLancamentosTodos) ? resLancamentosTodos : [];
             } catch (err) {
                 console.error("Erro Crítico: Falha ao carregar lançamentos.", err);
