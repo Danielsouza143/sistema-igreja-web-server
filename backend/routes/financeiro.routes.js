@@ -17,12 +17,13 @@ router.get('/lancamentos', async (req, res) => {
         const { ano, mes, categorias } = req.query;
         let query = { tenantId: req.tenant.id };
 
+        // Filtro por Ano e Mês
         if (ano && ano !== 'todos') {
             const anoInt = parseInt(ano);
             let start, end;
 
             if (mes && mes !== 'todos') {
-                const mesInt = parseInt(mes) - 1; 
+                const mesInt = parseInt(mes) - 1; // JS months are 0-11
                 start = new Date(Date.UTC(anoInt, mesInt, 1, 0, 0, 0));
                 end = new Date(Date.UTC(anoInt, mesInt + 1, 0, 23, 59, 59, 999));
             } else {
@@ -38,6 +39,7 @@ router.get('/lancamentos', async (req, res) => {
             query.data = { $gte: start, $lte: end };
         }
 
+        // Filtro por Múltiplas Categorias
         if (categorias) {
             let catsArray = Array.isArray(categorias) ? categorias : categorias.split(',').map(c => c.trim()).filter(Boolean);
             if (catsArray.length > 0) {
@@ -105,7 +107,9 @@ router.put('/lancamentos/:id', upload.single('comprovante'), async (req, res) =>
         const { comprovanteUrl, ...updateData } = req.body;
         const existingLancamento = await Lancamento.findOne({ _id: req.params.id, tenantId: req.tenant.id });
 
-        if (!existingLancamento) return res.status(404).json({ message: 'Lançamento não encontrado.' });
+        if (!existingLancamento) {
+            return res.status(404).json({ message: 'Lançamento não encontrado.' });
+        }
 
         if (req.file) {
             if (existingLancamento.comprovanteUrl) {
@@ -170,11 +174,12 @@ router.delete('/lancamentos/lote', async (req, res) => {
 
 // POST /api/financeiro/upload-comprovante - Rota para upload
 router.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
-    if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
+    if (!req.file) {
+        return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
+    }
     const filePath = req.file.location;
     res.status(200).json({ filePath: filePath });
 });
-
 
 // ==========================================
 // ROTAS DE FUNDOS E METAS
@@ -228,6 +233,7 @@ router.put('/fundos/:id', async (req, res) => {
 router.delete('/fundos/:id', async (req, res) => {
     try {
         await Fundo.findOneAndDelete({ _id: req.params.id, tenantId: req.tenant.id });
+        // Desvincula os lançamentos desse fundo (não exclui o dinheiro do caixa)
         await Lancamento.updateMany({ fundoId: req.params.id, tenantId: req.tenant.id }, { fundoId: null });
         res.status(204).send();
     } catch (error) {
