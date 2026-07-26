@@ -12,16 +12,15 @@ const configSchema = new mongoose.Schema({
         required: true,
     },
     // ADICIONADO: Seção para armazenar a identidade da igreja
-    identidade: {
-        nomeIgreja: {
-            type: String,
-            default: 'Nome da Igreja'
-        },
-        logoIgrejaUrl: {
-            type: String,
-            default: ''
-        }
-    },
+    // Procure a parte de identidade e substitua para ficar assim:
+identidade: {
+    nomeIgreja: { type: String, default: '' },
+    logoIgrejaUrl: { type: String, default: '' },
+    cnpj: { type: String, default: '' },
+    telefone: { type: String, default: '' },
+    endereco: { type: String, default: '' },
+    email: { type: String, default: '' }
+},
     // ADICIONADO: Seção para armazenar as configurações de aparência
     aparencia: {
         theme: {
