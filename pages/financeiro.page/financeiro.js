@@ -23,7 +23,40 @@ var iniciarFinanceiro = () => {
     let graficoFundoAtual = null;
 
     // ==========================================
-    // 2. SELETORES DO DOM E BOTÕES
+    // FECHAMENTO DE MENUS GLOBAIS (PREVENÇÃO DE DUPLICAÇÃO HTMX)
+    // ==========================================
+    const fecharMenusGlobais = (e) => {
+        const cbContainer = document.getElementById('categorias-checkboxes');
+        if (cbContainer && !e.target.closest('#multi-select-categoria')) {
+            cbContainer.classList.remove('active');
+        }
+        const contextMenu = document.getElementById('context-menu');
+        if (contextMenu && contextMenu.style.display === 'block') {
+            contextMenu.style.display = 'none';
+        }
+        if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
+            const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
+            if (tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
+            
+            const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
+            if(checkboxSelecionarTodos) checkboxSelecionarTodos.checked = false;
+            
+            const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
+            if(tabelaCorpo) {
+                tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
+                tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
+            }
+            
+            const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
+            if(btnExcluirSelecionados) btnExcluirSelecionados.classList.add('hidden');
+        }
+    };
+
+    window.removeEventListener('click', fecharMenusGlobais);
+    window.addEventListener('click', fecharMenusGlobais);
+
+    // ==========================================
+    // 2. SELETORES DO DOM E BOTÕES (DECLARADOS APENAS UMA VEZ)
     // ==========================================
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
@@ -329,6 +362,7 @@ var iniciarFinanceiro = () => {
             renderizarFundos(fundosAtivos);
             popularSelectFundos(); 
         } catch (error) {
+            console.error('Erro ao carregar fundos:', error);
             fundosAtivos = [];
             renderizarFundos(fundosAtivos);
         }
@@ -714,7 +748,7 @@ var iniciarFinanceiro = () => {
                     }
                 }, 'image/png');
             } catch (error) {
-                alert('Ocorreu um erro ao tentar compartilhar o recibo.');
+                console.error('Erro ao gerar ou compartilhar recibo:', error);
             }
         }, 500);
     };
@@ -833,7 +867,9 @@ var iniciarFinanceiro = () => {
         if(!selectCategoria) return;
         const categorias = (tipo === 'entrada' ? categoriasConfig?.entradas : categoriasConfig?.saidas) || [];
         selectCategoria.innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-        if (categoriaSelecionada) selectCategoria.value = categoriaSelecionada;
+        if (categoriaSelecionada) {
+            selectCategoria.value = categoriaSelecionada;
+        }
     };
 
     const salvarEdicaoEmLinha = async (evento) => {
@@ -843,6 +879,7 @@ var iniciarFinanceiro = () => {
         const lancamentoOriginal = todosLancamentos.find(l => l._id === id);
 
         if (!lancamentoOriginal) return;
+
         let novoValor = celula.textContent.trim();
         let valorOriginal = lancamentoOriginal[campo];
 
@@ -854,10 +891,12 @@ var iniciarFinanceiro = () => {
                 return;
             }
         }
+
         if (novoValor === valorOriginal) {
             if (campo === 'valor') celula.textContent = formatarMoeda(valorOriginal);
             return;
         }
+
         try {
             const dadosAtualizados = { [campo]: novoValor };
             await window.api.put(`/api/financeiro/lancamentos/${id}`, dadosAtualizados);
@@ -1032,9 +1071,7 @@ var iniciarFinanceiro = () => {
         try {
             try {
                 tenantInfo = await window.api.get('/api/tenants/current');
-            } catch(e) {
-                console.warn("Não foi possível carregar a Igreja", e);
-            }
+            } catch(e) {}
 
             try {
                 const resMembros = await window.api.get(`/api/membros?_t=${Date.now()}`);
@@ -1218,9 +1255,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
-    const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
-
     if(checkboxSelecionarTodos) {
         checkboxSelecionarTodos.onchange = (e) => {
             const isChecked = e.target.checked;
@@ -1274,6 +1308,7 @@ var iniciarFinanceiro = () => {
         };
     }
 
+    // Modal Pesquisa de Membros
     if(buscaMembroModalInput) {
         buscaMembroModalInput.oninput = () => {
             const termo = buscaMembroModalInput.value.toLowerCase();
