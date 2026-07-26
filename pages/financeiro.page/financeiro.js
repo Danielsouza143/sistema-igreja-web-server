@@ -130,10 +130,11 @@ var iniciarFinanceiro = () => {
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
-    // Helper para converter imagem em Base64 (Bypass de CORS Canvas)
+    // --- A MÁGICA DO PROXY PARA BURLAR O BLOQUEIO DE IMAGEM DA AMAZON S3 ---
     const getBase64FromUrl = async (url) => {
         try {
-            const data = await fetch(url + '?v=' + new Date().getTime(), { mode: 'cors' });
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+            const data = await fetch(proxyUrl);
             const blob = await data.blob();
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -143,8 +144,8 @@ var iniciarFinanceiro = () => {
                 };
             });
         } catch (e) {
-            console.error('Erro de CORS ao converter imagem. O AWS S3 bloqueou a requisição:', e);
-            return url; // Retorna a URL normal se falhar, na esperança de o html2canvas conseguir
+            console.error('Falha ao usar o Proxy CORS. A logo não será carregada no PDF.', e);
+            return url; 
         }
     };
 
@@ -686,9 +687,7 @@ var iniciarFinanceiro = () => {
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 tenantInfo = resConfig?.identidade || null;
-            } catch (e) {
-                console.error("Erro ao buscar info da igreja");
-            }
+            } catch (e) {}
         }
 
         if (tenantInfo) {
@@ -699,7 +698,6 @@ var iniciarFinanceiro = () => {
 
             if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.nomeIgreja || 'Nossa Igreja';
             
-            // GARANTE EXIBIÇÃO DO CNPJ SE TIVER DADO
             if (elCnpjIgreja) {
                 if (tenantInfo.cnpj) {
                     elCnpjIgreja.textContent = `CNPJ / CPF: ${tenantInfo.cnpj}`;
@@ -712,7 +710,6 @@ var iniciarFinanceiro = () => {
             if (tenantInfo.logoIgrejaUrl) {
                 if(logoImg) { 
                     logoImg.crossOrigin = "anonymous";
-                    // BYPASS DO CORS DA AWS USANDO BASE64 NATIVO DO JS
                     logoImg.src = await getBase64FromUrl(tenantInfo.logoIgrejaUrl); 
                     logoImg.style.display = 'block'; 
                 }
@@ -1096,7 +1093,6 @@ var iniciarFinanceiro = () => {
     // ==========================================
     const carregarDados = async () => {
         try {
-            // AQUI É ONDE ELE PUXA A IDENTIDADE ASSIM QUE CARREGA A TELA
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
@@ -1114,7 +1110,6 @@ var iniciarFinanceiro = () => {
             } catch (err) { todosLancamentos = []; }
 
             await carregarFundos();
-
             calcularBalancoGeral(todosLancamentos);
             popularFiltros(todosLancamentos);
             await aplicarFiltros();
@@ -1433,7 +1428,6 @@ var iniciarFinanceiro = () => {
                 columnStyles: { 4: { halign: 'right' } }
             });
 
-            // Somar apenas o que NÃO é Fundo
             const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const balanco = receitas - despesas;
@@ -1457,7 +1451,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // START
     carregarDados();
 };
 
