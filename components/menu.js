@@ -1,31 +1,23 @@
 // Função de logout robusta para garantir a limpeza completa do estado
 if (typeof handleLogout === 'undefined') {
     window.handleLogout = () => {
-        // Limpa TODO o armazenamento local e de sessão para evitar vazamento de estado.
-        // Esta é a etapa mais crucial para a segurança em um ambiente multi-tenant.
         localStorage.clear();
         sessionStorage.clear();
-
-        // Redireciona para a página de login. O navegador irá carregar a página do zero.
         window.location.href = '/login.html';
     };
 }
 
 var iniciarMenu = () => {
-    // --- LÓGICA DE IDENTIDADE DA IGREJA (MOVIDA DE CHURCH-IDENTITY.JS) ---
+    // --- LÓGICA DE IDENTIDADE DA IGREJA ---
     class ChurchIdentity {
         static async loadAndApplyIdentity() {
             try {
-                // CORREÇÃO: Usar a rota autenticada que retorna os dados do tenant
                 const configs = await window.api.get('/api/configs');
-                if (!configs || !configs.identidade) {
-                    throw new Error('Objeto de identidade não encontrado nas configurações do tenant.');
-                }
+                if (!configs || !configs.identidade) throw new Error('Identidade não encontrada');
                 const { nomeIgreja, logoIgrejaUrl } = configs.identidade;
                 this.updateMenuDisplay(nomeIgreja, logoIgrejaUrl);
                 localStorage.setItem('churchIdentity', JSON.stringify({ nomeIgreja, logoIgrejaUrl }));
             } catch (error) {
-                console.error('Falha ao carregar a identidade da igreja:', error);
                 const storedIdentity = JSON.parse(localStorage.getItem('churchIdentity'));
                 if (storedIdentity) {
                     this.updateMenuDisplay(storedIdentity.nomeIgreja, storedIdentity.logoIgrejaUrl);
@@ -38,32 +30,26 @@ var iniciarMenu = () => {
             const menuChurchName = document.getElementById('menu-church-name');
             
             if (logoContainer) {
-                logoContainer.innerHTML = ''; // Limpa o container primeiro
+                logoContainer.innerHTML = ''; 
                 if (logoUrl) {
                     const img = document.createElement('img');
                     img.src = logoUrl;
                     img.alt = "Logo da Igreja";
-                    img.style.width = '50px';
-                    img.style.height = '50px';
+                    img.style.width = '45px';
+                    img.style.height = '45px';
                     img.style.borderRadius = '50%';
                     img.style.objectFit = 'cover';
                     logoContainer.appendChild(img);
                 } else {
                     const icon = document.createElement('i');
                     icon.className = 'bx bx-church';
-                    icon.style.fontSize = '50px';
+                    icon.style.fontSize = '45px';
                     icon.style.color = '#fff';
                     logoContainer.appendChild(icon);
                 }
-            } else {
-                console.warn('Container do logo (#menu-logo-container) não encontrado.');
             }
 
-            if (menuChurchName) {
-                menuChurchName.textContent = nomeIgreja || ''; // Usa string vazia como fallback
-            } else {
-                console.warn('Elemento #menu-church-name não encontrado no menu.');
-            }
+            if (menuChurchName) menuChurchName.textContent = nomeIgreja || ''; 
         }
 
         static init() {
@@ -78,111 +64,106 @@ var iniciarMenu = () => {
             window.addEventListener('storage', (event) => {
                 if (event.key === 'churchIdentity') {
                     const newIdentity = JSON.parse(event.newValue);
-                    if (newIdentity) {
-                        ChurchIdentity.updateMenuDisplay(newIdentity.nomeIgreja, newIdentity.logoIgrejaUrl);
-                    }
+                    if (newIdentity) ChurchIdentity.updateMenuDisplay(newIdentity.nomeIgreja, newIdentity.logoIgrejaUrl);
                 }
             });
         }
     }
-    // --- FIM DA LÓGICA DE IDENTIDADE ---
 
-
-    const hamburgerBtnDesktop = document.getElementById('hamburger-btn-desktop');
-    const hamburgerBtnMobile = document.getElementById('hamburger-btn-mobile');
-    const sidebar = document.getElementById('sidebar-menu');
-    const overlay = document.getElementById('sidebar-overlay');
-    const closeBtn = document.getElementById('sidebar-close-btn');
+    // --- APLICAÇÃO DE TEMAS E CORES ---
     let userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
     const aplicarAparencia = async () => {
         try {
             const configs = await window.api.get('/api/configs') || {};
             const aparencia = configs.aparencia || { corPrimaria: '#001f5d', corSecundaria: '#0033a0' };
-            // Remove a lógica de tema, aplica apenas as cores
             document.documentElement.style.setProperty('--cor-primaria', aparencia.corPrimaria);
             document.documentElement.style.setProperty('--cor-secundaria', aparencia.corSecundaria);
-        } catch (error) {
-            console.error('Erro ao aplicar aparência:', error);
-        }
+        } catch (error) {}
     };
 
-    if (!sidebar || !overlay || !closeBtn || !hamburgerBtnDesktop || !hamburgerBtnMobile) {
-        console.error('Elementos da sidebar não foram encontrados. O menu está presente no HTML?');
-    } else {
-        const toggleSidebar = () => {
-            // A verificação do painel de notificações foi movida para o listener de overlay
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        };
-
-        if (hamburgerBtnDesktop) hamburgerBtnDesktop.addEventListener('click', toggleSidebar);
-        if (hamburgerBtnMobile) hamburgerBtnMobile.addEventListener('click', toggleSidebar);
-
-        closeBtn.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', () => {
-            // Se a sidebar estiver ativa, fecha ela
-            if (sidebar.classList.contains('active')) {
-                toggleSidebar();
+    // --- EVENT DELEGATION: Resolve o erro de "elementos não encontrados" ---
+    document.removeEventListener('click', window.menuClickHandler);
+    window.menuClickHandler = (e) => {
+        // Abrir Menu Lateral (Hamburger)
+        if (e.target.closest('#hamburger-btn-desktop') || e.target.closest('#hamburger-btn-mobile')) {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
             }
-        });
-    }
+        }
+        // Fechar Menu Lateral
+        else if (e.target.closest('#sidebar-close-btn') || e.target.closest('#sidebar-overlay')) {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+            }
+        }
 
+        // Abrir Modal de Conta do Usuário
+        if (e.target.closest('#conta-area-trigger')) {
+            e.stopPropagation();
+            const modalConta = document.getElementById('modal-conta-usuario');
+            if (modalConta && userInfo) {
+                const nome = userInfo.name || userInfo.username;
+                const avatarEl = document.getElementById('conta-modal-avatar');
+                if(avatarEl) avatarEl.textContent = nome.charAt(0).toUpperCase();
+                
+                const nomeEl = document.getElementById('conta-modal-nome');
+                if(nomeEl) nomeEl.textContent = nome;
+                
+                const emailEl = document.getElementById('conta-modal-email');
+                if(emailEl) emailEl.textContent = userInfo.username;
+                
+                const roleEl = document.getElementById('conta-modal-role');
+                if(roleEl) roleEl.textContent = userInfo.role === 'admin' ? 'Administrador' : 'Operador';
+                
+                modalConta.style.display = 'flex';
+            }
+        } 
+        // Fechar Modal de Conta
+        else if (e.target.closest('.modal-overlay') || e.target.closest('[data-close-modal="modal-conta-usuario"]')) {
+            const modalConta = document.getElementById('modal-conta-usuario');
+            if (modalConta) modalConta.style.display = 'none';
+        }
+
+        // Botão Logout
+        if (e.target.closest('#btn-modal-logout')) {
+            e.preventDefault();
+            handleLogout();
+        }
+    };
+    document.addEventListener('click', window.menuClickHandler);
+
+    // Destaque de aba atual
     const currentPage = window.location.pathname;
     const allLinks = document.querySelectorAll('.sub-menu-link, .sidebar-links a');
-
     allLinks.forEach(link => {
         if (link.pathname === currentPage) {
             link.classList.add('active');
-            if (link.closest('details')) {
-                link.closest('details').open = true;
-            }
+            if (link.closest('details')) link.closest('details').open = true;
         }
     });
-
-    const contaTrigger = document.getElementById('conta-area-trigger');
-    const userAvatar = document.getElementById('user-avatar');
-    const modalConta = document.getElementById('modal-conta-usuario');
 
     window.updateUserDisplay = () => {
         userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (userInfo) {
             const nome = userInfo.name || userInfo.username;
-            if (userAvatar) {
-                userAvatar.textContent = nome.charAt(0).toUpperCase();
-            }
+            const userAvatar = document.getElementById('user-avatar');
+            if (userAvatar) userAvatar.textContent = nome.charAt(0).toUpperCase();
         }
     };
 
-    if (contaTrigger && modalConta) {
-        contaTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const nome = userInfo.name || userInfo.username;
-            document.getElementById('conta-modal-avatar').textContent = nome.charAt(0).toUpperCase();
-            document.getElementById('conta-modal-nome').textContent = nome;
-            document.getElementById('conta-modal-email').textContent = userInfo.username;
-            document.getElementById('conta-modal-role').textContent = userInfo.role === 'admin' ? 'Administrador' : 'Operador';
-            modalConta.style.display = 'flex';
-        });
-
-        modalConta.addEventListener('click', (e) => {
-            if (e.target.matches('.modal-overlay') || e.target.closest('[data-close-modal="modal-conta-usuario"]')) {
-                modalConta.style.display = 'none';
-            }
-        });
-        
-        document.getElementById('btn-modal-logout').addEventListener('click', (e) => {
-            e.preventDefault();
-            handleLogout();
-        });
-    }
-
     if (userInfo && userInfo.role !== 'admin') {
         const configLink = document.querySelector('a[href*="configuracoes.html"]');
-        if (configLink) configLink.closest('li').style.display = 'none';
+        if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
     }
 
-    // --- INICIALIZAÇÃO ---
+    // --- START ---
     ChurchIdentity.init();
     aplicarAparencia();
     if (window.updateUserDisplay) window.updateUserDisplay();
@@ -194,7 +175,6 @@ var iniciarMenu = () => {
         }
     });
 
-    // Adiciona o script de notificações dinamicamente
     if (!document.querySelector('script[src="/components/notifications.js"]')) {
         const notificationsScript = document.createElement('script');
         notificationsScript.src = '/components/notifications.js';
@@ -202,14 +182,6 @@ var iniciarMenu = () => {
     }
 }
 
-// Inicialização compatível com HTMX
 document.addEventListener('DOMContentLoaded', iniciarMenu);
 document.body.addEventListener('htmx:afterSwap', iniciarMenu);
-
-// Se carregado dinamicamente via script tag no body (pelo global-loader)
-if (document.readyState !== 'loading') {
-    iniciarMenu();
-}
-
-// Expõe globalmente para o global-loader chamar se necessário
-window.initMenu = iniciarMenu;
+if (document.readyState !== 'loading') iniciarMenu();
