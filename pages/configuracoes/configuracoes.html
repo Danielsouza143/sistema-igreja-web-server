@@ -5,8 +5,8 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/preload.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações - Gestão ADTC</title>
-    <script src="/auth-guard.js"></script> <!-- GUARDA DE ROTA -->
+    <title>Configurações</title>
+    <script src="/auth-guard.js"></script> 
     <script src="/js/api.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
@@ -22,7 +22,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" defer></script>
 </head>
 <body data-theme="light" hx-boost="true" hx-ext="preload">
-    <!-- Barra de Progresso do HTMX -->
     <div class="htmx-indicator"></div>
     <header id="menu-placeholder"></header>
 
@@ -86,16 +85,31 @@
                 <section id="identidade" class="config-section">
                     <h1 class="title-page">Identidade da Igreja</h1>
                     <div class="config-card">
-                        <h3><i class='bx bxs-church'></i> Nome e Logo</h3>
+                        <h3><i class='bx bxs-church'></i> Informações Oficiais (Recibos e Relatórios)</h3>
                         <div class="form-group">
                             <label for="config-nome-igreja">Nome da Igreja</label>
                             <input type="text" id="config-nome-igreja" placeholder="Nome completo da sua igreja">
                         </div>
                         <div class="form-group">
-                            <label>Logo da Igreja</label>
-                            <div class="logo-preview-container" id="logo-preview">
-                                <!-- JS will dynamically add <img> or <i> here -->
-                            </div>
+                            <label for="config-cnpj">CNPJ / CPF</label>
+                            <input type="text" id="config-cnpj" placeholder="Ex: 00.000.000/0000-00">
+                        </div>
+                        <div class="form-group">
+                            <label for="config-telefone">Telefone / WhatsApp</label>
+                            <input type="text" id="config-telefone" placeholder="Ex: (00) 00000-0000">
+                        </div>
+                        <div class="form-group">
+                            <label for="config-endereco">Endereço (Rua, Bairro, Cidade - UF)</label>
+                            <input type="text" id="config-endereco" placeholder="Ex: Rua Principal, 123 - Centro, Imperatriz - MA">
+                        </div>
+                        <div class="form-group">
+                            <label for="config-email">E-mail de Contato</label>
+                            <input type="email" id="config-email" placeholder="contato@suaigreja.com">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">
+                            <label>Logo Oficial da Igreja</label>
+                            <div class="logo-preview-container" id="logo-preview"></div>
                             <input type="file" id="logo-upload-input" accept="image/png, image/jpeg" style="display: none;">
                             <div class="logo-actions">
                                 <button type="button" id="btn-trocar-logo" class="btn btn-secundario">Trocar Logo</button>
@@ -179,26 +193,7 @@
         </div>
     </div>
 
-    <!-- Modal da Conta do Usuário (para ser usado em todas as páginas) -->
-    <div id="modal-conta-usuario" class="modal-overlay">
-        <div class="modal-content modal-sm">
-            <button class="modal-close" data-close-modal="modal-conta-usuario">&times;</button>
-            <div class="conta-modal-header">
-                <div id="conta-modal-avatar" class="user-avatar-large">U</div>
-                <h3 id="conta-modal-nome">Nome do Usuário</h3>
-                <p id="conta-modal-email">email@exemplo.com</p>
-                <span id="conta-modal-role" class="badge">Administrador</span>
-            </div>
-            <div class="conta-modal-body">
-                <a href="/pages/configuracoes/configuracoes.html#perfil" class="btn-modal-conta"><i class='bx bxs-user-cog'></i> Gerenciar Perfil</a>
-                <a href="#" id="btn-modal-logout" class="btn-modal-conta btn-perigo"><i class='bx bx-log-out'></i> Sair</a>
-            </div>
-        </div>
-    </div>
-
     <script src="/js/global-loader.js" defer></script>
-    
-    
     <script src="configuracoes.js"></script>
 
     <!-- Modal para Cortar Logo -->
