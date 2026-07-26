@@ -74,11 +74,7 @@ var iniciarConfiguracoes = () => {
     };
 
     const salvarAparencia = () => {
-        const aparencia = {
-            theme: 'light',
-            corPrimaria: corPrincipalInput.value,
-            corSecundaria: corSecundariaInput.value
-        };
+        const aparencia = { theme: 'light', corPrimaria: corPrincipalInput.value, corSecundaria: corSecundariaInput.value };
         salvarConfiguracao('aparencia', aparencia);
     };
 
@@ -163,7 +159,8 @@ var iniciarConfiguracoes = () => {
     }
 
     if(btnSalvarIdentidade) {
-        btnSalvarIdentidade.addEventListener('click', async () => {
+        btnSalvarIdentidade.addEventListener('click', async (e) => {
+            e.preventDefault(); // Previne recarregamento nativo do HTML
             btnSalvarIdentidade.disabled = true;
             btnSalvarIdentidade.textContent = 'Salvando...';
             
@@ -174,10 +171,13 @@ var iniciarConfiguracoes = () => {
             const email = emailInput ? emailInput.value.trim() : '';
 
             try {
-                // 1. Faz o upload da Logo primeiro se houver
                 if (croppedLogoBlob) {
                     const formData = new FormData();
                     formData.append('nomeIgreja', nomeIgreja);
+                    formData.append('cnpj', cnpj);
+                    formData.append('telefone', telefone);
+                    formData.append('endereco', endereco);
+                    formData.append('email', email);
                     formData.append('logo', croppedLogoBlob, 'logo.png');
 
                     try {
@@ -186,17 +186,21 @@ var iniciarConfiguracoes = () => {
                         const headers = getAuthHeader();
                         await fetch('/api/configs/upload-logo', { method: 'POST', body: formData, headers: headers });
                     }
-                } 
-
-                // 2. Agora força a atualização de TODOS os campos de texto no banco de dados
-                await window.api.patch('/api/configs', {
-                    'identidade.nomeIgreja': nomeIgreja,
-                    'identidade.cnpj': cnpj,
-                    'identidade.telefone': telefone,
-                    'identidade.endereco': endereco,
-                    'identidade.email': email
-                });
-
+                } else {
+                    // CORREÇÃO: Envio seguro do Objeto Identidade Inteiro
+                    const urlAntiga = (configs.identidade && configs.identidade.logoIgrejaUrl) ? configs.identidade.logoIgrejaUrl : '';
+                    await window.api.patch('/api/configs', {
+                        identidade: {
+                            nomeIgreja: nomeIgreja,
+                            cnpj: cnpj,
+                            telefone: telefone,
+                            endereco: endereco,
+                            email: email,
+                            logoIgrejaUrl: urlAntiga
+                        }
+                    });
+                }
+                
                 croppedLogoBlob = null;
                 await carregarConfigs();
                 window.dispatchEvent(new CustomEvent('churchIdentityUpdated', { detail: { ...configs.identidade } }));
@@ -293,7 +297,8 @@ var iniciarConfiguracoes = () => {
     }
 
     if(btnSalvarSenha) {
-        btnSalvarSenha.addEventListener('click', async () => {
+        btnSalvarSenha.addEventListener('click', async (e) => {
+            e.preventDefault();
             const currentPassword = document.getElementById('perfil-senha-atual').value;
             const newPassword = document.getElementById('perfil-nova-senha').value;
             const confirmPassword = document.getElementById('perfil-confirmar-senha').value;
@@ -339,16 +344,10 @@ var iniciarConfiguracoes = () => {
             if(usuarioNomeCompletoInput) usuarioNomeCompletoInput.value = usuario.name || '';
             document.getElementById('usuario-username').value = usuario.username;
             document.getElementById('usuario-role').value = usuario.role;
-            if(passInput) {
-                passInput.placeholder = "Deixe em branco para não alterar";
-                passInput.required = false;
-            }
+            if(passInput) { passInput.placeholder = "Deixe em branco para não alterar"; passInput.required = false; }
         } else {
             if(modalUsuarioTitulo) modalUsuarioTitulo.textContent = 'Adicionar Usuário';
-            if(passInput) {
-                passInput.placeholder = "Digite a nova senha";
-                passInput.required = true;
-            }
+            if(passInput) { passInput.placeholder = "Digite a nova senha"; passInput.required = true; }
         }
         if(modalUsuario) modalUsuario.style.display = 'flex';
     };
@@ -421,9 +420,7 @@ var iniciarConfiguracoes = () => {
             carregarAparencia();
             carregarIdentidade();
             renderizarCategorias();
-        } catch (error) {
-            console.error('Erro ao carregar configurações:', error);
-        }
+        } catch (error) { console.error('Erro ao carregar configurações:', error); }
     };
 
     const init = () => {
