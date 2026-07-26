@@ -7,7 +7,7 @@ var iniciarFinanceiro = () => {
     let todosMembros = [];
     let fundosAtivos = [];
     let categoriasConfig = { entradas: [], saidas: [] };
-    let tenantInfo = null; // AQUI FICAM OS DADOS DA IGREJA (NOME, LOGO, CNPJ)
+    let tenantInfo = null; 
 
     let lancamentoEmEdicaoId = null;
     let fundoEmEdicaoId = null;
@@ -489,6 +489,7 @@ var iniciarFinanceiro = () => {
                 
                 if(modalFundo) modalFundo.style.display = 'none';
                 carregarFundos();
+                alert('Fundo salvo com sucesso!');
             } catch(error) {
                 alert('Erro ao salvar fundo.');
             }
@@ -657,13 +658,24 @@ var iniciarFinanceiro = () => {
     // 8. MODAIS E GERAÇÃO DE RECIBOS
     // ==========================================
     
-    // AQUI: Preenche o Recibo com os dados do Tenant salvo nas Configurações Globais
+    // AQUI: Preenche o Recibo com os dados da Igreja. 
+    // CORREÇÃO: Busca os dados em /api/configs se a variável tenantInfo estiver vazia
     const preencherRecibo = async (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
         document.getElementById('recibo-valor').textContent = formatarMoeda(lancamento.valor);
         document.getElementById('recibo-descricao').textContent = lancamento.descricao;
         document.getElementById('recibo-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         document.getElementById('recibo-categoria').textContent = lancamento.categoria;
+
+        // Se os dados não estiverem na memória ainda, busca no backend da rota certa
+        if (!tenantInfo) {
+            try {
+                const resConfig = await window.api.get('/api/configs');
+                tenantInfo = resConfig?.identidade || null;
+            } catch (e) {
+                console.error("Erro ao buscar info da igreja");
+            }
+        }
 
         if (tenantInfo) {
             const elNomeIgreja = document.getElementById('recibo-nome-igreja');
@@ -772,6 +784,7 @@ var iniciarFinanceiro = () => {
         const btnImprimir = document.getElementById('detalhes-btn-imprimir');
         const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
         
+        // CORREÇÃO: MOSTRA OS BOTÕES PARA TODAS AS ENTRADAS INDEPENDENTE DE SER MEMBRO
         if (lancamento.tipo === 'entrada') {
             if(btnImprimir) {
                 btnImprimir.classList.remove('hidden');
@@ -851,6 +864,13 @@ var iniciarFinanceiro = () => {
         if(modalLancamento) modalLancamento.style.display = 'flex';
     };
 
+    const atualizarCategoriasModal = (tipo, categoriaSelecionada = null) => {
+        if(!selectCategoria) return;
+        const categorias = (tipo === 'entrada' ? categoriasConfig?.entradas : categoriasConfig?.saidas) || [];
+        selectCategoria.innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (categoriaSelecionada) selectCategoria.value = categoriaSelecionada;
+    };
+
     const salvarEdicaoEmLinha = async (evento) => {
         const celula = evento.target;
         const id = celula.dataset.id;
@@ -858,7 +878,6 @@ var iniciarFinanceiro = () => {
         const lancamentoOriginal = todosLancamentos.find(l => l._id === id);
 
         if (!lancamentoOriginal) return;
-
         let novoValor = celula.textContent.trim();
         let valorOriginal = lancamentoOriginal[campo];
 
@@ -870,12 +889,10 @@ var iniciarFinanceiro = () => {
                 return;
             }
         }
-
         if (novoValor === valorOriginal) {
             if (campo === 'valor') celula.textContent = formatarMoeda(valorOriginal);
             return;
         }
-
         try {
             const dadosAtualizados = { [campo]: novoValor };
             await window.api.put(`/api/financeiro/lancamentos/${id}`, dadosAtualizados);
@@ -933,7 +950,14 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    const imprimirRelatorioAnualMembro = (membro, contribuicoes) => {
+    const imprimirRelatorioAnualMembro = async (membro, contribuicoes) => {
+        if (!tenantInfo) {
+            try {
+                const resConfig = await window.api.get('/api/configs');
+                tenantInfo = resConfig?.identidade || null;
+            } catch (e) {}
+        }
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const anoCorrente = new Date().getFullYear();
@@ -1048,11 +1072,11 @@ var iniciarFinanceiro = () => {
     // ==========================================
     const carregarDados = async () => {
         try {
-            // Puxando a Identidade a partir do arquivo de configurações recém editado
+            // AQUI É ONDE ELE PUXA A IDENTIDADE ASSIM QUE CARREGA A TELA
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-                tenantInfo = resConfig?.identidade || null; // <--- PUXA A IDENTIDADE SALVA
+                tenantInfo = resConfig?.identidade || null; // <--- PUXA A IDENTIDADE SALVA DO BANCO DE DADOS
             } catch (err) { categoriasConfig = { entradas: [], saidas: [] }; }
 
             try {
@@ -1218,7 +1242,7 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // BOTÃO DIREITO: Apenas para Entradas/Receitas
+    // CORREÇÃO: O Botão Direito agora puxa o Recibo Personalizado diretamente
     if(btnImprimirCtx) {
         btnImprimirCtx.onclick = () => {
             if (!rightClickedRowId) return;
@@ -1387,7 +1411,6 @@ var iniciarFinanceiro = () => {
                 columnStyles: { 4: { halign: 'right' } }
             });
 
-            // Somar apenas o que NÃO é Fundo
             const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const balanco = receitas - despesas;
