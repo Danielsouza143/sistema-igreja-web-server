@@ -1,7 +1,4 @@
 var iniciarFinanceiro = () => {
-    // ==========================================
-    // 1. VARIÁVEIS GLOBAIS DE ESTADO
-    // ==========================================
     let todosLancamentos = [];
     let lancamentosSelecionados = new Set();
     let todosMembros = [];
@@ -22,9 +19,6 @@ var iniciarFinanceiro = () => {
     let graficoContribuicoesMembro = null;
     let graficoFundoAtual = null;
 
-    // ==========================================
-    // FECHAMENTO DE MENUS GLOBAIS
-    // ==========================================
     const fecharMenusGlobais = (e) => {
         const cbContainer = document.getElementById('categorias-checkboxes');
         if (cbContainer && !e.target.closest('#multi-select-categoria')) {
@@ -37,16 +31,13 @@ var iniciarFinanceiro = () => {
         if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
             const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
             if (tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
-            
             const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
             if(checkboxSelecionarTodos) checkboxSelecionarTodos.checked = false;
-            
             const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
             if(tabelaCorpo) {
                 tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
                 tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
             }
-            
             const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
             if(btnExcluirSelecionados) btnExcluirSelecionados.classList.add('hidden');
         }
@@ -55,9 +46,6 @@ var iniciarFinanceiro = () => {
     window.removeEventListener('click', fecharMenusGlobais);
     window.addEventListener('click', fecharMenusGlobais);
 
-    // ==========================================
-    // 2. SELETORES DO DOM E BOTÕES
-    // ==========================================
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
     const filtroAno = document.getElementById('filtro-ano');
@@ -65,14 +53,12 @@ var iniciarFinanceiro = () => {
     const filtroTipo = document.getElementById('filtro-tipo');
     const btnAplicarFiltros = document.getElementById('btn-aplicar-filtros');
     const categoriasCheckboxes = document.getElementById('categorias-checkboxes');
-    
     const modalLancamento = document.getElementById('modal-lancamento');
     const formLancamento = document.getElementById('form-lancamento');
     const modalFundo = document.getElementById('modal-fundo');
     const formFundo = document.getElementById('form-fundo');
     const modalDetalhes = document.getElementById('modal-detalhes-lancamento');
     const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
-    
     const inputValorLancamento = document.getElementById('valor');
     const selectTipo = document.getElementById('tipo');
     const selectCategoria = document.getElementById('categoria');
@@ -80,23 +66,19 @@ var iniciarFinanceiro = () => {
     const grupoMembro = document.getElementById('grupo-membro');
     const comprovanteInput = document.getElementById('comprovante');
     const inputMetaFundo = document.getElementById('fundo-meta');
-    
     const buscaMembroModalInput = document.getElementById('busca-membro-modal');
     const buscaMembroResultadosModal = document.getElementById('busca-membro-resultados-modal');
     const membroIdHiddenInput = document.getElementById('membroId-hidden');
     const clearMembroBtn = document.getElementById('clear-membro-btn');
-
     const buscaMembroInput = document.getElementById('busca-membro-input');
     const buscaResultados = document.getElementById('busca-membro-resultados');
     const historicoContainer = document.getElementById('historico-membro-container');
     const avisoInicial = document.getElementById('aviso-inicial-dizimos');
-    
     const contextMenu = document.getElementById('context-menu');
     const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
     const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
     const toast = document.getElementById('toast-desfazer');
     const btnDesfazer = document.getElementById('btn-desfazer');
-
     const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
     const btnNovaMeta = document.getElementById('btn-nova-meta');
     const btnSelecionar = document.getElementById('context-selecionar');
@@ -110,11 +92,7 @@ var iniciarFinanceiro = () => {
     const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
     const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
 
-    // ==========================================
-    // 3. FUNÇÕES UTILITÁRIAS
-    // ==========================================
     const formatarMoeda = (valor) => `R$ ${(valor || 0).toFixed(2).replace('.', ',')}`;
-
     const aplicarMascaraMoeda = (e) => {
         let valor = e.target.value.replace(/\D/g, "");
         if (valor === "") { e.target.value = ""; return; }
@@ -123,35 +101,32 @@ var iniciarFinanceiro = () => {
         valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
         e.target.value = "R$ " + valor;
     };
-
     const parseMoedaToFloat = (str) => {
         if (!str) return 0;
         if (typeof str === 'number') return str;
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
-    // Nova conversão para Base64 acessando a imagem diretamente com regras de CORS nativas
     const getBase64FromUrl = async (url) => {
         try {
-            const data = await fetch(url + '?v=' + new Date().getTime(), { mode: 'cors' });
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+            const data = await fetch(proxyUrl);
             const blob = await data.blob();
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(blob);
-                reader.onloadend = () => resolve(reader.result);
+                reader.onloadend = () => { resolve(reader.result); };
             });
         } catch (e) {
-            console.error('Falha ao converter a imagem do S3:', e);
-            return url; // Retorna a URL normal em último caso
+            console.error('Falha ao usar o Proxy CORS.', e);
+            return url; 
         }
     };
 
     if(inputValorLancamento) inputValorLancamento.oninput = aplicarMascaraMoeda;
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
 
-    window.toggleMultiSelect = () => {
-        if(categoriasCheckboxes) categoriasCheckboxes.classList.toggle('active');
-    };
+    window.toggleMultiSelect = () => { if(categoriasCheckboxes) categoriasCheckboxes.classList.toggle('active'); };
 
     const atualizarTextoCategorias = () => {
         const checkboxes = document.querySelectorAll('.categoria-checkbox:checked');
@@ -163,12 +138,8 @@ var iniciarFinanceiro = () => {
     };
 
     document.onclick = (e) => {
-        if (categoriasCheckboxes && !e.target.closest('#multi-select-categoria')) {
-            categoriasCheckboxes.classList.remove('active');
-        }
-        if (contextMenu && contextMenu.style.display === 'block') {
-            contextMenu.style.display = 'none';
-        }
+        if (categoriasCheckboxes && !e.target.closest('#multi-select-categoria')) categoriasCheckboxes.classList.remove('active');
+        if (contextMenu && contextMenu.style.display === 'block') contextMenu.style.display = 'none';
         if (e.target.matches('[data-close]') || e.target.closest('[data-close]')) {
             const modalOverlay = e.target.closest('.modal-overlay') || e.target.closest('.modal');
             if (modalOverlay) modalOverlay.style.display = 'none';
@@ -178,18 +149,11 @@ var iniciarFinanceiro = () => {
     const configurarAbas = () => {
         const abasLink = document.querySelectorAll('.abas-financeiro .aba-link');
         const abaSalva = localStorage.getItem('abaFinanceiroAtiva') || 'lancamentos';
-        
         document.querySelectorAll('.abas-financeiro .aba-link').forEach(a => a.classList.remove('active'));
         document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('active'));
-        
         const abaParaAtivar = document.querySelector(`.abas-financeiro .aba-link[data-aba="${abaSalva}"]`);
         const conteudoParaAtivar = document.getElementById(abaSalva);
-        
-        if(abaParaAtivar && conteudoParaAtivar) {
-            abaParaAtivar.classList.add('active');
-            conteudoParaAtivar.classList.add('active');
-        }
-
+        if(abaParaAtivar && conteudoParaAtivar) { abaParaAtivar.classList.add('active'); conteudoParaAtivar.classList.add('active'); }
         abasLink.forEach(aba => {
             aba.onclick = () => {
                 document.querySelector('.abas-financeiro .aba-link.active')?.classList.remove('active');
@@ -203,9 +167,6 @@ var iniciarFinanceiro = () => {
     };
     configurarAbas();
 
-    // ==========================================
-    // 4. RENDERIZAÇÃO: TABELAS E DASHBOARD
-    // ==========================================
     const renderizarTabela = (lancamentos) => {
         if(!tabelaCorpo) return;
         tabelaCorpo.innerHTML = '';
@@ -287,13 +248,7 @@ var iniciarFinanceiro = () => {
         const labels = (['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']);
         new Chart(canvas.getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Receitas', data: dadosPorMes.map(d => d.entradas), backgroundColor: '#28a745' },
-                    { label: 'Despesas', data: dadosPorMes.map(d => d.saidas), backgroundColor: '#dc3545' }
-                ]
-            },
+            data: { labels: labels, datasets: [{ label: 'Receitas', data: dadosPorMes.map(d => d.entradas), backgroundColor: '#28a745' }, { label: 'Despesas', data: dadosPorMes.map(d => d.saidas), backgroundColor: '#dc3545' }] },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
         });
     };
@@ -317,10 +272,7 @@ var iniciarFinanceiro = () => {
         }
         
         canvas.style.display = 'block';
-        const despesasPorCategoria = despesas.reduce((acc, l) => {
-            acc[l.categoria] = (acc[l.categoria] || 0) + l.valor;
-            return acc;
-        }, {});
+        const despesasPorCategoria = despesas.reduce((acc, l) => { acc[l.categoria] = (acc[l.categoria] || 0) + l.valor; return acc; }, {});
 
         const cores = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#17a2b8', '#6f42c1'];
         new Chart(canvas.getContext('2d'), {
@@ -353,17 +305,11 @@ var iniciarFinanceiro = () => {
         canvas.style.display = 'block';
 
         const dadosPorMes = Array(12).fill(0);
-        contribuicoesAno.forEach(c => {
-            const mes = new Date(c.data).getUTCMonth();
-            dadosPorMes[mes] += c.valor;
-        });
+        contribuicoesAno.forEach(c => { const mes = new Date(c.data).getUTCMonth(); dadosPorMes[mes] += c.valor; });
         
         new Chart(canvas.getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                datasets: [{ label: `Contribuições em ${anoCorrente}`, data: dadosPorMes, backgroundColor: 'rgba(40, 167, 69, 0.7)', borderColor: 'rgba(40, 167, 69, 1)', borderWidth: 1 }]
-            },
+            data: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'], datasets: [{ label: `Contribuições em ${anoCorrente}`, data: dadosPorMes, backgroundColor: 'rgba(40, 167, 69, 0.7)', borderColor: 'rgba(40, 167, 69, 1)', borderWidth: 1 }] },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
         });
     };
@@ -377,10 +323,7 @@ var iniciarFinanceiro = () => {
             fundosAtivos = Array.isArray(response) ? response : [];
             renderizarFundos(fundosAtivos);
             popularSelectFundos(); 
-        } catch (error) {
-            fundosAtivos = [];
-            renderizarFundos(fundosAtivos);
-        }
+        } catch (error) { fundosAtivos = []; renderizarFundos(fundosAtivos); }
     }
 
     const popularSelectFundos = () => {
@@ -417,7 +360,6 @@ var iniciarFinanceiro = () => {
         const grid = document.getElementById('grid-fundos');
         if(!grid) return;
         grid.innerHTML = '';
-
         if(fundos.length === 0) {
             grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666; padding: 40px;">Nenhuma meta ou fundo cadastrado no momento.</p>';
             return;
@@ -439,9 +381,7 @@ var iniciarFinanceiro = () => {
             card.innerHTML = `
                 <div class="card-fundo-header">
                     <h3>${fundo.nome}</h3>
-                    <div class="badge-status">
-                        <span class="badge-status ${badgeClass}">${statusText}</span>
-                    </div>
+                    <div class="badge-status"><span class="badge-status ${badgeClass}">${statusText}</span></div>
                 </div>
                 <p class="fundo-desc">${fundo.descricao}</p>
                 <p class="fundo-ritmo"><i class='bx bx-time-five'></i> ${ritmoTexto}</p>
@@ -453,22 +393,11 @@ var iniciarFinanceiro = () => {
                     <i class='bx bxs-trash btn-excluir-fundo' style="font-size: 1.2rem; color: #dc3545; cursor: pointer;" title="Excluir"></i>
                 </div>
             `;
-
-            card.onclick = (e) => {
-                if(!e.target.classList.contains('btn-editar-fundo') && !e.target.classList.contains('btn-excluir-fundo')) {
-                    abrirDetalhesFundo(fundo);
-                }
-            };
-            card.querySelector('.btn-editar-fundo').onclick = (e) => {
-                e.stopPropagation();
-                abrirModalFundo(fundo);
-            };
+            card.onclick = (e) => { if(!e.target.classList.contains('btn-editar-fundo') && !e.target.classList.contains('btn-excluir-fundo')) abrirDetalhesFundo(fundo); };
+            card.querySelector('.btn-editar-fundo').onclick = (e) => { e.stopPropagation(); abrirModalFundo(fundo); };
             card.querySelector('.btn-excluir-fundo').onclick = async (e) => {
                 e.stopPropagation();
-                if(confirm('Deseja realmente excluir este fundo? Os lançamentos vinculados a ele continuarão existindo no caixa geral.')) {
-                    await window.api.delete(`/api/financeiro/fundos/${fundo._id}`);
-                    carregarFundos();
-                }
+                if(confirm('Deseja realmente excluir este fundo? Os lançamentos vinculados a ele continuarão existindo no caixa geral.')) { await window.api.delete(`/api/financeiro/fundos/${fundo._id}`); carregarFundos(); }
             };
             grid.appendChild(card);
         });
@@ -493,29 +422,20 @@ var iniciarFinanceiro = () => {
     if(formFundo) {
         formFundo.onsubmit = async (e) => {
             e.preventDefault();
-            const dados = {
-                nome: document.getElementById('fundo-nome').value,
-                descricao: document.getElementById('fundo-descricao').value,
-                meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'),
-                prazo: document.getElementById('fundo-prazo').value
-            };
+            const dados = { nome: document.getElementById('fundo-nome').value, descricao: document.getElementById('fundo-descricao').value, meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'), prazo: document.getElementById('fundo-prazo').value };
             try {
                 if(fundoEmEdicaoId) await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
                 else await window.api.post('/api/financeiro/fundos', dados);
-                
                 if(modalFundo) modalFundo.style.display = 'none';
                 carregarFundos();
                 alert('Fundo salvo com sucesso!');
-            } catch(error) {
-                alert('Erro ao salvar fundo.');
-            }
+            } catch(error) { alert('Erro ao salvar fundo.'); }
         };
     }
 
     const abrirDetalhesFundo = (fundo) => {
         if(!modalDetalhesFundo) return;
         fundoEmVisualizacao = fundo; 
-
         document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
         document.getElementById('fundo-valor-arrecadado').textContent = formatarMoeda(fundo.arrecadado);
         document.getElementById('fundo-valor-meta').textContent = formatarMoeda(fundo.meta);
@@ -528,11 +448,7 @@ var iniciarFinanceiro = () => {
             if(lancamentosDoFundo.length > 0) {
                 tabela.innerHTML = lancamentosDoFundo.map(l => {
                     const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Caixa Geral (Transferência)';
-                    return `<tr>
-                            <td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
-                            <td>${membroNome}</td>
-                            <td style="color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}</td>
-                        </tr>`;
+                    return `<tr><td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td><td>${membroNome}</td><td style="color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}</td></tr>`;
                 }).join('');
             } else {
                 tabela.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento vinculado ainda.</td></tr>';
@@ -545,27 +461,12 @@ var iniciarFinanceiro = () => {
     const renderizarGraficoFundoEspecifico = (lancamentos) => {
         const canvas = document.getElementById('grafico-fundo-historico');
         if(!canvas) return;
-        
         let chartExistente = Chart.getChart('grafico-fundo-historico');
         if (chartExistente) chartExistente.destroy();
-
         const ctx = canvas.getContext('2d');
         const dadosPorMes = Array(12).fill(0);
-        
-        lancamentos.forEach(l => {
-            const mes = new Date(l.data).getUTCMonth();
-            if(l.tipo === 'entrada') dadosPorMes[mes] += l.valor;
-            else dadosPorMes[mes] -= l.valor; 
-        });
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                datasets: [{ label: 'Arrecadação Mensal Líquida', data: dadosPorMes, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.2)', fill: true, tension: 0.3 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        lancamentos.forEach(l => { const mes = new Date(l.data).getUTCMonth(); if(l.tipo === 'entrada') dadosPorMes[mes] += l.valor; else dadosPorMes[mes] -= l.valor; });
+        new Chart(ctx, { type: 'line', data: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'], datasets: [{ label: 'Arrecadação Mensal Líquida', data: dadosPorMes, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
     };
 
     if(btnNovaArrec) {
@@ -575,10 +476,7 @@ var iniciarFinanceiro = () => {
             setTimeout(() => {
                 if(selectTipo) selectTipo.value = 'entrada';
                 atualizarCategoriasModal('entrada');
-                if(selectFundo && fundoEmVisualizacao) {
-                    selectFundo.value = fundoEmVisualizacao._id;
-                    toggleMembroSearch();
-                }
+                if(selectFundo && fundoEmVisualizacao) { selectFundo.value = fundoEmVisualizacao._id; toggleMembroSearch(); }
             }, 100);
         };
     }
@@ -634,9 +532,7 @@ var iniciarFinanceiro = () => {
                 const resAno = await window.api.get(`/api/financeiro/lancamentos?ano=${ano}&_t=${Date.now()}`);
                 const resAnoCaixaPrincipal = (resAno || []).filter(l => !l.fundoId);
                 renderizarGraficoAnual(resAnoCaixaPrincipal, ano);
-            } else {
-                renderizarGraficoAnual(lancamentosCaixaPrincipal, 'Geral');
-            }
+            } else { renderizarGraficoAnual(lancamentosCaixaPrincipal, 'Geral'); }
             return lancamentosFiltrados;
         } catch (error) { return []; }
     };
@@ -671,7 +567,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 8. MODAIS E GERAÇÃO DE RECIBOS (COM BASE64 NATIVO)
+    // 8. MODAIS E GERAÇÃO DE RECIBOS (COM BASE64)
     // ==========================================
     const preencherRecibo = async (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
@@ -682,8 +578,7 @@ var iniciarFinanceiro = () => {
 
         if (!tenantInfo) {
             try {
-                const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
-                tenantInfo = resConfig?.identidade || null;
+                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
             } catch (e) {
                 console.error("Erro ao buscar info da igreja");
             }
@@ -695,7 +590,7 @@ var iniciarFinanceiro = () => {
             const logoImg = document.getElementById('recibo-logo-igreja');
             const logoIcon = document.getElementById('recibo-logo-icone');
 
-            if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.nomeIgreja || 'Nossa Igreja';
+            if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.name || 'Nossa Igreja';
             
             if (elCnpjIgreja) {
                 if (tenantInfo.cnpj) {
@@ -706,10 +601,10 @@ var iniciarFinanceiro = () => {
                 }
             }
             
-            if (tenantInfo.logoIgrejaUrl) {
+            if (tenantInfo.config && tenantInfo.config.logoUrl) {
                 if(logoImg) { 
                     logoImg.crossOrigin = "anonymous";
-                    logoImg.src = await getBase64FromUrl(tenantInfo.logoIgrejaUrl); 
+                    logoImg.src = await getBase64FromUrl(tenantInfo.config.logoUrl); 
                     logoImg.style.display = 'block'; 
                 }
                 if(logoIcon) logoIcon.style.display = 'none';
@@ -972,8 +867,7 @@ var iniciarFinanceiro = () => {
     const imprimirRelatorioAnualMembro = async (membro, contribuicoes) => {
         if (!tenantInfo) {
             try {
-                const resConfig = await window.api.get('/api/configs');
-                tenantInfo = resConfig?.identidade || null;
+                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
             } catch (e) {}
         }
 
@@ -1017,7 +911,7 @@ var iniciarFinanceiro = () => {
 
         const finalY = doc.lastAutoTable.finalY + 25;
         doc.text('___________________________________', 105, finalY + 10, { align: 'center' });
-        doc.text('Tesouraria - ' + (tenantInfo ? tenantInfo.nomeIgreja : 'Nossa Igreja'), 105, finalY + 17, { align: 'center' });
+        doc.text('Tesouraria - ' + (tenantInfo ? tenantInfo.name : 'Nossa Igreja'), 105, finalY + 17, { align: 'center' });
         doc.save(`Relatorio_Contribuicoes_${membro.nome.split(' ')[0]}_${anoCorrente}.pdf`);
     };
 
@@ -1092,9 +986,12 @@ var iniciarFinanceiro = () => {
     const carregarDados = async () => {
         try {
             try {
+                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
+            } catch (err) {}
+
+            try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-                tenantInfo = resConfig?.identidade || null; 
             } catch (err) { categoriasConfig = { entradas: [], saidas: [] }; }
 
             try {
