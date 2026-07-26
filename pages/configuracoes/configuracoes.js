@@ -1,10 +1,8 @@
 var iniciarConfiguracoes = () => {
-    // --- ESTADO DA APLICAÇÃO ---
     let configs = {};
     let cropper;
     let croppedLogoBlob = null;
 
-    // --- SELETORES DO DOM ---
     const navLinks = document.querySelectorAll('.config-nav-link');
     const sections = document.querySelectorAll('.config-section');
     const corPrincipalInput = document.getElementById('cor-principal');
@@ -38,7 +36,6 @@ var iniciarConfiguracoes = () => {
     const imageToCrop = document.getElementById('image-to-crop');
     const btnConfirmarCorte = document.getElementById('btn-confirmar-corte');
 
-    // --- LÓGICA DE NAVEGAÇÃO ---
     const handleNavigation = () => {
         const hash = window.location.hash || '#perfil';
         navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === hash));
@@ -177,34 +174,29 @@ var iniciarConfiguracoes = () => {
             const email = emailInput ? emailInput.value.trim() : '';
 
             try {
+                // 1. Faz o upload da Logo primeiro se houver
                 if (croppedLogoBlob) {
                     const formData = new FormData();
                     formData.append('nomeIgreja', nomeIgreja);
-                    formData.append('cnpj', cnpj);
-                    formData.append('telefone', telefone);
-                    formData.append('endereco', endereco);
-                    formData.append('email', email);
                     formData.append('logo', croppedLogoBlob, 'logo.png');
 
                     try {
                         await window.api.post('/api/configs/upload-logo', formData);
                     } catch (err) {
                         const headers = getAuthHeader();
-                        await fetch('/api/configs/upload-logo', {
-                            method: 'POST',
-                            body: formData,
-                            headers: headers
-                        });
+                        await fetch('/api/configs/upload-logo', { method: 'POST', body: formData, headers: headers });
                     }
-                } else {
-                    await window.api.patch('/api/configs', {
-                        'identidade.nomeIgreja': nomeIgreja,
-                        'identidade.cnpj': cnpj,
-                        'identidade.telefone': telefone,
-                        'identidade.endereco': endereco,
-                        'identidade.email': email
-                    });
-                }
+                } 
+
+                // 2. Agora força a atualização de TODOS os campos de texto no banco de dados
+                await window.api.patch('/api/configs', {
+                    'identidade.nomeIgreja': nomeIgreja,
+                    'identidade.cnpj': cnpj,
+                    'identidade.telefone': telefone,
+                    'identidade.endereco': endereco,
+                    'identidade.email': email
+                });
+
                 croppedLogoBlob = null;
                 await carregarConfigs();
                 window.dispatchEvent(new CustomEvent('churchIdentityUpdated', { detail: { ...configs.identidade } }));
@@ -424,7 +416,7 @@ var iniciarConfiguracoes = () => {
     // --- INICIALIZAÇÃO ---
     const carregarConfigs = async () => {
         try {
-            const serverConfigs = await window.api.get('/api/configs') || {};
+            const serverConfigs = await window.api.get(`/api/configs?_t=${Date.now()}`) || {};
             configs = serverConfigs;
             carregarAparencia();
             carregarIdentidade();
