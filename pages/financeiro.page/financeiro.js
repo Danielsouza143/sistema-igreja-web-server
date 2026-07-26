@@ -7,7 +7,7 @@ var iniciarFinanceiro = () => {
     let todosMembros = [];
     let fundosAtivos = [];
     let categoriasConfig = { entradas: [], saidas: [] };
-    let tenantInfo = null; // Memória para os dados da Igreja (Nome, CNPJ, Logo)
+    let tenantInfo = null; // AQUI FICAM OS DADOS DA IGREJA (NOME, LOGO, CNPJ)
 
     let lancamentoEmEdicaoId = null;
     let fundoEmEdicaoId = null;
@@ -23,7 +23,7 @@ var iniciarFinanceiro = () => {
     let graficoFundoAtual = null;
 
     // ==========================================
-    // FECHAMENTO DE MENUS GLOBAIS (PREVENÇÃO DE DUPLICAÇÃO HTMX)
+    // FECHAMENTO DE MENUS GLOBAIS
     // ==========================================
     const fecharMenusGlobais = (e) => {
         const cbContainer = document.getElementById('categorias-checkboxes');
@@ -56,7 +56,7 @@ var iniciarFinanceiro = () => {
     window.addEventListener('click', fecharMenusGlobais);
 
     // ==========================================
-    // 2. SELETORES DO DOM E BOTÕES (DECLARADOS APENAS UMA VEZ)
+    // 2. SELETORES DO DOM E BOTÕES
     // ==========================================
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
@@ -362,7 +362,6 @@ var iniciarFinanceiro = () => {
             renderizarFundos(fundosAtivos);
             popularSelectFundos(); 
         } catch (error) {
-            console.error('Erro ao carregar fundos:', error);
             fundosAtivos = [];
             renderizarFundos(fundosAtivos);
         }
@@ -490,7 +489,6 @@ var iniciarFinanceiro = () => {
                 
                 if(modalFundo) modalFundo.style.display = 'none';
                 carregarFundos();
-                alert('Fundo salvo com sucesso!');
             } catch(error) {
                 alert('Erro ao salvar fundo.');
             }
@@ -656,24 +654,16 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 8. MODAIS, GERAÇÃO DE PDF E EVENTOS
+    // 8. MODAIS E GERAÇÃO DE RECIBOS
     // ==========================================
     
-    // --> Função Responsável por Buscar os Dados da Igreja e Preencher o Recibo
+    // AQUI: Preenche o Recibo com os dados do Tenant salvo nas Configurações Globais
     const preencherRecibo = async (lancamento, membro) => {
-        document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Não Identificado';
+        document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
         document.getElementById('recibo-valor').textContent = formatarMoeda(lancamento.valor);
         document.getElementById('recibo-descricao').textContent = lancamento.descricao;
         document.getElementById('recibo-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         document.getElementById('recibo-categoria').textContent = lancamento.categoria;
-
-        if (!tenantInfo) {
-            try {
-                tenantInfo = await window.api.get('/api/tenants/current');
-            } catch (e) {
-                console.error("Erro ao buscar info da igreja");
-            }
-        }
 
         if (tenantInfo) {
             const elNomeIgreja = document.getElementById('recibo-nome-igreja');
@@ -681,12 +671,13 @@ var iniciarFinanceiro = () => {
             const logoImg = document.getElementById('recibo-logo-igreja');
             const logoIcon = document.getElementById('recibo-logo-icone');
 
-            if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.name || 'Nossa Igreja';
+            if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.nomeIgreja || 'Nossa Igreja';
             if (elCnpjIgreja) elCnpjIgreja.textContent = tenantInfo.cnpj ? `CNPJ: ${tenantInfo.cnpj}` : '';
             
-            if (tenantInfo.config && tenantInfo.config.logoUrl) {
+            if (tenantInfo.logoIgrejaUrl) {
                 if(logoImg) { 
-                    logoImg.src = tenantInfo.config.logoUrl; 
+                    logoImg.crossOrigin = "anonymous";
+                    logoImg.src = tenantInfo.logoIgrejaUrl; 
                     logoImg.style.display = 'block'; 
                 }
                 if(logoIcon) logoIcon.style.display = 'none';
@@ -704,10 +695,8 @@ var iniciarFinanceiro = () => {
         const { jsPDF } = window.jspdf;
         const reciboElement = document.getElementById('recibo-template');
 
-        // Delay rápido para dar tempo de carregar a imagem da logo externa
         setTimeout(async () => {
-            // useCORS garante que a imagem vinda de fora (AWS S3) seja impressa no PDF
-            const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true });
+            const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true, allowTaint: true });
             const imgData = canvas.toDataURL('image/png');
 
             const pdf = new jsPDF('p', 'mm', 'a4');
@@ -716,7 +705,7 @@ var iniciarFinanceiro = () => {
             
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`Recibo_${lancamento.categoria}_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.pdf`);
-        }, 500);
+        }, 800);
     };
 
     const compartilharRecibo = async (lancamento) => {
@@ -727,7 +716,7 @@ var iniciarFinanceiro = () => {
 
         setTimeout(async () => {
             try {
-                const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true });
+                const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true, allowTaint: true });
                 canvas.toBlob(async (blob) => {
                     const fileName = `Recibo_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.png`;
                     const file = new File([blob], fileName, { type: 'image/png' });
@@ -748,9 +737,9 @@ var iniciarFinanceiro = () => {
                     }
                 }, 'image/png');
             } catch (error) {
-                console.error('Erro ao gerar ou compartilhar recibo:', error);
+                console.error('Erro ao compartilhar:', error);
             }
-        }, 500);
+        }, 800);
     };
 
     const abrirModalDetalhes = (lancamento) => {
@@ -777,13 +766,12 @@ var iniciarFinanceiro = () => {
                 previewContainer.innerHTML = `<img src="${lancamento.comprovanteUrl}" alt="Comprovante">`;
             }
         } else {
-            previewContainer.innerHTML = '<span>Nenhum comprovante carregado</span>';
+            previewContainer.innerHTML = '<span>Nenhum comprovante anexado</span>';
         }
 
         const btnImprimir = document.getElementById('detalhes-btn-imprimir');
         const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
         
-        // MOSTRA OS BOTÕES PARA TODAS AS ENTRADAS E RECEITAS
         if (lancamento.tipo === 'entrada') {
             if(btnImprimir) {
                 btnImprimir.classList.remove('hidden');
@@ -861,15 +849,6 @@ var iniciarFinanceiro = () => {
         }
         toggleMembroSearch();
         if(modalLancamento) modalLancamento.style.display = 'flex';
-    };
-
-    const atualizarCategoriasModal = (tipo, categoriaSelecionada = null) => {
-        if(!selectCategoria) return;
-        const categorias = (tipo === 'entrada' ? categoriasConfig?.entradas : categoriasConfig?.saidas) || [];
-        selectCategoria.innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-        if (categoriaSelecionada) {
-            selectCategoria.value = categoriaSelecionada;
-        }
     };
 
     const salvarEdicaoEmLinha = async (evento) => {
@@ -995,7 +974,7 @@ var iniciarFinanceiro = () => {
 
         const finalY = doc.lastAutoTable.finalY + 25;
         doc.text('___________________________________', 105, finalY + 10, { align: 'center' });
-        doc.text('Tesouraria - ' + (tenantInfo ? tenantInfo.name : 'Nossa Igreja'), 105, finalY + 17, { align: 'center' });
+        doc.text('Tesouraria - ' + (tenantInfo ? tenantInfo.nomeIgreja : 'Nossa Igreja'), 105, finalY + 17, { align: 'center' });
         doc.save(`Relatorio_Contribuicoes_${membro.nome.split(' ')[0]}_${anoCorrente}.pdf`);
     };
 
@@ -1069,19 +1048,17 @@ var iniciarFinanceiro = () => {
     // ==========================================
     const carregarDados = async () => {
         try {
+            // Puxando a Identidade a partir do arquivo de configurações recém editado
             try {
-                tenantInfo = await window.api.get('/api/tenants/current');
-            } catch(e) {}
+                const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
+                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
+                tenantInfo = resConfig?.identidade || null; // <--- PUXA A IDENTIDADE SALVA
+            } catch (err) { categoriasConfig = { entradas: [], saidas: [] }; }
 
             try {
                 const resMembros = await window.api.get(`/api/membros?_t=${Date.now()}`);
                 todosMembros = Array.isArray(resMembros) ? resMembros : [];
             } catch (err) { todosMembros = []; }
-
-            try {
-                const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
-                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-            } catch (err) { categoriasConfig = { entradas: [], saidas: [] }; }
 
             try {
                 const resLancamentosTodos = await window.api.get(`/api/financeiro/lancamentos?ano=todos&_t=${Date.now()}`);
@@ -1241,6 +1218,7 @@ var iniciarFinanceiro = () => {
         };
     }
 
+    // BOTÃO DIREITO: Apenas para Entradas/Receitas
     if(btnImprimirCtx) {
         btnImprimirCtx.onclick = () => {
             if (!rightClickedRowId) return;
