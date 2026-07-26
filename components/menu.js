@@ -157,7 +157,6 @@ var iniciarMenu = () => {
         if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
     }
 
-    // --- START ---
     ChurchIdentity.init();
     aplicarAparencia();
     if (window.updateUserDisplay) window.updateUserDisplay();
@@ -168,17 +167,15 @@ var iniciarMenu = () => {
             document.documentElement.style.setProperty('--cor-primaria', e.detail.aparencia.corPrimaria);
         }
     });
-
-    if (!document.querySelector('script[src="/components/notifications.js"]')) {
-        const notificationsScript = document.createElement('script');
-        notificationsScript.src = '/components/notifications.js';
-        document.body.appendChild(notificationsScript);
-    }
 }
 
 document.addEventListener('DOMContentLoaded', iniciarMenu);
 document.body.addEventListener('htmx:afterSwap', iniciarMenu);
 if (document.readyState !== 'loading') iniciarMenu();
 
-// === A LINHA CRUCIAL PARA O GLOBAL LOADER VOLTAR A FUNCIONAR ===
-window.initMenu = iniciarMenu;
+// Expondo de forma correta para o Global Loader achar
+window.initMenu = function() {
+    if (typeof iniciarMenu === 'function') {
+        iniciarMenu();
+    }
+};
