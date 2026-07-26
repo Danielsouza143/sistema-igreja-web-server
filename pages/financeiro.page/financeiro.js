@@ -130,22 +130,19 @@ var iniciarFinanceiro = () => {
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
-    // --- A MÁGICA DO PROXY PARA BURLAR O BLOQUEIO DE IMAGEM DA AMAZON S3 ---
+    // Nova conversão para Base64 acessando a imagem diretamente com regras de CORS nativas
     const getBase64FromUrl = async (url) => {
         try {
-            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-            const data = await fetch(proxyUrl);
+            const data = await fetch(url + '?v=' + new Date().getTime(), { mode: 'cors' });
             const blob = await data.blob();
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(blob);
-                reader.onloadend = () => {
-                    resolve(reader.result);
-                };
+                reader.onloadend = () => resolve(reader.result);
             });
         } catch (e) {
-            console.error('Falha ao usar o Proxy CORS. A logo não será carregada no PDF.', e);
-            return url; 
+            console.error('Falha ao converter a imagem do S3:', e);
+            return url; // Retorna a URL normal em último caso
         }
     };
 
@@ -674,7 +671,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 8. MODAIS E GERAÇÃO DE RECIBOS (COM BASE64 BYPASS S3)
+    // 8. MODAIS E GERAÇÃO DE RECIBOS (COM BASE64 NATIVO)
     // ==========================================
     const preencherRecibo = async (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
@@ -687,7 +684,9 @@ var iniciarFinanceiro = () => {
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 tenantInfo = resConfig?.identidade || null;
-            } catch (e) {}
+            } catch (e) {
+                console.error("Erro ao buscar info da igreja");
+            }
         }
 
         if (tenantInfo) {
@@ -805,7 +804,6 @@ var iniciarFinanceiro = () => {
         const btnImprimir = document.getElementById('detalhes-btn-imprimir');
         const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
         
-        // MOSTRA OS BOTÕES DE RECIBO SE FOR ENTRADA, NÃO IMPORTA SE TEM MEMBRO
         if (lancamento.tipo === 'entrada') {
             if(btnImprimir) {
                 btnImprimir.classList.remove('hidden');
