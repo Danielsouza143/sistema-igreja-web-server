@@ -130,6 +130,24 @@ var iniciarFinanceiro = () => {
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
+    // Helper para converter imagem em Base64 (Bypass de CORS Canvas)
+    const getBase64FromUrl = async (url) => {
+        try {
+            const data = await fetch(url + '?v=' + new Date().getTime(), { mode: 'cors' });
+            const blob = await data.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => {
+                    resolve(reader.result);
+                };
+            });
+        } catch (e) {
+            console.error('Erro de CORS ao converter imagem. O AWS S3 bloqueou a requisição:', e);
+            return url; // Retorna a URL normal se falhar, na esperança de o html2canvas conseguir
+        }
+    };
+
     if(inputValorLancamento) inputValorLancamento.oninput = aplicarMascaraMoeda;
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
 
@@ -655,11 +673,8 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 8. MODAIS E GERAÇÃO DE RECIBOS
+    // 8. MODAIS E GERAÇÃO DE RECIBOS (COM BASE64 BYPASS S3)
     // ==========================================
-    
-    // AQUI: Preenche o Recibo com os dados da Igreja. 
-    // CORREÇÃO: Busca os dados em /api/configs se a variável tenantInfo estiver vazia
     const preencherRecibo = async (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
         document.getElementById('recibo-valor').textContent = formatarMoeda(lancamento.valor);
@@ -667,10 +682,9 @@ var iniciarFinanceiro = () => {
         document.getElementById('recibo-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         document.getElementById('recibo-categoria').textContent = lancamento.categoria;
 
-        // Se os dados não estiverem na memória ainda, busca no backend da rota certa
         if (!tenantInfo) {
             try {
-                const resConfig = await window.api.get('/api/configs');
+                const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 tenantInfo = resConfig?.identidade || null;
             } catch (e) {
                 console.error("Erro ao buscar info da igreja");
@@ -684,12 +698,22 @@ var iniciarFinanceiro = () => {
             const logoIcon = document.getElementById('recibo-logo-icone');
 
             if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.nomeIgreja || 'Nossa Igreja';
-            if (elCnpjIgreja) elCnpjIgreja.textContent = tenantInfo.cnpj ? `CNPJ: ${tenantInfo.cnpj}` : '';
+            
+            // GARANTE EXIBIÇÃO DO CNPJ SE TIVER DADO
+            if (elCnpjIgreja) {
+                if (tenantInfo.cnpj) {
+                    elCnpjIgreja.textContent = `CNPJ / CPF: ${tenantInfo.cnpj}`;
+                    elCnpjIgreja.style.display = 'block';
+                } else {
+                    elCnpjIgreja.style.display = 'none';
+                }
+            }
             
             if (tenantInfo.logoIgrejaUrl) {
                 if(logoImg) { 
                     logoImg.crossOrigin = "anonymous";
-                    logoImg.src = tenantInfo.logoIgrejaUrl; 
+                    // BYPASS DO CORS DA AWS USANDO BASE64 NATIVO DO JS
+                    logoImg.src = await getBase64FromUrl(tenantInfo.logoIgrejaUrl); 
                     logoImg.style.display = 'block'; 
                 }
                 if(logoIcon) logoIcon.style.display = 'none';
@@ -784,7 +808,7 @@ var iniciarFinanceiro = () => {
         const btnImprimir = document.getElementById('detalhes-btn-imprimir');
         const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
         
-        // CORREÇÃO: MOSTRA OS BOTÕES PARA TODAS AS ENTRADAS INDEPENDENTE DE SER MEMBRO
+        // MOSTRA OS BOTÕES DE RECIBO SE FOR ENTRADA, NÃO IMPORTA SE TEM MEMBRO
         if (lancamento.tipo === 'entrada') {
             if(btnImprimir) {
                 btnImprimir.classList.remove('hidden');
@@ -1076,7 +1100,7 @@ var iniciarFinanceiro = () => {
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-                tenantInfo = resConfig?.identidade || null; // <--- PUXA A IDENTIDADE SALVA DO BANCO DE DADOS
+                tenantInfo = resConfig?.identidade || null; 
             } catch (err) { categoriasConfig = { entradas: [], saidas: [] }; }
 
             try {
@@ -1242,7 +1266,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // CORREÇÃO: O Botão Direito agora puxa o Recibo Personalizado diretamente
     if(btnImprimirCtx) {
         btnImprimirCtx.onclick = () => {
             if (!rightClickedRowId) return;
@@ -1310,7 +1333,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // Modal Pesquisa de Membros
     if(buscaMembroModalInput) {
         buscaMembroModalInput.oninput = () => {
             const termo = buscaMembroModalInput.value.toLowerCase();
@@ -1411,6 +1433,7 @@ var iniciarFinanceiro = () => {
                 columnStyles: { 4: { halign: 'right' } }
             });
 
+            // Somar apenas o que NÃO é Fundo
             const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const balanco = receitas - despesas;
