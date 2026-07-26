@@ -1,4 +1,3 @@
-// Função de logout robusta para garantir a limpeza completa do estado
 if (typeof handleLogout === 'undefined') {
     window.handleLogout = () => {
         localStorage.clear();
@@ -8,13 +7,16 @@ if (typeof handleLogout === 'undefined') {
 }
 
 var iniciarMenu = () => {
-    // --- LÓGICA DE IDENTIDADE DA IGREJA ---
     class ChurchIdentity {
         static async loadAndApplyIdentity() {
             try {
-                const configs = await window.api.get('/api/configs');
-                if (!configs || !configs.identidade) throw new Error('Identidade não encontrada');
-                const { nomeIgreja, logoIgrejaUrl } = configs.identidade;
+                // Busca as configurações e pega a raiz (onde estão o name e config.logoUrl)
+                const tenant = await window.api.get('/api/tenants/current');
+                if (!tenant) throw new Error('Identidade não encontrada');
+                
+                const nomeIgreja = tenant.name;
+                const logoIgrejaUrl = tenant.config ? tenant.config.logoUrl : null;
+                
                 this.updateMenuDisplay(nomeIgreja, logoIgrejaUrl);
                 localStorage.setItem('churchIdentity', JSON.stringify({ nomeIgreja, logoIgrejaUrl }));
             } catch (error) {
@@ -70,7 +72,6 @@ var iniciarMenu = () => {
         }
     }
 
-    // --- APLICAÇÃO DE TEMAS E CORES ---
     let userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
     const aplicarAparencia = async () => {
@@ -82,7 +83,6 @@ var iniciarMenu = () => {
         } catch (error) {}
     };
 
-    // --- EVENT DELEGATION (Previne duplicação do HTMX) ---
     document.removeEventListener('click', window.menuClickHandler);
     window.menuClickHandler = (e) => {
         if (e.target.closest('#hamburger-btn-desktop') || e.target.closest('#hamburger-btn-mobile')) {
@@ -173,7 +173,6 @@ document.addEventListener('DOMContentLoaded', iniciarMenu);
 document.body.addEventListener('htmx:afterSwap', iniciarMenu);
 if (document.readyState !== 'loading') iniciarMenu();
 
-// Expondo de forma correta para o Global Loader achar
 window.initMenu = function() {
     if (typeof iniciarMenu === 'function') {
         iniciarMenu();
