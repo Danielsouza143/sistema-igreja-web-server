@@ -82,10 +82,9 @@ var iniciarMenu = () => {
         } catch (error) {}
     };
 
-    // --- EVENT DELEGATION: Resolve o erro de "elementos não encontrados" ---
+    // --- EVENT DELEGATION (Previne duplicação do HTMX) ---
     document.removeEventListener('click', window.menuClickHandler);
     window.menuClickHandler = (e) => {
-        // Abrir Menu Lateral (Hamburger)
         if (e.target.closest('#hamburger-btn-desktop') || e.target.closest('#hamburger-btn-mobile')) {
             const sidebar = document.getElementById('sidebar-menu');
             const overlay = document.getElementById('sidebar-overlay');
@@ -94,7 +93,6 @@ var iniciarMenu = () => {
                 overlay.classList.toggle('active');
             }
         }
-        // Fechar Menu Lateral
         else if (e.target.closest('#sidebar-close-btn') || e.target.closest('#sidebar-overlay')) {
             const sidebar = document.getElementById('sidebar-menu');
             const overlay = document.getElementById('sidebar-overlay');
@@ -104,7 +102,6 @@ var iniciarMenu = () => {
             }
         }
 
-        // Abrir Modal de Conta do Usuário
         if (e.target.closest('#conta-area-trigger')) {
             e.stopPropagation();
             const modalConta = document.getElementById('modal-conta-usuario');
@@ -125,13 +122,11 @@ var iniciarMenu = () => {
                 modalConta.style.display = 'flex';
             }
         } 
-        // Fechar Modal de Conta
         else if (e.target.closest('.modal-overlay') || e.target.closest('[data-close-modal="modal-conta-usuario"]')) {
             const modalConta = document.getElementById('modal-conta-usuario');
             if (modalConta) modalConta.style.display = 'none';
         }
 
-        // Botão Logout
         if (e.target.closest('#btn-modal-logout')) {
             e.preventDefault();
             handleLogout();
@@ -139,7 +134,6 @@ var iniciarMenu = () => {
     };
     document.addEventListener('click', window.menuClickHandler);
 
-    // Destaque de aba atual
     const currentPage = window.location.pathname;
     const allLinks = document.querySelectorAll('.sub-menu-link, .sidebar-links a');
     allLinks.forEach(link => {
@@ -185,3 +179,6 @@ var iniciarMenu = () => {
 document.addEventListener('DOMContentLoaded', iniciarMenu);
 document.body.addEventListener('htmx:afterSwap', iniciarMenu);
 if (document.readyState !== 'loading') iniciarMenu();
+
+// === A LINHA CRUCIAL PARA O GLOBAL LOADER VOLTAR A FUNCIONAR ===
+window.initMenu = iniciarMenu;
