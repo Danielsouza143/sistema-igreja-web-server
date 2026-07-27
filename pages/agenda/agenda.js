@@ -64,7 +64,7 @@ const iniciarAgenda = async () => {
         }
     }
 
-    // --- CALENDÁRIO ---
+    // --- CALENDÁRIO E MENU DE CONTEXTO ---
     function inicializarCalendario() {
         calendar = new FullCalendar.Calendar(calendarioEl, {
             locale: 'pt-br', // Força português
@@ -82,15 +82,19 @@ const iniciarAgenda = async () => {
             eventClick: (info) => abrirDetalhesEvento(info.event.id),
             dateClick: (info) => abrirModalParaCriacao(info.dateStr),
             
-            // Adiciona listener do botão direito em cada evento renderezado
+            // Injeta o menu de botão direito em cada evento
             eventDidMount: function(info) {
                 info.el.addEventListener('contextmenu', (e) => {
                     e.preventDefault(); // Impede o menu do navegador
                     ctxEventId = info.event.id;
                     ctxEventDate = info.event.start;
-                    ctxMenu.style.display = 'block';
-                    ctxMenu.style.left = e.pageX + 'px';
-                    ctxMenu.style.top = e.pageY + 'px';
+                    
+                    // Mostra o menu na posição do mouse
+                    if(ctxMenu) {
+                        ctxMenu.style.display = 'block';
+                        ctxMenu.style.left = `${e.pageX}px`;
+                        ctxMenu.style.top = `${e.pageY}px`;
+                    }
                 });
             },
             
@@ -133,30 +137,52 @@ const iniciarAgenda = async () => {
                 id: evento._id,
                 title: evento.nome,
                 start: evento.dataInicio,
-                // O SEGREDO ESTÁ AQUI: Ao omitir o 'end', o FullCalendar é forçado a desenhar o evento apenas no dia do Início, nunca esticando barras.
+                // O SEGREDO ESTÁ AQUI: Não passamos o "end". Assim o evento NUNCA estica a barra.
                 backgroundColor: corEvento,
                 textColor: corTexto,
-                allDay: false, // Garante comportamento de evento com hora
+                allDay: false, 
                 extendedProps: evento
             }
         });
     }
 
-    // --- MENU DE CONTEXTO ---
     function configurarContexto() {
-        // Fechar ao clicar em qualquer lugar
+        // Fechar ao clicar em qualquer lugar da tela
         document.addEventListener('click', () => {
             if (ctxMenu) ctxMenu.style.display = 'none';
         });
 
-        // Ações usando Optional Chaining (?.) para não quebrar se o HTML não tiver carregado
-        document.getElementById('ctx-ver-detalhes')?.addEventListener('click', () => abrirDetalhesEvento(ctxEventId));
-        document.getElementById('ctx-ver-dia')?.addEventListener('click', () => {
-            if (ctxEventDate) calendar.changeView('timeGridDay', ctxEventDate);
+        // Fechar se clicar com o botão direito em um lugar vazio
+        document.addEventListener('contextmenu', (e) => {
+            if (!e.target.closest('.fc-event')) {
+                if (ctxMenu) ctxMenu.style.display = 'none';
+            }
         });
-        document.getElementById('ctx-editar')?.addEventListener('click', () => abrirModalParaEdicao(ctxEventId));
-        document.getElementById('ctx-exportar')?.addEventListener('click', () => exportarEvento(ctxEventId));
-        document.getElementById('ctx-excluir')?.addEventListener('click', () => excluirEvento(ctxEventId));
+
+        // Ações do Menu de Contexto (Uso de '?. ' evita quebras caso o ID mude no HTML)
+        document.getElementById('ctx-ver-detalhes')?.addEventListener('click', () => {
+            if(ctxEventId) abrirDetalhesEvento(ctxEventId);
+        });
+        
+        document.getElementById('ctx-ver-dia')?.addEventListener('click', () => {
+            if (ctxEventDate) {
+                calendar.changeView('timeGridDay', ctxEventDate);
+                // Rola para o topo para focar no calendário
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        
+        document.getElementById('ctx-editar')?.addEventListener('click', () => {
+            if(ctxEventId) abrirModalParaEdicao(ctxEventId);
+        });
+        
+        document.getElementById('ctx-exportar')?.addEventListener('click', () => {
+            if(ctxEventId) exportarEvento(ctxEventId);
+        });
+        
+        document.getElementById('ctx-excluir')?.addEventListener('click', () => {
+            if(ctxEventId) excluirEvento(ctxEventId);
+        });
     }
 
     // --- FORMULÁRIO E SALVAMENTO ---
@@ -203,13 +229,6 @@ const iniciarAgenda = async () => {
             
             if (dataFimBase <= dataInicioBase) {
                 return alert("A data de fim deve ser posterior à data de início.");
-            }
-            
-            // Alerta de segurança contra eventos esticados por meses
-            const horasDuracao = (dataFimBase - dataInicioBase) / (1000 * 60 * 60);
-            if (horasDuracao > 24) {
-                const confirmar = confirm(`Atenção! Este evento está programado para durar ${Math.round(horasDuracao)} horas seguidas. As datas de início e fim estão corretas?`);
-                if (!confirmar) return;
             }
 
             const dataInicioStr = dataInicioBase.toISOString();
@@ -293,6 +312,24 @@ const iniciarAgenda = async () => {
         });
     }
 
+    // --- FUNÇÃO AUXILIAR DE DATA PARA LISTA ---
+    function formatarDataLista(dataISO) {
+        if (!dataISO) return '';
+        const data = new Date(dataISO);
+        
+        // Pega "18/12/2026"
+        const dataStr = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        
+        // Pega "sexta-feira" e transforma em "Sexta-feira"
+        let diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'long' });
+        diaSemana = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+        
+        // Pega "19:00"
+        const horaStr = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        return `${dataStr}, ${diaSemana} - ${horaStr}`;
+    }
+
     // --- LISTA DE EVENTOS ---
     function renderizarLista() {
         listaEventosContainer.innerHTML = '';
@@ -322,12 +359,13 @@ const iniciarAgenda = async () => {
                 ${imgHTML}
                 <div class="evento-card-body">
                     <h4>${evento.nome} <span class="badge ${tipo.toLowerCase()}" style="font-size: 0.7rem; float:right;">${tipo}</span></h4>
-                    <p><i class='bx bx-calendar'></i> ${new Date(evento.dataInicio).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})}</p>
+                    <p><i class='bx bx-calendar'></i> ${formatarDataLista(evento.dataInicio)}</p>
                     <p><i class='bx bx-map'></i> ${evento.local}</p>
                 </div>
             `;
             
             card.addEventListener('click', (e) => {
+                // Abre o modal de detalhes se não tiver clicado nos botões da foto
                 if(!e.target.closest('.btn-acao-sm')) {
                     abrirDetalhesEvento(evento._id);
                 }
@@ -423,7 +461,13 @@ const iniciarAgenda = async () => {
 
         const dataInicio = new Date(evento.dataInicio);
         const dataFim = new Date(evento.dataFim);
-        document.getElementById('detalhes-data').textContent = `${dataInicio.toLocaleDateString('pt-BR')} das ${dataInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às ${dataFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        
+        // Exibição mais bonita da data e hora
+        const diaInicio = dataInicio.toLocaleDateString('pt-BR');
+        const horaInicio = dataInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const horaFim = dataFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        document.getElementById('detalhes-data').textContent = `${diaInicio} das ${horaInicio} às ${horaFim}`;
         document.getElementById('detalhes-local').textContent = evento.local;
         
         const responsavel = todosMembros.find(m => m._id === evento.responsavelId);
@@ -449,16 +493,27 @@ const iniciarAgenda = async () => {
     }
 
     function configurarDetalhesModal() {
-        // Uso de ?. previne quebra de JS caso elemento carregue depois
-        detalhesCloseBtn?.addEventListener('click', () => detalhesModal.classList.remove('active'));
+        const detalhesCloseBtn = document.getElementById('detalhes-modal-close');
+        
+        detalhesCloseBtn?.addEventListener('click', () => {
+            detalhesModal.classList.remove('active');
+        });
 
         document.getElementById('btn-editar-evento')?.addEventListener('click', () => {
+            if(!currentEventId) return;
             detalhesModal.classList.remove('active');
             abrirModalParaEdicao(currentEventId);
         });
 
-        document.getElementById('btn-excluir-evento')?.addEventListener('click', () => excluirEvento(currentEventId));
-        document.getElementById('btn-exportar-ics')?.addEventListener('click', () => exportarEvento(currentEventId));
+        document.getElementById('btn-excluir-evento')?.addEventListener('click', () => {
+            if(!currentEventId) return;
+            excluirEvento(currentEventId);
+        });
+
+        document.getElementById('btn-exportar-ics')?.addEventListener('click', () => {
+            if(!currentEventId) return;
+            exportarEvento(currentEventId);
+        });
 
         const cartazImg = document.getElementById('detalhes-cartaz-img');
         const fullscreenContainer = document.getElementById('fullscreen-container');
@@ -540,7 +595,10 @@ const iniciarAgenda = async () => {
         btnNovoEvento.addEventListener('click', () => abrirModalParaCriacao());
         closeModal.addEventListener('click', () => modal.classList.remove('active'));
         window.addEventListener('click', (e) => {
+            // Fecha modal Novo/Editar se clicar fora
             if (e.target === modal) modal.classList.remove('active');
+            
+            // Fecha modal Detalhes se clicar fora
             if (e.target.matches('.modal-overlay#detalhes-evento-modal')) {
                 document.getElementById('detalhes-evento-modal').classList.remove('active');
             }
