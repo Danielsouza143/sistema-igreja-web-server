@@ -1,5 +1,5 @@
 /* =========================================================
-   ESTRUTURA GERAL DA AGENDA
+   ESTRUTURA GERAL DA AGENDA E HEADER
 ========================================================== */
 .header-pagina {
     display: flex;
@@ -12,10 +12,7 @@
 .title-page { margin: 0; font-size: 1.8rem; color: #001f5d; }
 .subtitulo-pagina { margin: 5px 0 0 0; color: #6c757d; font-size: 1rem; }
 
-.acoes-header {
-    display: flex;
-    gap: 15px;
-}
+.acoes-header { display: flex; gap: 15px; }
 
 /* =========================================================
    CUSTOMIZAÇÃO DO FULLCALENDAR (Design Premium)
@@ -28,11 +25,8 @@
     border: 1px solid #eee;
 }
 
-.fc {
-    font-family: 'Montserrat', sans-serif !important;
-}
+.fc { font-family: 'Montserrat', sans-serif !important; }
 
-/* Toolbar (Topo do Calendário) */
 .fc .fc-toolbar-title {
     font-size: 1.5rem !important;
     font-weight: 700 !important;
@@ -62,7 +56,6 @@
     color: #ffffff !important;
 }
 
-/* Grid e Células */
 .fc-theme-standard th {
     background-color: #f8f9fa;
     padding: 10px 0 !important;
@@ -73,19 +66,9 @@
     border-color: #eee !important;
 }
 
-.fc-theme-standard td, .fc-theme-standard th {
-    border-color: #eee !important;
-}
-
-.fc-daygrid-day-number {
-    font-weight: 600;
-    color: #333;
-    padding: 8px !important;
-}
-
-.fc-day-today {
-    background-color: rgba(0, 123, 255, 0.05) !important;
-}
+.fc-theme-standard td, .fc-theme-standard th { border-color: #eee !important; }
+.fc-daygrid-day-number { font-weight: 600; color: #333; padding: 8px !important; }
+.fc-day-today { background-color: rgba(0, 123, 255, 0.05) !important; }
 
 /* Eventos no Calendário (Chips Premium) */
 .fc-event {
@@ -94,7 +77,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     margin: 2px 4px !important;
     overflow: hidden;
-    cursor: context-menu; /* Indica que tem click direito */
+    cursor: context-menu; 
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -104,7 +87,6 @@
     z-index: 5;
 }
 
-/* Injeção Customizada do Evento (Thumbnails e Texto) */
 .custom-event-chip {
     display: flex;
     align-items: center;
@@ -139,11 +121,7 @@
     text-overflow: ellipsis;
 }
 
-.custom-event-time {
-    font-size: 0.7rem;
-    font-weight: 500;
-    opacity: 0.9;
-}
+.custom-event-time { font-size: 0.7rem; font-weight: 500; opacity: 0.9; }
 
 .fc-daygrid-more-link {
     font-weight: 600 !important;
@@ -185,7 +163,6 @@
     box-shadow: 0 8px 15px rgba(0,0,0,0.1);
 }
 
-/* Botões de Ação por cima da Imagem */
 .evento-card-acoes {
     position: absolute;
     top: 10px;
@@ -211,15 +188,8 @@
     transition: all 0.2s;
 }
 
-.evento-card-acoes .btn-acao-sm:hover {
-    background: #0033a0;
-    color: white;
-    transform: scale(1.1);
-}
-
-.evento-card-acoes .btn-acao-sm.excluir:hover {
-    background: #dc3545;
-}
+.evento-card-acoes .btn-acao-sm:hover { background: #0033a0; color: white; transform: scale(1.1); }
+.evento-card-acoes .btn-acao-sm.excluir:hover { background: #dc3545; }
 
 .evento-card-cartaz {
     width: 100%;
@@ -229,33 +199,13 @@
     border-bottom: 1px solid #eee;
 }
 
-.evento-card-body {
-    padding: 20px;
-    flex-grow: 1;
-}
-
-.evento-card-body h4 {
-    margin: 0 0 15px 0;
-    font-size: 1.15rem;
-    color: #001f5d;
-}
-
-.evento-card-body p {
-    margin: 0 0 8px 0;
-    font-size: 0.9rem;
-    color: #555;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.evento-card-body p i {
-    color: #007bff;
-    font-size: 1.1rem;
-}
+.evento-card-body { padding: 20px; flex-grow: 1; }
+.evento-card-body h4 { margin: 0 0 15px 0; font-size: 1.15rem; color: #001f5d; }
+.evento-card-body p { margin: 0 0 8px 0; font-size: 0.9rem; color: #555; display: flex; align-items: center; gap: 8px; }
+.evento-card-body p i { color: #007bff; font-size: 1.1rem; }
 
 /* =========================================================
-   NOVO MODAL DE DETALHES (Fundo Inteligente)
+   NOVO MODAL DE DETALHES (Fundo Inteligente e Layout Limpo)
 ========================================================== */
 .modal-detalhes-premium {
     max-width: 900px !important;
@@ -284,11 +234,7 @@
     z-index: 10;
     transition: all 0.2s;
 }
-
-.modal-close-flutuante:hover {
-    background: #ff4d4d;
-    color: white;
-}
+.modal-close-flutuante:hover { background: #ff4d4d; color: white; }
 
 .detalhes-layout {
     display: flex;
@@ -300,24 +246,15 @@
 /* Lado do Cartaz e Fundo Branco Dinâmico */
 .detalhes-imagem-lateral {
     flex: 0 0 45%;
-    background-color: #111; /* Padrão Preto */
+    background-color: #111; 
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background-color 0.3s;
 }
-
-.detalhes-imagem-lateral.fundo-branco {
-    background-color: #f8f9fa; /* Fundo claro se não tiver foto */
-}
-
-.detalhes-imagem-lateral img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* Não corta a foto */
-    cursor: zoom-in;
-}
+.detalhes-imagem-lateral.fundo-branco { background-color: #f8f9fa; }
+.detalhes-imagem-lateral img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; }
 
 .cartaz-placeholder {
     display: flex;
@@ -383,7 +320,25 @@
 .fin-valor.positiva { color: #28a745; }
 .fin-valor.negativa { color: #dc3545; }
 
-/* Responsividade do Modal */
+/* Botões do Modal */
+.detalhes-botoes-acao {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.detalhes-botoes-acao .btn {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+}
+
 @media (max-width: 900px) {
     .detalhes-layout { flex-direction: column; max-height: 90vh; }
     .detalhes-imagem-lateral { flex: 0 0 250px; }
@@ -395,8 +350,8 @@
 ========================================================== */
 .context-menu {
     position: absolute;
-    z-index: 3000;
-    width: 220px;
+    z-index: 9999;
+    width: 240px;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -405,12 +360,7 @@
     font-family: 'Montserrat', sans-serif;
 }
 
-.context-menu ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
+.context-menu ul { list-style: none; margin: 0; padding: 0; }
 .context-menu li {
     padding: 10px 20px;
     cursor: pointer;
@@ -421,15 +371,8 @@
     color: #333;
     transition: background-color 0.2s;
 }
-
-.context-menu li:hover {
-    background-color: #f1f3f5;
-}
-
-.context-menu li i {
-    font-size: 1.2rem;
-    color: #555;
-}
+.context-menu li:hover { background-color: #f1f3f5; }
+.context-menu li i { font-size: 1.2rem; color: #555; }
 
 /* =========================================================
    MODAL DO CROPPER (CORTE DE IMAGEM)
