@@ -30,79 +30,84 @@
             </div>
         </div>
 
-        <!-- O NOVO GRID QUE ALINHA TUDO PERFEITAMENTE -->
+        <!-- NOVO SISTEMA DE COLUNAS (Alinhamento de base perfeito) -->
         <section class="dashboard-grid">
             
-            <!-- Widget Eventos (Coluna Esquerda, Esticado até a base) -->
-            <div class="widget widget-eventos">
-                <h3>
-                    <span><i class='bx bx-calendar-event'></i> Próximos Eventos</span>
-                    <div class="eventos-view-toggles">
-                        <button id="btn-view-list" class="btn-view-toggle" title="Modo Lista"><i class='bx bx-list-ul'></i></button>
-                        <button id="btn-view-carousel" class="btn-view-toggle" title="Modo Cartazes"><i class='bx bx-carousel'></i></button>
-                    </div>
-                </h3>
-                <div id="widget-eventos" class="widget-conteudo scrollable-content">
-                    <p class="loading-text">Carregando eventos...</p>
-                </div>
-            </div>
-
-            <!-- Widget Carrossel de Fundos (Coluna do Meio, Topo) -->
-            <div class="widget widget-fundos">
-                <h3><i class='bx bx-target-lock'></i> Metas e Fundos</h3>
-                <div class="carrossel-container-principal">
-                    <div class="carrossel-wrapper">
-                        <button class="carrossel-btn prev" id="btn-prev-fundos"><i class='bx bx-chevron-left'></i></button>
-                        <div class="carrossel-track" id="widget-fundos-track">
-                            <p class="loading-text" style="padding: 20px;">Carregando fundos...</p>
+            <!-- COLUNA 1: Eventos -->
+            <div class="dash-col">
+                <div class="widget widget-eventos">
+                    <h3>
+                        <span><i class='bx bx-calendar-event'></i> Próximos Eventos</span>
+                        <div class="eventos-view-toggles">
+                            <button id="btn-view-list" class="btn-view-toggle" title="Modo Lista"><i class='bx bx-list-ul'></i></button>
+                            <button id="btn-view-carousel" class="btn-view-toggle" title="Modo Cartazes"><i class='bx bx-carousel'></i></button>
                         </div>
-                        <button class="carrossel-btn next" id="btn-next-fundos"><i class='bx bx-chevron-right'></i></button>
+                    </h3>
+                    <div id="widget-eventos" class="widget-conteudo scrollable-content">
+                        <p class="loading-text">Carregando eventos...</p>
                     </div>
-                    <div class="carrossel-indicators" id="carrossel-pontinhos-fundos"></div>
                 </div>
             </div>
 
-            <!-- Widget Financeiro (Coluna Direita, Topo) -->
-            <div class="widget widget-financeiro">
-                <h3>
-                    <span><i class='bx bx-line-chart'></i> Resumo Financeiro</span>
-                    <button id="btn-toggle-financeiro" class="btn-toggle-eye" title="Mostrar/Ocultar Valores">
-                        <i class='bx bx-show'></i>
-                    </button>
-                </h3>
-                <div id="widget-financeiro" class="widget-conteudo chart-container">
-                    <canvas id="grafico-resumo-financeiro"></canvas>
+            <!-- COLUNA 2: Fundos e Ações Rápidas -->
+            <div class="dash-col">
+                <div class="widget widget-fundos">
+                    <h3><i class='bx bx-target-lock'></i> Metas e Fundos</h3>
+                    <div class="carrossel-container-principal">
+                        <div class="carrossel-wrapper">
+                            <button class="carrossel-btn prev" id="btn-prev-fundos"><i class='bx bx-chevron-left'></i></button>
+                            <div class="carrossel-track" id="widget-fundos-track">
+                                <p class="loading-text" style="padding: 20px;">Carregando fundos...</p>
+                            </div>
+                            <button class="carrossel-btn next" id="btn-next-fundos"><i class='bx bx-chevron-right'></i></button>
+                        </div>
+                        <div class="carrossel-indicators" id="carrossel-pontinhos-fundos"></div>
+                    </div>
+                </div>
+
+                <div class="widget widget-acoes">
+                    <h3><i class='bx bx-rocket'></i> Ações Rápidas</h3>
+                    <div class="widget-conteudo acoes-rapidas">
+                        <button id="btn-add-membro" class="btn-acao"><i class='bx bx-user-plus'></i> Cadastrar</button>
+                        <button id="btn-add-lancamento" class="btn-acao"><i class='bx bx-dollar-circle'></i> Financeiro</button>
+                        <button id="btn-add-evento" class="btn-acao"><i class='bx bx-calendar-plus'></i> Eventos</button>
+                        <button id="btn-add-emprestimo" class="btn-acao"><i class='bx bx-transfer-alt'></i> Empréstimos</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Widget de Ações Rápidas (Coluna do Meio, Base) -->
-            <div class="widget widget-acoes">
-                <h3><i class='bx bx-rocket'></i> Ações Rápidas</h3>
-                <div class="widget-conteudo acoes-rapidas">
-                    <button id="btn-add-membro" class="btn-acao"><i class='bx bx-user-plus'></i> Cadastrar</button>
-                    <button id="btn-add-lancamento" class="btn-acao"><i class='bx bx-dollar-circle'></i> Financeiro</button>
-                    <button id="btn-add-evento" class="btn-acao"><i class='bx bx-calendar-plus'></i> Eventos</button>
-                    <button id="btn-add-emprestimo" class="btn-acao"><i class='bx bx-transfer-alt'></i> Empréstimos</button>
+            <!-- COLUNA 3: Financeiro e Aniversariantes -->
+            <div class="dash-col">
+                <div class="widget widget-financeiro">
+                    <h3>
+                        <span><i class='bx bx-line-chart'></i> Resumo Financeiro</span>
+                        <button id="btn-toggle-financeiro" class="btn-toggle-eye" title="Mostrar/Ocultar Valores">
+                            <i class='bx bx-show'></i>
+                        </button>
+                    </h3>
+                    <div id="widget-financeiro" class="widget-conteudo chart-container">
+                        <canvas id="grafico-resumo-financeiro"></canvas>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Widget Aniversariantes (Coluna Direita, Base) -->
-            <div class="widget widget-aniversarios">
-                <h3><i class='bx bx-cake'></i> Aniversariantes</h3>
-                <div id="widget-aniversariantes" class="widget-conteudo scrollable-content">
-                    <p class="loading-text">Carregando aniversariantes...</p>
-                </div>
-            </div>
-
-            <!-- Widget Atrasos (Ocupa o rodapé se houver) -->
-            <div class="widget widget-alerta widget-atrasos">
-                <h3><i class='bx bx-error-circle'></i> Utensílios com Devolução Atrasada</h3>
-                <div id="widget-atrasos" class="widget-conteudo">
-                    <p class="loading-text">Verificando empréstimos...</p>
+                <div class="widget widget-aniversarios">
+                    <h3><i class='bx bx-cake'></i> Aniversariantes</h3>
+                    <div id="widget-aniversariantes" class="widget-conteudo scrollable-content">
+                        <p class="loading-text">Carregando aniversariantes...</p>
+                    </div>
                 </div>
             </div>
 
         </section>
+
+        <!-- WIDGET ATRASOS (Fica debaixo de tudo ocupando a tela toda quando houver) -->
+        <div class="widget widget-alerta widget-atrasos" style="margin-top: 25px;">
+            <h3><i class='bx bx-error-circle'></i> Utensílios com Devolução Atrasada</h3>
+            <div id="widget-atrasos" class="widget-conteudo">
+                <p class="loading-text">Verificando empréstimos...</p>
+            </div>
+        </div>
+
     </main>
 
     <!-- Modal Detalhes do Fundo -->
