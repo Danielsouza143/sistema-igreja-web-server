@@ -9,28 +9,19 @@ const iniciarAgenda = async () => {
     const closeModal = modal.querySelector('.modal-close');
     const cancelModal = modal.querySelector('.modal-cancel');
     const form = document.getElementById('evento-form');
-    const btnZoomIn = document.getElementById('btn-zoom-in');
-    const btnZoomOut = document.getElementById('btn-zoom-out');
 
-    // --- Elementos do Modal de Detalhes ---
+    // --- Elementos do Modal de Detalhes Premium ---
     const detalhesModal = document.getElementById('detalhes-evento-modal');
     const detalhesCloseBtn = document.getElementById('detalhes-modal-close');
-    const detalhesFecharBtn = document.getElementById('btn-fechar-detalhes');
     const btnEditarEvento = document.getElementById('btn-editar-evento');
     const btnExcluirEvento = document.getElementById('btn-excluir-evento');
     const btnExportarIcs = document.getElementById('btn-exportar-ics');
-    const btnLembrete = document.getElementById('btn-lembrete'); // NOVO
-    let currentEventId = null; // Guarda o ID do evento atualmente em visualização
-
+    let currentEventId = null; 
 
     // --- Estado da Aplicação ---
     let calendar;
     let todosEventos = [];
-    let todosMembros = []; // NOVO: Para guardar os membros
-    const calendarAspectRatio = {
-        steps: [1.35, 1.5, 1.8, 2.2, 2.5], // De mais alto para mais baixo
-        current: 2, // Começa no meio (1.8)
-    };
+    let todosMembros = []; 
 
     // --- INICIALIZAÇÃO ---
     await carregarDadosIniciais();
@@ -39,9 +30,6 @@ const iniciarAgenda = async () => {
     configurarAbas();
     configurarModal();
     configurarFormulario();
-    configurarZoomCalendario();
-
-    // Chamar a configuração do novo modal na inicialização
     configurarDetalhesModal();
 
     // --- FUNÇÕES DE LÓGICA ---
@@ -51,7 +39,6 @@ const iniciarAgenda = async () => {
         const selectCategorias = document.getElementById('evento-categoria');
 
         try {
-            // CORREÇÃO: Usar o window.api para as chamadas de API
             const [eventosData, membrosData, configs] = await Promise.all([
                 window.api.get('/api/eventos'),
                 window.api.get('/api/membros'),
@@ -59,55 +46,60 @@ const iniciarAgenda = async () => {
             ]);
 
             todosEventos = eventosData;
-            todosMembros = membrosData; // Armazena os membros
+            todosMembros = membrosData; 
 
             popularSelect(selectResponsaveis, todosMembros, 'nome', '_id', 'Nenhum membro encontrado');
-            popularSelect(selectCategorias, configs.eventos_categorias.map(c => ({ name: c })), 'name', 'name', 'Nenhuma categoria encontrada');
+            popularSelect(selectCategorias, configs.eventos_categorias.map(c => ({ name: c })), 'name', 'name', 'Nenhuma categoria');
 
         } catch (error) {
-            console.error('Erro ao carregar dados iniciais:', error);
-            alert(error.message || 'Não foi possível carregar os dados da página.');
-            selectResponsaveis.innerHTML = `<option value="">Falha ao carregar</option>`;
-            selectCategorias.innerHTML = `<option value="">Falha ao carregar</option>`;
-            selectResponsaveis.disabled = true;
-            selectCategorias.disabled = true;
+            console.error('Erro ao carregar dados:', error);
+            alert('Não foi possível carregar os dados. Verifique a conexão.');
         }
     }
 
     function inicializarCalendario() {
+        // Inicializa o FullCalendar com o idioma Português ativado pelo script externo
         calendar = new FullCalendar.Calendar(calendarioEl, {
-            aspectRatio: calendarAspectRatio.steps[calendarAspectRatio.current],
+            locale: 'pt-br',
             initialView: 'dayGridMonth',
+            contentHeight: 'auto', // Ajusta a altura automaticamente ao container
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,listWeek'
+                right: 'dayGridMonth,timeGridWeek,listMonth' // Usando lista mensal (melhor que semanal)
             },
-            locale: 'pt-br',
-            buttonText: { today: 'Hoje', month: 'Mês', week: 'Semana', list: 'Lista' },
-            dayMaxEventRows: true, // NOVO: Permite que o dia cresça para mostrar todos os eventos
+            buttonText: { 
+                today: 'Hoje', 
+                month: 'Mês', 
+                week: 'Semana', 
+                list: 'Lista' 
+            },
+            dayMaxEventRows: 4, // Mostra até 4 eventos antes de "Ver Mais"
             events: formatarEventosParaCalendario(todosEventos),
             eventClick: (info) => abrirDetalhesEvento(info.event.id),
             dateClick: (info) => abrirModalParaCriacao(info.dateStr),
-            // NOVO: Hook para customizar a aparência do evento
+            
+            // CUSTOMIZAÇÃO PREMIUM DOS EVENTOS NO CALENDÁRIO
             eventContent: function(arg) {
                 const evento = arg.event.extendedProps;
                 const isProgramacao = evento.tipo === 'Programação';
-                const startTime = new Date(arg.event.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                let cartazHtml = '';
-
+                
+                // Formata a hora sem os segundos
+                const dataObj = arg.event.start;
+                const startTime = dataObj ? dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+                
+                let thumbHtml = '';
                 if (evento.cartazUrl) {
-                    cartazHtml = `<img src="${evento.cartazUrl}" class="fc-custom-preview-thumb" alt="Cartaz">`;
+                    thumbHtml = `<img src="${evento.cartazUrl}" class="custom-event-thumb" alt="Thumb">`;
                 }
 
                 return {
                     html: `
-                        <div class="fc-custom-preview-wrapper">
-                            <span class="fc-custom-preview-type-badge ${isProgramacao ? 'programacao' : 'evento'}"></span>
-                            ${cartazHtml}
-                            <div class="fc-custom-preview-content">
-                                <span class="fc-custom-preview-time">${startTime}</span>
-                                <span class="fc-custom-preview-title">${arg.event.title}</span>
+                        <div class="custom-event-chip" style="background-color: ${arg.event.backgroundColor}; color: ${arg.event.textColor};">
+                            ${thumbHtml}
+                            <div class="custom-event-info">
+                                <span class="custom-event-title">${arg.event.title}</span>
+                                ${startTime ? `<span class="custom-event-time">${startTime}</span>` : ''}
                             </div>
                         </div>
                     `
@@ -117,34 +109,14 @@ const iniciarAgenda = async () => {
         calendar.render();
     }
 
-    function configurarZoomCalendario() {
-        // CORREÇÃO: Lógica do zoom invertida
-        btnZoomIn.addEventListener('click', () => { // Zoom In (+) torna o calendário mais ALTO
-            if (calendarAspectRatio.current > 0) {
-                calendarAspectRatio.current--;
-                calendar.setOption('aspectRatio', calendarAspectRatio.steps[calendarAspectRatio.current]);
-            }
-        });
-        btnZoomOut.addEventListener('click', () => { // Zoom Out (-) torna o calendário mais BAIXO
-            if (calendarAspectRatio.current < calendarAspectRatio.steps.length - 1) {
-                calendarAspectRatio.current++;
-                calendar.setOption('aspectRatio', calendarAspectRatio.steps[calendarAspectRatio.current]);
-            }
-        });
-    }
-
     function configurarFormulario() {
-        // NOVO: Mostrar/esconder campos financeiros com base no tipo
+        // Mostra/Esconde campos financeiros
         document.getElementById('evento-tipo').addEventListener('change', (e) => {
             const financialFields = document.getElementById('financial-fields');
-            if (e.target.value === 'Evento') {
-                financialFields.style.display = 'block';
-            } else {
-                financialFields.style.display = 'none';
-            }
+            financialFields.style.display = e.target.value === 'Evento' ? 'block' : 'none';
         });
 
-        // NOVO: Lógica de Recorrência UI
+        // Lógica de Recorrência
         const checkboxRepetir = document.getElementById('evento-repetir');
         const recurrenceOptions = document.getElementById('recurrence-options');
         const selectPeriodo = document.getElementById('evento-periodo');
@@ -163,7 +135,6 @@ const iniciarAgenda = async () => {
             const id = document.getElementById('evento-id').value;
             const cartazInput = document.getElementById('evento-cartaz-input');
             
-            // Dados Básicos
             const baseData = {
                 tipo: document.getElementById('evento-tipo').value,
                 nome: document.getElementById('evento-nome').value,
@@ -180,18 +151,8 @@ const iniciarAgenda = async () => {
                 })
             };
 
-            // Dados de Data/Hora (Strings ISO para cálculo)
             const dataInicioStr = document.getElementById('evento-data-inicio').value;
             const dataFimStr = document.getElementById('evento-data-fim').value;
-            
-            // Se tiver imagem nova, faz upload primeiro (para usar URL em todos)
-            // OBS: Para simplicidade, se for lote com imagem, idealmente faria upload separado.
-            // Aqui, vamos manter a lógica: se for lote, NÃO suportaremos upload de cartaz NOVO por enquanto,
-            // ou teríamos que fazer upload manual antes. Para evitar complexidade extrema agora,
-            // vamos alertar se tentar lote + imagem nova, ou simplesmente ignorar a imagem nova no lote secundário.
-            // MELHOR: Se for lote, fazemos um upload fake/independente antes?
-            // Vamos usar a lógica padrão: Se for UM evento, usa FormData normal.
-            // Se for LOTE, precisamos da URL da imagem já pronta.
             
             let finalCartazUrl = baseData.cartazUrl;
 
@@ -201,7 +162,6 @@ const iniciarAgenda = async () => {
                 Object.keys(baseData).forEach(key => formData.append(key, baseData[key]));
                 formData.append('dataInicio', dataInicioStr);
                 formData.append('dataFim', dataFimStr);
-                // Campo legado para manter compatibilidade com visualização, se quiser
                 if(checkboxRepetir.checked) formData.append('recorrencia', 'Semanal'); 
                 
                 if (cartazInput.files[0]) {
@@ -209,59 +169,35 @@ const iniciarAgenda = async () => {
                 }
 
                 try {
-                    if (id) {
-                        await window.api.put(`/api/eventos/${id}`, formData);
-                    } else {
-                        await window.api.post('/api/eventos', formData);
-                    }
+                    if (id) await window.api.put(`/api/eventos/${id}`, formData);
+                    else await window.api.post('/api/eventos', formData);
                 } catch (error) {
-                    console.error('Erro ao salvar evento:', error);
                     alert(`Erro ao salvar: ${error.message}`);
                     return;
                 }
             } else {
-                // --- LÓGICA DE CRIAÇÃO EM LOTE (RECORRÊNCIA) ---
-                
-                // 1. Upload da imagem se houver (precisamos da URL para replicar)
-                if (cartazInput.files[0]) {
-                    // Como a API de eventos espera criar o evento JUNTO com o upload,
-                    // vamos criar o PRIMEIRO evento via FormData normalmente, e os outros via JSON.
-                    // Isso é mais seguro.
-                }
-
+                // Criação em Lote (Recorrência)
                 const eventosParaCriar = [];
                 const dataInicioBase = new Date(dataInicioStr);
                 const dataFimBase = new Date(dataFimStr);
                 const duracaoMs = dataFimBase - dataInicioBase;
 
-                // Define a data limite
                 let dataLimite = new Date();
                 const periodo = selectPeriodo.value;
                 if (periodo === 'mes') {
-                    dataLimite = new Date(dataInicioBase.getFullYear(), dataInicioBase.getMonth() + 1, 0); // Fim do mês da data inicial
+                    dataLimite = new Date(dataInicioBase.getFullYear(), dataInicioBase.getMonth() + 1, 0); 
                 } else if (periodo === 'ano') {
-                    dataLimite = new Date(dataInicioBase.getFullYear(), 11, 31); // Fim do ano
+                    dataLimite = new Date(dataInicioBase.getFullYear(), 11, 31); 
                 } else if (periodo === 'personalizado') {
                     const limiteInput = document.getElementById('evento-data-limite').value;
-                    if (!limiteInput) {
-                        alert('Por favor, selecione uma data limite para a repetição.');
-                        return;
-                    }
+                    if (!limiteInput) return alert('Selecione uma data limite.');
                     dataLimite = new Date(limiteInput);
-                    // Ajusta para o final do dia para garantir inclusão
                     dataLimite.setHours(23, 59, 59);
                 }
 
-                // Loop para gerar datas (Semanal)
                 let currentInicio = new Date(dataInicioBase);
                 
-                // Adiciona o primeiro evento (que será enviado separadamente se tiver foto, ou no lote)
-                // Se tiver foto nova, criamos o primeiro via POST normal para obter a URL e depois os outros.
-                // Se não tiver foto nova, vai tudo no lote.
-                
-                let primeiroEventoComFoto = null;
                 if (cartazInput.files[0]) {
-                    // Marca para criar o primeiro separado
                     const formData = new FormData();
                     Object.keys(baseData).forEach(key => formData.append(key, baseData[key]));
                     formData.append('dataInicio', dataInicioStr);
@@ -271,10 +207,7 @@ const iniciarAgenda = async () => {
                     
                     try {
                         const res = await window.api.post('/api/eventos', formData);
-                        // Atualiza a URL do cartaz para os próximos
                         if (res && res.cartazUrl) finalCartazUrl = res.cartazUrl;
-                        
-                        // Avança uma semana para não duplicar o primeiro
                         currentInicio.setDate(currentInicio.getDate() + 7);
                     } catch (err) {
                         alert('Erro ao criar o evento inicial da série: ' + err.message);
@@ -287,15 +220,12 @@ const iniciarAgenda = async () => {
                     
                     eventosParaCriar.push({
                         ...baseData,
-                        cartazUrl: finalCartazUrl, // Usa a URL (existente ou do upload recém feito)
-                        financeiro: JSON.parse(baseData.financeiro), // Precisa ser obj, não string
+                        cartazUrl: finalCartazUrl, 
+                        financeiro: JSON.parse(baseData.financeiro), 
                         dataInicio: currentInicio.toISOString(),
                         dataFim: currentFim.toISOString(),
-                        recorrencia: 'Semanal',
-                        tenantId: undefined // Será posto pelo backend
+                        recorrencia: 'Semanal'
                     });
-
-                    // Avança 7 dias
                     currentInicio.setDate(currentInicio.getDate() + 7);
                 }
 
@@ -303,7 +233,6 @@ const iniciarAgenda = async () => {
                     try {
                         await window.api.post('/api/eventos/lote', eventosParaCriar);
                     } catch (error) {
-                        console.error('Erro ao criar lote:', error);
                         alert(`Erro ao criar recorrências: ${error.message}`);
                         return;
                     }
@@ -311,6 +240,8 @@ const iniciarAgenda = async () => {
             }
 
             modal.classList.remove('active');
+            
+            // Recarrega tudo e atualiza o calendário e a lista
             await carregarDadosIniciais();
             calendar.removeAllEvents();
             calendar.addEventSource(formatarEventosParaCalendario(todosEventos));
@@ -318,31 +249,42 @@ const iniciarAgenda = async () => {
         });
     }
 
-    // --- Funções de UI (sem alterações, exceto renderizarLista) ---
-
     function renderizarLista() {
         listaEventosContainer.innerHTML = '';
         if (todosEventos.length === 0) {
-            listaEventosContainer.innerHTML = '<p>Nenhum evento ou programação encontrado.</p>';
+            listaEventosContainer.innerHTML = '<p style="color: #666; text-align: center; width: 100%; grid-column: 1/-1;">Nenhum evento ou programação futuro.</p>';
             return;
         }
+
+        // Renderiza a lista exibindo o cartaz (se houver)
         todosEventos.forEach(evento => {
-            const tipo = evento.tipo || 'Evento'; // CORREÇÃO: Garante que tipo nunca seja undefined
+            const tipo = evento.tipo || 'Evento';
             const card = document.createElement('div');
             card.className = 'evento-card';
+            
+            let imgHTML = '';
+            if (evento.cartazUrl) {
+                imgHTML = `<img src="${evento.cartazUrl}" class="evento-card-cartaz" alt="Cartaz">`;
+            } else {
+                imgHTML = `<div class="evento-card-cartaz" style="display:flex; justify-content:center; align-items:center; color:#ccc;"><i class='bx bx-image' style="font-size: 3rem;"></i></div>`;
+            }
+
             card.innerHTML = `
-                <div class="card-header"><h4>${evento.nome} <span class="badge ${tipo.toLowerCase()}">${tipo}</span></h4></div>
-                <div class="card-body">
+                ${imgHTML}
+                <div class="evento-card-body">
+                    <h4>${evento.nome} <span class="badge ${tipo.toLowerCase()}" style="font-size: 0.7rem; float:right;">${tipo}</span></h4>
                     <p><i class='bx bx-calendar'></i> ${new Date(evento.dataInicio).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})}</p>
                     <p><i class='bx bx-map'></i> ${evento.local}</p>
-                    ${evento.recorrencia ? `<p><i class='bx bx-sync'></i> ${evento.recorrencia}</p>` : ''}
                 </div>
-                <div class="card-footer"><button class="btn btn-principal btn-editar" data-id="${evento._id}">Ver Detalhes</button></div>
+                <div class="evento-card-footer">
+                    <button class="btn btn-principal btn-editar" data-id="${evento._id}" style="width: 100%;">Detalhes</button>
+                </div>
             `;
             listaEventosContainer.appendChild(card);
         });
+
         document.querySelectorAll('.btn-editar').forEach(btn => {
-            btn.addEventListener('click', (e) => abrirModalParaEdicao(e.currentTarget.dataset.id));
+            btn.addEventListener('click', (e) => abrirDetalhesEvento(e.currentTarget.dataset.id));
         });
     }
 
@@ -356,6 +298,7 @@ const iniciarAgenda = async () => {
                     content.classList.remove('active');
                     if (content.id === targetId) content.classList.add('active');
                 });
+                if(targetId === 'view-calendario') calendar.render(); // Redesenha o calendário se estava oculto
             });
         });
     }
@@ -366,128 +309,75 @@ const iniciarAgenda = async () => {
         cancelModal.addEventListener('click', () => modal.classList.remove('active'));
         window.addEventListener('click', (e) => {
             if (e.target === modal) modal.classList.remove('active');
+            if (e.target.matches('.modal-overlay#detalhes-evento-modal')) {
+                document.getElementById('detalhes-evento-modal').classList.remove('active');
+            }
         });
     }
 
-        function abrirModalParaCriacao(dateStr = null) {
+    function abrirModalParaCriacao(dateStr = null) {
+        form.reset();
+        document.getElementById('evento-id').value = '';
+        document.getElementById('modal-title').textContent = 'Nova Programação / Evento';
+        document.getElementById('cartaz-preview-wrapper').classList.add('hidden');
+        document.getElementById('financial-fields').style.display = 'none';
+        document.getElementById('evento-tipo').value = 'Programação'; 
 
-            form.reset();
+        if (dateStr) {
+            document.getElementById('evento-data-inicio').value = `${dateStr}T19:00`;
+            document.getElementById('evento-data-fim').value = `${dateStr}T21:00`;
+        }
+        modal.classList.add('active');
+    }
 
-            document.getElementById('evento-id').value = '';
+    function abrirModalParaEdicao(id) {
+        const evento = todosEventos.find(e => e._id === id);
+        if (!evento) return;
 
-            document.getElementById('modal-title').textContent = 'Nova Programação / Evento';
+        form.reset(); 
+        document.getElementById('evento-id').value = evento._id;
+        document.getElementById('modal-title').textContent = 'Editar Programação / Evento';
+        document.getElementById('evento-tipo').value = evento.tipo || 'Evento';
+        document.getElementById('evento-nome').value = evento.nome;
+        document.getElementById('evento-categoria').value = evento.categoria;
+        
+        // Esconde opções de repetir ao editar
+        document.getElementById('evento-repetir').checked = false;
+        document.getElementById('recurrence-options').style.display = 'none';
 
-            document.getElementById('cartaz-preview').style.display = 'none';
+        document.getElementById('evento-data-inicio').value = new Date(evento.dataInicio).toISOString().substring(0, 16);
+        document.getElementById('evento-data-fim').value = new Date(evento.dataFim).toISOString().substring(0, 16);
+        document.getElementById('evento-local').value = evento.local;
+        document.getElementById('evento-responsavel').value = evento.responsavelId;
+        document.getElementById('evento-descricao').value = evento.descricao || '';
+        document.getElementById('evento-cor').value = evento.cor || (evento.tipo === 'Evento' ? '#e36e00' : '#0033a0');
 
-            // NOVO: Esconder campos financeiros por padrão
-
-            document.getElementById('financial-fields').style.display = 'none';
-
-            document.getElementById('evento-tipo').value = 'Programação'; // Padrão para Programação
-
-    
-
-            if (dateStr) {
-
-                document.getElementById('evento-data-inicio').value = `${dateStr}T19:00`;
-
-                document.getElementById('evento-data-fim').value = `${dateStr}T21:00`;
-
-            }
-
-            modal.classList.add('active');
-
+        const cartazUrlInput = document.getElementById('evento-cartaz-url');
+        const cartazPreviewWrapper = document.getElementById('cartaz-preview-wrapper');
+        const cartazPreview = document.getElementById('cartaz-preview');
+        
+        cartazUrlInput.value = evento.cartazUrl || '';
+        if (evento.cartazUrl) {
+            cartazPreview.src = evento.cartazUrl;
+            cartazPreviewWrapper.classList.remove('hidden');
+        } else {
+            cartazPreviewWrapper.classList.add('hidden');
         }
 
-    
-
-        function abrirModalParaEdicao(id) {
-
-            const evento = todosEventos.find(e => e._id === id);
-
-            if (!evento) return;
-
-    
-
-            form.reset(); // Limpa o formulário antes de preencher
-
-            document.getElementById('evento-id').value = evento._id;
-
-            document.getElementById('modal-title').textContent = 'Editar Programação / Evento';
-
-            document.getElementById('evento-tipo').value = evento.tipo || 'Evento';
-
-            document.getElementById('evento-nome').value = evento.nome;
-
-            document.getElementById('evento-categoria').value = evento.categoria;
-
-            document.getElementById('evento-recorrencia').value = evento.recorrencia || '';
-
-            document.getElementById('evento-data-inicio').value = new Date(evento.dataInicio).toISOString().substring(0, 16);
-
-            document.getElementById('evento-data-fim').value = new Date(evento.dataFim).toISOString().substring(0, 16);
-
-            document.getElementById('evento-local').value = evento.local;
-
-                        document.getElementById('evento-responsavel').value = evento.responsavelId;
-
-                        document.getElementById('evento-descricao').value = evento.descricao || '';
-
-                        document.getElementById('evento-cor').value = evento.cor || (evento.tipo === 'Evento' ? '#e36e00' : '#3a86ff'); // NOVO
-
-                        
-
-            
-
-            const cartazUrlInput = document.getElementById('evento-cartaz-url');
-
-            const cartazPreview = document.getElementById('cartaz-preview');
-
-            cartazUrlInput.value = evento.cartazUrl || '';
-
-            if (evento.cartazUrl) {
-
-                cartazPreview.src = evento.cartazUrl;
-
-                cartazPreview.style.display = 'block';
-
-            } else {
-
-                cartazPreview.style.display = 'none';
-
+        const financialFields = document.getElementById('financial-fields');
+        if (evento.tipo === 'Evento') {
+            financialFields.style.display = 'block';
+            if (evento.financeiro) {
+                document.getElementById('evento-envolve-fundos').checked = evento.financeiro.envolveFundos;
+                document.getElementById('evento-meta').value = evento.financeiro.meta || 0;
+                document.getElementById('evento-custo').value = evento.financeiro.custoEstimado || 0;
             }
-
-    
-
-            // NOVO: Lógica para campos financeiros
-
-            const financialFields = document.getElementById('financial-fields');
-
-            if (evento.tipo === 'Evento') {
-
-                financialFields.style.display = 'block';
-
-                if (evento.financeiro) {
-
-                    document.getElementById('evento-envolve-fundos').checked = evento.financeiro.envolveFundos;
-
-                    document.getElementById('evento-meta').value = evento.financeiro.meta || 0;
-
-                    document.getElementById('evento-custo').value = evento.financeiro.custoEstimado || 0;
-
-                }
-
-            } else {
-
-                financialFields.style.display = 'none';
-
-            }
-
-    
-
-            modal.classList.add('active');
-
+        } else {
+            financialFields.style.display = 'none';
         }
+
+        modal.classList.add('active');
+    }
 
     function popularSelect(selectEl, items, textProp, valueProp, emptyMessage) {
         selectEl.innerHTML = '';
@@ -509,10 +399,8 @@ const iniciarAgenda = async () => {
     function formatarEventosParaCalendario(eventos) {
         return eventos.map(evento => {
             const tipo = evento.tipo || 'Evento';
-            const corPadrao = tipo === 'Programação' ? '#3a86ff' : '#e36e00';
+            const corPadrao = tipo === 'Programação' ? '#0033a0' : '#e36e00';
             const corEvento = evento.cor || corPadrao;
-
-            // Lógica para garantir bom contraste no texto do evento
             const corTexto = isColorLight(corEvento) ? '#212529' : '#ffffff';
 
             return {
@@ -520,53 +408,58 @@ const iniciarAgenda = async () => {
                 title: evento.nome,
                 start: evento.dataInicio,
                 end: evento.dataFim,
-                color: corEvento,
-                borderColor: corEvento, // Borda da mesma cor
-                textColor: corTexto, // Define a cor do texto
+                backgroundColor: corEvento,
+                textColor: corTexto,
                 extendedProps: evento
             }
         });
     }
 
-    // --- FUNÇÃO UTILITÁRIA PARA CONTRASTE DE COR ---
     function isColorLight(hexColor) {
-        if (!hexColor.startsWith('#')) return true; // Retorna true se não for um hex
-
+        if (!hexColor || !hexColor.startsWith('#')) return false;
         const hex = hexColor.replace('#', '');
+        if(hex.length !== 6) return false;
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
-        // Fórmula de luminosidade YIQ
         const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-        return yiq >= 150; // Cores com luminosidade >= 150 são consideradas claras
+        return yiq >= 150; 
     }
 
-    // --- FUNÇÕES DO MODAL DE DETALHES ---
+    // --- FUNÇÕES DO NOVO MODAL DE DETALHES ---
 
     function abrirDetalhesEvento(id) {
         currentEventId = id;
         const evento = todosEventos.find(e => e._id === id);
         if (!evento) return;
 
-        // Preenche o título e o cartaz
+        // Título e Badge
         document.getElementById('detalhes-modal-title').textContent = evento.nome;
+        const badge = document.getElementById('detalhes-tipo-badge');
+        badge.textContent = evento.tipo;
+        badge.style.backgroundColor = evento.tipo === 'Evento' ? '#fff0e6' : '#e9f5ff';
+        badge.style.color = evento.tipo === 'Evento' ? '#e36e00' : '#007bff';
+
+        document.getElementById('detalhes-categoria').textContent = evento.categoria;
+
+        // Cartaz
         const cartazImg = document.getElementById('detalhes-cartaz-img');
-        const cartazContainer = document.getElementById('detalhes-cartaz-container');
+        const placeholder = document.getElementById('detalhes-placeholder');
         if (evento.cartazUrl) {
             cartazImg.src = evento.cartazUrl;
-            cartazContainer.style.display = 'block';
+            cartazImg.style.display = 'block';
+            placeholder.style.display = 'none';
         } else {
-            cartazContainer.style.display = 'none';
+            cartazImg.style.display = 'none';
+            placeholder.style.display = 'flex';
         }
 
-        // Preenche as informações
+        // Infos
         const dataInicio = new Date(evento.dataInicio);
         const dataFim = new Date(evento.dataFim);
-        const formatoData = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-        document.getElementById('detalhes-data').textContent = `${dataInicio.toLocaleDateString('pt-BR', formatoData)} - ${dataFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        document.getElementById('detalhes-data').textContent = `${dataInicio.toLocaleDateString('pt-BR')} das ${dataInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às ${dataFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
         document.getElementById('detalhes-local').textContent = evento.local;
         
-        // Busca e exibe o nome do responsável
         const responsavel = todosMembros.find(m => m._id === evento.responsavelId);
         const responsavelEl = document.getElementById('detalhes-responsavel');
         if (responsavel) {
@@ -575,19 +468,18 @@ const iniciarAgenda = async () => {
             responsavelEl.textContent = 'Não informado';
         }
 
-        document.getElementById('detalhes-categoria').textContent = evento.categoria;
-        document.getElementById('detalhes-descricao').textContent = evento.descricao || 'Nenhuma descrição fornecida.';
+        document.getElementById('detalhes-descricao').textContent = evento.descricao || 'Nenhuma descrição detalhada fornecida.';
 
         // Recorrência
-        const recorrenciaP = document.getElementById('detalhes-recorrencia-p');
+        const recorrenciaP = document.getElementById('detalhes-recorrencia-wrapper');
         if (evento.recorrencia) {
             document.getElementById('detalhes-recorrencia').textContent = evento.recorrencia;
-            recorrenciaP.style.display = 'block';
+            recorrenciaP.style.display = 'flex';
         } else {
             recorrenciaP.style.display = 'none';
         }
 
-        // Detalhes Financeiros
+        // Financeiro
         const financeiroContainer = document.getElementById('detalhes-financeiro-container');
         if (evento.tipo === 'Evento' && evento.financeiro && evento.financeiro.envolveFundos) {
             document.getElementById('detalhes-meta').textContent = `R$ ${evento.financeiro.meta.toFixed(2)}`;
@@ -602,7 +494,6 @@ const iniciarAgenda = async () => {
 
     function configurarDetalhesModal() {
         detalhesCloseBtn.addEventListener('click', () => detalhesModal.classList.remove('active'));
-        detalhesFecharBtn.addEventListener('click', () => detalhesModal.classList.remove('active'));
 
         btnEditarEvento.addEventListener('click', () => {
             detalhesModal.classList.remove('active');
@@ -611,18 +502,19 @@ const iniciarAgenda = async () => {
 
         btnExcluirEvento.addEventListener('click', async () => {
             if (!currentEventId) return;
-
-            const confirmou = confirm('Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.');
+            const confirmou = confirm('Tem certeza que deseja excluir este evento?');
             if (confirmou) {
                 try {
                     await window.api.delete(`/api/eventos/${currentEventId}`);
                     detalhesModal.classList.remove('active');
-                    await carregarDadosIniciais(); // Recarrega tudo
+                    
+                    // RECARREGA TUDO PARA REFLETIR A EXCLUSÃO
+                    await carregarDadosIniciais();
                     calendar.removeAllEvents();
                     calendar.addEventSource(formatarEventosParaCalendario(todosEventos));
                     renderizarLista();
+                    
                 } catch (error) {
-                    console.error('Erro ao excluir evento:', error);
                     alert(`Não foi possível excluir o evento. ${error.message}`);
                 }
             }
@@ -645,42 +537,28 @@ const iniciarAgenda = async () => {
             document.body.removeChild(link);
         });
 
-        btnLembrete.addEventListener('click', () => {
-            if (!currentEventId) return;
-            if (window.criarLembreteEvento) {
-                window.criarLembreteEvento(currentEventId);
-            } else {
-                alert('O sistema de notificações não está pronto.');
-            }
-        });
-
-        // NOVO E MELHORADO: Lógica para cartaz em tela cheia
+        // Cartaz em tela cheia
         const cartazImg = document.getElementById('detalhes-cartaz-img');
         const fullscreenContainer = document.getElementById('fullscreen-container');
         const fullscreenImage = document.getElementById('fullscreen-image');
         const fullscreenClose = document.querySelector('.fullscreen-close');
 
         cartazImg.addEventListener('click', () => {
-            if (!cartazImg.src || cartazImg.src.endsWith('placeholder-image.png')) return;
             fullscreenImage.src = cartazImg.src;
             fullscreenContainer.classList.add('active');
         });
 
-        const fecharFullscreen = () => {
-            fullscreenContainer.classList.remove('active');
-        };
-
+        const fecharFullscreen = () => { fullscreenContainer.classList.remove('active'); };
         fullscreenContainer.addEventListener('click', fecharFullscreen);
         fullscreenClose.addEventListener('click', fecharFullscreen);
     }
 
     function gerarIcs(evento) {
-        // Formata a data para o padrão UTC (YYYYMMDDTHHMMSSZ)
         const toUtcString = (date) => {
             return new Date(date).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
         };
 
-        const icsData = [
+        return [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
             'PRODID:-//SistemaIgreja//Agenda//PT',
@@ -695,13 +573,7 @@ const iniciarAgenda = async () => {
             'END:VEVENT',
             'END:VCALENDAR'
         ].join('\r\n');
-
-        return icsData;
     }
-
-    // Chamar a configuração do novo modal na inicialização
-    configurarDetalhesModal();
-
 };
 
 document.addEventListener('DOMContentLoaded', iniciarAgenda);
