@@ -1,5 +1,6 @@
 var iniciarConfiguracoes = () => {
     let configs = {};
+    let tenantInfo = {}; // Guarda a identidade da Igreja da raiz do DB
     let cropper;
     let croppedLogoBlob = null;
 
@@ -88,20 +89,19 @@ var iniciarConfiguracoes = () => {
         salvarAparencia();
     });
 
-    // --- SEÇÃO: IDENTIDADE DA IGREJA (CORRIGIDO PARA O MONGODB) ---
+    // --- SEÇÃO: IDENTIDADE DA IGREJA (AGORA LÊ DO TENANTINFO) ---
     const carregarIdentidade = () => {
-        if (!configs) return;
+        if (!tenantInfo) return;
         
-        // Puxa os dados que vêm direto da raiz do Tenant
-        if(nomeIgrejaInput) nomeIgrejaInput.value = configs.name || '';
-        if(cnpjInput) cnpjInput.value = configs.cnpj || '';
-        if(telefoneInput) telefoneInput.value = configs.telefone || '';
-        if(enderecoInput) enderecoInput.value = configs.address || ''; // Salva como address no BD
-        if(emailInput) emailInput.value = configs.email || '';
+        if(nomeIgrejaInput) nomeIgrejaInput.value = tenantInfo.name || '';
+        if(cnpjInput) cnpjInput.value = tenantInfo.cnpj || '';
+        if(telefoneInput) telefoneInput.value = tenantInfo.telefone || '';
+        if(enderecoInput) enderecoInput.value = tenantInfo.address || ''; 
+        if(emailInput) emailInput.value = tenantInfo.email || '';
         
         if(logoPreview) {
             logoPreview.innerHTML = ''; 
-            const logoUrl = configs.config ? configs.config.logoUrl : null;
+            const logoUrl = tenantInfo.config ? tenantInfo.config.logoUrl : null;
             if (logoUrl) {
                 const img = document.createElement('img');
                 img.src = logoUrl;
@@ -172,9 +172,10 @@ var iniciarConfiguracoes = () => {
             const email = emailInput ? emailInput.value.trim() : '';
 
             try {
+                // 1. Faz o upload da nova logo se existir
                 if (croppedLogoBlob) {
                     const formData = new FormData();
-                    formData.append('name', name);
+                    formData.append('name', name); // Pode ser ignorado pelo backend, mas enviamos
                     formData.append('logo', croppedLogoBlob, 'logo.png');
 
                     try {
@@ -185,8 +186,8 @@ var iniciarConfiguracoes = () => {
                     }
                 } 
 
-                // Salva todos os campos de texto na raiz do documento, garantindo o padrão do MongoDB
-                await window.api.patch('/api/configs', {
+                // 2. Salva a Identidade diretamente na raiz do banco de dados do Tenant
+                await window.api.patch('/api/tenants/current', {
                     name: name,
                     cnpj: cnpj,
                     telefone: telefone,
@@ -195,9 +196,10 @@ var iniciarConfiguracoes = () => {
                 });
                 
                 croppedLogoBlob = null;
-                await carregarConfigs();
+                await carregarConfigs(); // Recarrega os dados fresquinhos do banco
                 
-                const logoNova = configs.config ? configs.config.logoUrl : null;
+                // Dispara o evento garantindo que a logo correta será mantida no header
+                const logoNova = tenantInfo.config ? tenantInfo.config.logoUrl : null;
                 window.dispatchEvent(new CustomEvent('churchIdentityUpdated', { detail: { nomeIgreja: name, logoUrl: logoNova } }));
                 
                 alert('Identidade da igreja salva com sucesso!');
@@ -316,7 +318,6 @@ var iniciarConfiguracoes = () => {
             if (newPassword !== confirmPassword) return alert('A nova senha e a confirmação não coincidem.');
             if (newPassword.length < 6) return alert('A nova senha deve ter pelo menos 6 caracteres.');
             
-            // Adicionado o ID do usuário para evitar erro 500 no Backend
             const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
             try {
@@ -433,8 +434,13 @@ var iniciarConfiguracoes = () => {
     // --- INICIALIZAÇÃO ---
     const carregarConfigs = async () => {
         try {
+            // Busca os dados nativos da Igreja
+            tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
+            
+            // Busca as categorias (podem vir junto no config)
             const serverConfigs = await window.api.get(`/api/configs?_t=${Date.now()}`) || {};
             configs = serverConfigs;
+            
             carregarAparencia();
             carregarIdentidade();
             renderizarCategorias();
