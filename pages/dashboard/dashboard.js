@@ -10,6 +10,11 @@ const iniciarDashboard = () => {
     let dadosLancamentos = [];
     let todosMembros = [];
     let financeiroOculto = true;
+    
+    // Estado Eventos
+    let todosEventosFuturos = [];
+    let viewModeEventos = 'list'; 
+    let eventoCarouselInterval = null;
 
     // --- RENDERIZAÇÃO DOS WIDGETS ---
 
@@ -19,28 +24,144 @@ const iniciarDashboard = () => {
         document.getElementById('data-atual').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
     }
     
-    function renderizarProximosEventos(eventos) {
-        const container = document.getElementById('widget-eventos');
+    function processarEventos(eventos) {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        const proximos = eventos
+        todosEventosFuturos = eventos
             .filter(e => new Date(e.dataFim) >= hoje)
-            .sort((a, b) => new Date(a.dataInicio) - new Date(b.dataInicio))
-            .slice(0, 6); // Pode pegar até 6 já que é rolável e agora o card é mais alto
+            .sort((a, b) => new Date(a.dataInicio) - new Date(b.dataInicio));
 
-        if (proximos.length === 0) {
-            container.innerHTML = '<p class="sem-itens">Nenhum evento futuro cadastrado.</p>';
-            return;
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+        
+        // Verifica se há cartazes neste mês para definir o padrão
+        const eventosComCartazMes = todosEventosFuturos.filter(e => {
+            const d = new Date(e.dataInicio);
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
+        });
+
+        if (eventosComCartazMes.length > 0) {
+            viewModeEventos = 'carousel';
+        } else {
+            viewModeEventos = 'list';
         }
 
-        container.innerHTML = proximos.map(e => `
-            <div class="lista-item">
-                <span class="item-principal">${e.nome}</span>
-                <span class="item-detalhe">${formatarDataSimples(e.dataInicio)}</span>
-            </div>
-        `).join('');
+        atualizarViewEventos();
     }
+
+    function atualizarViewEventos() {
+        const container = document.getElementById('widget-eventos');
+        const btnList = document.getElementById('btn-view-list');
+        const btnCarousel = document.getElementById('btn-view-carousel');
+
+        btnList.classList.toggle('active', viewModeEventos === 'list');
+        btnCarousel.classList.toggle('active', viewModeEventos === 'carousel');
+
+        if (eventoCarouselInterval) clearInterval(eventoCarouselInterval);
+
+        if (viewModeEventos === 'list') {
+            container.classList.remove('carousel-mode');
+            container.classList.add('scrollable-content');
+            
+            const eventosExibir = todosEventosFuturos.slice(0, 7);
+            if (eventosExibir.length === 0) {
+                container.innerHTML = '<p class="sem-itens">Nenhum evento futuro cadastrado.</p>';
+            } else {
+                container.innerHTML = eventosExibir.map(e => `
+                    <div class="lista-item">
+                        <span class="item-principal">${e.nome}</span>
+                        <span class="item-detalhe">${formatarDataSimples(e.dataInicio)}</span>
+                    </div>
+                `).join('');
+            }
+        } else {
+            // MODO CARROSSEL DE CARTAZES
+            container.classList.add('carousel-mode');
+            container.classList.remove('scrollable-content');
+            
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+
+            const eventosComCartaz = todosEventosFuturos.filter(e => {
+                const d = new Date(e.dataInicio);
+                return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
+            });
+
+            if(eventosComCartaz.length === 0) {
+                container.innerHTML = '<p class="sem-itens" style="padding: 20px; color: white;">Nenhum cartaz para os eventos deste mês.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="eventos-carousel" id="eventos-carousel-wrapper">
+                    <button class="ec-btn prev" id="btn-ec-prev"><i class='bx bx-chevron-left'></i></button>
+                    <div class="ec-track" id="ec-track">
+                        ${eventosComCartaz.map(e => `
+                            <div class="ec-slide">
+                                <img src="${e.cartazUrl}" alt="${e.nome}">
+                                <div class="ec-slide-info">
+                                    <h4>${e.nome}</h4>
+                                    <p>${formatarDataSimples(e.dataInicio)}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="ec-btn next" id="btn-ec-next"><i class='bx bx-chevron-right'></i></button>
+                </div>
+            `;
+
+            const track = document.getElementById('ec-track');
+            const slidesCount = eventosComCartaz.length;
+            let currentSlide = 0;
+
+            const updateSlide = () => {
+                track.style.transform = `translateX(-${currentSlide * 100}%)`;
+            };
+
+            document.getElementById('btn-ec-next').addEventListener('click', () => {
+                currentSlide = (currentSlide + 1) % slidesCount;
+                updateSlide();
+            });
+
+            document.getElementById('btn-ec-prev').addEventListener('click', () => {
+                currentSlide = (currentSlide - 1 + slidesCount) % slidesCount;
+                updateSlide();
+            });
+
+            // Slide Automático
+            if(slidesCount > 1) {
+                eventoCarouselInterval = setInterval(() => {
+                    currentSlide = (currentSlide + 1) % slidesCount;
+                    updateSlide();
+                }, 4000);
+
+                // Pausa no Hover
+                const wrapper = document.getElementById('eventos-carousel-wrapper');
+                wrapper.addEventListener('mouseenter', () => clearInterval(eventoCarouselInterval));
+                wrapper.addEventListener('mouseleave', () => {
+                    eventoCarouselInterval = setInterval(() => {
+                        currentSlide = (currentSlide + 1) % slidesCount;
+                        updateSlide();
+                    }, 4000);
+                });
+            } else {
+                document.getElementById('btn-ec-next').style.display = 'none';
+                document.getElementById('btn-ec-prev').style.display = 'none';
+            }
+        }
+    }
+
+    // Listener dos botões de View
+    document.getElementById('btn-view-list').addEventListener('click', () => {
+        viewModeEventos = 'list';
+        atualizarViewEventos();
+    });
+    document.getElementById('btn-view-carousel').addEventListener('click', () => {
+        viewModeEventos = 'carousel';
+        atualizarViewEventos();
+    });
 
     function renderizarAniversariantes(membros) {
         todosMembros = membros; 
@@ -210,7 +331,7 @@ const iniciarDashboard = () => {
 
     function renderizarFundosCarrossel(fundos) {
         const track = document.getElementById('widget-fundos-track');
-        const dotsContainer = document.getElementById('carrossel-pontinhos');
+        const dotsContainer = document.getElementById('carrossel-pontinhos-fundos');
         
         if (!fundos || fundos.length === 0) {
             track.innerHTML = '<p class="sem-itens" style="padding: 20px;">Nenhuma meta ou fundo ativo.</p>';
@@ -223,7 +344,6 @@ const iniciarDashboard = () => {
         track.innerHTML = '';
         if(dotsContainer) dotsContainer.innerHTML = '';
         
-        // Se houver apenas 1 fundo, não precisamos de setas ou pontinhos
         if(fundos.length === 1) {
             document.getElementById('btn-prev-fundos').style.display = 'none';
             document.getElementById('btn-next-fundos').style.display = 'none';
@@ -239,6 +359,10 @@ const iniciarDashboard = () => {
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
+
+            // Cria o wrapper que garante os 100% de largura
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-fundo-wrapper';
 
             const card = document.createElement('div');
             card.className = `card-fundo ${cardStatusClass}`;
@@ -259,9 +383,9 @@ const iniciarDashboard = () => {
             `;
 
             card.onclick = () => abrirDetalhesFundo(fundo);
-            track.appendChild(card);
+            wrapper.appendChild(card);
+            track.appendChild(wrapper);
             
-            // Renderiza o pontinho correspondente
             if(fundos.length > 1 && dotsContainer) {
                 const dot = document.createElement('div');
                 dot.className = `carrossel-dot ${index === 0 ? 'active' : ''}`;
@@ -269,14 +393,14 @@ const iniciarDashboard = () => {
             }
         });
 
-        // Lógica de atualização visual dos pontinhos no evento de scroll
+        // Atualização visual dos pontinhos no evento de scroll
         if(fundos.length > 1 && dotsContainer) {
             track.addEventListener('scroll', () => {
-                const cardWidth = track.querySelector('.card-fundo').offsetWidth + 15; // Largura do card + gap css
+                const cardWidth = track.clientWidth; 
                 const scrollPos = track.scrollLeft;
                 const activeIndex = Math.round(scrollPos / cardWidth);
                 
-                document.querySelectorAll('.carrossel-dot').forEach((dot, idx) => {
+                document.querySelectorAll('#carrossel-pontinhos-fundos .carrossel-dot').forEach((dot, idx) => {
                     dot.classList.toggle('active', idx === activeIndex);
                 });
             });
@@ -350,19 +474,17 @@ const iniciarDashboard = () => {
         }
     });
 
-    // Ações das Setas do Carrossel
+    // Ações das Setas do Carrossel (Pula exatamente a largura do container)
     const btnPrev = document.getElementById('btn-prev-fundos');
     const btnNext = document.getElementById('btn-next-fundos');
     if(btnPrev && btnNext) {
         btnPrev.addEventListener('click', () => {
             const track = document.getElementById('widget-fundos-track');
-            const cardWidth = track.querySelector('.card-fundo')?.offsetWidth || 280;
-            track.scrollBy({ left: -(cardWidth + 15), behavior: 'smooth' });
+            track.scrollBy({ left: -(track.clientWidth), behavior: 'smooth' });
         });
         btnNext.addEventListener('click', () => {
             const track = document.getElementById('widget-fundos-track');
-            const cardWidth = track.querySelector('.card-fundo')?.offsetWidth || 280;
-            track.scrollBy({ left: (cardWidth + 15), behavior: 'smooth' });
+            track.scrollBy({ left: (track.clientWidth), behavior: 'smooth' });
         });
     }
 
@@ -384,7 +506,7 @@ const iniciarDashboard = () => {
                 window.api.get('/api/financeiro/fundos')
             ]);
             
-            renderizarProximosEventos(eventos);
+            processarEventos(eventos);
             renderizarFundosCarrossel(fundos);
             renderizarAniversariantes(membros);
             renderizarEmprestimosAtrasados(emprestimos);
@@ -401,7 +523,6 @@ const iniciarDashboard = () => {
     document.getElementById('btn-add-lancamento').addEventListener('click', () => window.location.href = '../financeiro.page/financeiro.html');
     document.getElementById('btn-add-evento').addEventListener('click', () => window.location.href = '../agenda/agenda.html');
     document.getElementById('btn-add-emprestimo').addEventListener('click', () => window.location.href = '../utensilios/utensilios.html');
-    document.getElementById('btn-registrar-presenca').addEventListener('click', () => window.location.href = '../lista.membros/lista.membros.html');
 
     carregarDashboard();
 };
