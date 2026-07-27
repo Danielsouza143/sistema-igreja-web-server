@@ -90,12 +90,13 @@ const iniciarDashboard = () => {
             });
 
             if(eventosComCartaz.length === 0) {
-                container.innerHTML = '<p class="sem-itens" style="padding: 20px; color: white;">Nenhum cartaz para os eventos deste mês.</p>';
+                // CORREÇÃO DA COR DE FUNDO VAZIA
+                container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%;"><p class="sem-itens" style="color: #888; padding: 20px;">Nenhum cartaz para os eventos deste mês.</p></div>';
                 return;
             }
 
             container.innerHTML = `
-                <div class="eventos-carousel" id="eventos-carousel-wrapper" style="width:100%; height:100%; position:relative;">
+                <div class="eventos-carousel" id="eventos-carousel-wrapper">
                     <button class="ec-btn prev" id="btn-ec-prev"><i class='bx bx-chevron-left'></i></button>
                     <div class="ec-track" id="ec-track">
                         ${eventosComCartaz.map(e => `
@@ -153,6 +154,7 @@ const iniciarDashboard = () => {
         }
     }
 
+    // Listener dos botões de View do Evento
     document.getElementById('btn-view-list').addEventListener('click', () => {
         viewModeEventos = 'list';
         atualizarViewEventos();
@@ -264,11 +266,8 @@ const iniciarDashboard = () => {
 
         if (chartFinanceiro) chartFinanceiro.destroy();
 
-        if (financeiroOculto) {
-            iconToggle.className = 'bx bx-show';
-        } else {
-            iconToggle.className = 'bx bx-hide';
-        }
+        if (financeiroOculto) iconToggle.className = 'bx bx-show';
+        else iconToggle.className = 'bx bx-hide';
 
         const formatarValor = (valor) => financeiroOculto ? 'R$ ****' : formatarDinheiro(valor);
 
@@ -363,6 +362,7 @@ const iniciarDashboard = () => {
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
 
+            // Cria o wrapper que garante os 100% de largura
             const wrapper = document.createElement('div');
             wrapper.className = 'card-fundo-wrapper';
 
