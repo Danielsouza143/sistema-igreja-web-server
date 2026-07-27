@@ -25,11 +25,11 @@
     gap: 25px;
 }
 
-/* PROPORÇÕES CORRIGIDAS */
+/* PROPORÇÕES CORRIGIDAS PARA DEIXAR A COLUNA 2 COM ASPECTO 4:3 */
 @media (min-width: 1200px) {
-    .dash-col:nth-child(1) { flex: 0 0 26%; } /* Eventos: Estreito */
-    .dash-col:nth-child(2) { flex: 0 0 42%; } /* Fundos: Quase Quadrado */
-    .dash-col:nth-child(3) { flex: 1; }       /* Financeiro: Ocupa o resto */
+    .dash-col:nth-child(1) { flex: 0 0 32%; } /* Eventos: Ganha mais largura */
+    .dash-col:nth-child(2) { flex: 0 0 28%; } /* Fundos e Ações: Mais estreito para formar o 4:3 */
+    .dash-col:nth-child(3) { flex: 1; }       /* Financeiro: Ocupa o resto do espaço (~40%) */
 }
 
 /* O segredo para as bases baterem: O último widget de cada coluna estica! */
@@ -37,7 +37,7 @@
     flex-grow: 1;
 }
 
-/* Redução drástica da altura do Resumo Financeiro */
+/* Redução da altura do Resumo Financeiro */
 .widget-financeiro .chart-container {
     height: 180px; 
     min-height: 180px;
@@ -51,6 +51,7 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
+    min-height: 250px;
 }
 
 .widget h3 {
@@ -110,7 +111,7 @@
 }
 .btn-toggle-eye:hover { color: var(--cor-secundaria); }
 
-/* --- AÇÕES RÁPIDAS --- */
+/* --- AÇÕES RÁPIDAS (Grid 2x2 ajustado para a coluna mais fina) --- */
 .acoes-rapidas {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -161,7 +162,7 @@
     position: relative;
     overflow: hidden;
     border-radius: 0 0 8px 8px;
-    background-color: #0c0c0c; /* Fundo cinematográfico elegante */
+    background-color: #0c0c0c; /* Fundo cinematográfico escuro */
     flex-grow: 1;
     display: flex;
     min-height: 350px;
@@ -181,12 +182,13 @@
     justify-content: center;
 }
 
-/* O Segredo do formato 3:4 e 1:1 é o object-fit: contain */
+/* Object-fit contain não deixa esticar nem cortar o cartaz! */
 .ec-slide img {
     width: 100%;
     height: 100%;
     object-fit: contain; 
 }
+
 .ec-slide-info {
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -198,7 +200,7 @@
 .ec-slide-info h4 { margin: 0 0 5px 0; font-size: 1.2rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
 .ec-slide-info p { margin: 0; font-size: 0.95rem; color: #e9ecef; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
 
-/* Setas Overlay */
+/* Setas Overlay Eventos */
 .ec-btn, .carrossel-btn {
     position: absolute;
     top: 50%;
