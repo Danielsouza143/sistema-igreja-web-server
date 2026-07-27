@@ -12,6 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
+    <!-- Cropper.js (Sistema de Corte de Imagens) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="/pages/styles/global.css">
     <link rel="stylesheet" href="/components/menu.css">
     <link rel="stylesheet" href="/components/notifications.css">
@@ -19,7 +22,6 @@
     <link rel="stylesheet" href="agenda.css">
     
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-    <!-- PACOTE DE IDIOMAS PARA TRADUZIR O CALENDÁRIO 100% PARA PORTUGUÊS -->
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales-all.global.min.js'></script>
 </head>
 <body hx-boost="true" hx-ext="preload">
@@ -157,7 +159,6 @@
                 </div>
             </div>
             
-            <!-- Campos Financeiros para Eventos -->
             <div id="financial-fields" class="financial-box">
                 <h4><i class='bx bxs-dollar-circle'></i> Gestão Financeira</h4>
                 <div class="form-group">
@@ -197,13 +198,34 @@
     </div>
 </div>
 
-<!-- NOVO MODAL DE DETALHES (Premium Cinematic Design) -->
+<!-- Modal de Corte de Imagem (Cropper) -->
+<div id="crop-modal" class="modal-overlay" style="display: none; z-index: 3000;">
+    <div class="modal-content modal-md">
+        <h2>Ajustar Cartaz</h2>
+        <div style="width: 100%; max-height: 50vh; overflow: hidden; margin-bottom: 15px; background: #eee;">
+            <img id="crop-image-target" src="" style="max-width: 100%;">
+        </div>
+        <p style="font-size: 0.9rem; color: #555; margin-bottom: 5px;">Proporção do Corte:</p>
+        <div class="crop-ratios" style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secundario btn-ratio active" data-ratio="NaN">Livre</button>
+            <button type="button" class="btn btn-secundario btn-ratio" data-ratio="1">1:1 (Quadrado)</button>
+            <button type="button" class="btn btn-secundario btn-ratio" data-ratio="0.75">3:4 (Retrato)</button>
+            <button type="button" class="btn btn-secundario btn-ratio" data-ratio="1.3333">4:3 (Paisagem)</button>
+            <button type="button" class="btn btn-secundario btn-ratio" data-ratio="1.7777">16:9 (Tela Cheia)</button>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secundario" id="btn-cancel-crop">Cancelar</button>
+            <button type="button" class="btn btn-principal" id="btn-confirm-crop"><i class='bx bx-crop'></i> Aplicar Corte</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
 <div id="detalhes-evento-modal" class="modal-overlay">
     <div class="modal-content modal-detalhes-premium">
         <button id="detalhes-modal-close" class="modal-close-flutuante">&times;</button>
         
         <div class="detalhes-layout">
-            <!-- Lado Esquerdo: Cartaz -->
             <div id="detalhes-cartaz-container" class="detalhes-imagem-lateral">
                 <img id="detalhes-cartaz-img" src="" alt="Cartaz do Evento">
                 <div id="detalhes-placeholder" class="cartaz-placeholder">
@@ -212,7 +234,6 @@
                 </div>
             </div>
 
-            <!-- Lado Direito: Informações -->
             <div class="detalhes-info-lateral">
                 <div class="detalhes-cabecalho">
                     <span id="detalhes-tipo-badge" class="badge-tipo">Programação</span>
@@ -269,15 +290,20 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="detalhes-botoes-acao">
-                    <button id="btn-editar-evento" class="btn btn-principal"><i class='bx bxs-edit'></i> Editar</button>
-                    <button id="btn-exportar-ics" class="btn btn-secundario"><i class='bx bx-export'></i> Exportar Agenda</button>
-                    <button id="btn-excluir-evento" class="btn btn-perigo"><i class='bx bx-trash'></i> Excluir</button>
-                </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Menu de Contexto do Calendário (Botão Direito) -->
+<div id="context-menu-agenda" class="context-menu" style="display: none;">
+    <ul>
+        <li id="ctx-ver-detalhes"><i class='bx bx-info-circle'></i> Ver Detalhes</li>
+        <li id="ctx-ver-dia"><i class='bx bx-calendar-event'></i> Eventos do Dia</li>
+        <li id="ctx-editar"><i class='bx bxs-edit'></i> Editar Evento</li>
+        <li id="ctx-exportar"><i class='bx bx-export'></i> Exportar Agenda</li>
+        <li id="ctx-excluir" style="color: #dc3545;"><i class='bx bxs-trash'></i> Excluir Evento</li>
+    </ul>
 </div>
 
 <!-- Modal de Tela Cheia para Cartazes -->
@@ -286,6 +312,7 @@
     <img id="fullscreen-image" src="">
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="/js/global-loader.js" defer></script>
 <script src="/js/api.js"></script>
 <script src="agenda.js"></script>
