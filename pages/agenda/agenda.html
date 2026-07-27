@@ -159,6 +159,7 @@
                 </div>
             </div>
             
+            <!-- Campos Financeiros para Eventos -->
             <div id="financial-fields" class="financial-box">
                 <h4><i class='bx bxs-dollar-circle'></i> Gestão Financeira</h4>
                 <div class="form-group">
@@ -290,6 +291,13 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- BOTÕES DE AÇÃO DO MODAL DE DETALHES -->
+                <div class="detalhes-botoes-acao">
+                    <button id="btn-editar-evento" class="btn btn-principal"><i class='bx bxs-edit'></i> Editar</button>
+                    <button id="btn-exportar-ics" class="btn btn-secundario"><i class='bx bx-export'></i> Exportar Agenda</button>
+                    <button id="btn-excluir-evento" class="btn btn-perigo"><i class='bx bx-trash'></i> Excluir</button>
+                </div>
             </div>
         </div>
     </div>
@@ -299,7 +307,7 @@
 <div id="context-menu-agenda" class="context-menu" style="display: none;">
     <ul>
         <li id="ctx-ver-detalhes"><i class='bx bx-info-circle'></i> Ver Detalhes</li>
-        <li id="ctx-ver-dia"><i class='bx bx-calendar-event'></i> Eventos do Dia</li>
+        <li id="ctx-ver-dia"><i class='bx bx-calendar-event'></i> Ver Eventos do Dia</li>
         <li id="ctx-editar"><i class='bx bxs-edit'></i> Editar Evento</li>
         <li id="ctx-exportar"><i class='bx bx-export'></i> Exportar Agenda</li>
         <li id="ctx-excluir" style="color: #dc3545;"><i class='bx bxs-trash'></i> Excluir Evento</li>
@@ -317,4 +325,5 @@
 <script src="/js/api.js"></script>
 <script src="agenda.js"></script>
 
-</body></html>
+</body>
+</html>
