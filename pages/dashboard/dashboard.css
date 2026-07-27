@@ -4,49 +4,43 @@
 .subtitulo-pagina { font-size: 1.1rem; color: #6c757d; margin-top: 5px; }
 
 /* =========================================================
-   GRID PRINCIPAL RESPONSIVA (O SEGREDO DO ALINHAMENTO)
+   SISTEMA DE COLUNAS FLEXÍVEIS (GARANTE O ALINHAMENTO)
 ========================================================== */
 .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 25px;
 }
 
-/* Tablet (2 Colunas) */
-@media (min-width: 768px) and (max-width: 1199px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr 1fr;
-        align-items: stretch;
-    }
-    .widget-eventos { grid-column: 1 / 3; }
-    .widget-fundos { grid-column: 1; grid-row: 2; }
-    .widget-financeiro { grid-column: 2; grid-row: 2; }
-    .widget-acoes { grid-column: 1; grid-row: 3; }
-    .widget-aniversarios { grid-column: 2; grid-row: 3; }
-    .widget-atrasos { grid-column: 1 / -1; grid-row: 4; }
-}
-
-/* Desktop (3 Colunas: 1.8fr | 1.1fr | 1.4fr) */
-/* Isso alarga o de Eventos, Estreita os Fundos/Ações, e o Financeiro/Niver no meio termo */
 @media (min-width: 1200px) {
     .dashboard-grid {
-        grid-template-columns: 1.8fr 1.1fr 1.4fr; 
-        align-items: stretch; 
+        flex-direction: row;
+        align-items: stretch; /* Faz as 3 colunas terem a mesma altura total */
     }
-    
-    /* Eventos ocupa toda a primeira coluna e estica a altura das duas linhas */
-    .widget-eventos { grid-column: 1; grid-row: 1 / 3; }
-    
-    /* Fundos e Ações na coluna do meio */
-    .widget-fundos { grid-column: 2; grid-row: 1; }
-    .widget-acoes { grid-column: 2; grid-row: 2; }
-    
-    /* Financeiro e Aniversários na coluna da direita */
-    .widget-financeiro { grid-column: 3; grid-row: 1; }
-    .widget-aniversarios { grid-column: 3; grid-row: 2; }
-    
-    /* Atrasos ocupa o fundo todo se aparecer */
-    .widget-atrasos { grid-column: 1 / -1; grid-row: 3; }
+}
+
+.dash-col {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* PROPORÇÕES CORRIGIDAS */
+@media (min-width: 1200px) {
+    .dash-col:nth-child(1) { flex: 0 0 26%; } /* Eventos: Estreito */
+    .dash-col:nth-child(2) { flex: 0 0 42%; } /* Fundos: Quase Quadrado */
+    .dash-col:nth-child(3) { flex: 1; }       /* Financeiro: Ocupa o resto */
+}
+
+/* O segredo para as bases baterem: O último widget de cada coluna estica! */
+.widget-eventos, .widget-acoes, .widget-aniversarios {
+    flex-grow: 1;
+}
+
+/* Redução drástica da altura do Resumo Financeiro */
+.widget-financeiro .chart-container {
+    height: 180px; 
+    min-height: 180px;
 }
 
 /* --- ESTILO DOS WIDGETS --- */
@@ -57,7 +51,6 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    min-height: 250px;
 }
 
 .widget h3 {
@@ -117,7 +110,7 @@
 }
 .btn-toggle-eye:hover { color: var(--cor-secundaria); }
 
-/* --- AÇÕES RÁPIDAS (Agora em Grid 2x2 para caber no bloco estreito) --- */
+/* --- AÇÕES RÁPIDAS --- */
 .acoes-rapidas {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -161,14 +154,14 @@
 .btn-view-toggle.active { background: var(--cor-secundaria); color: white; border-color: var(--cor-secundaria); }
 .btn-view-toggle:hover:not(.active) { background: #e9ecef; color: #333; }
 
-/* Layout Modo Carrossel Eventos */
+/* Layout Modo Carrossel Eventos (Mantém proporção da imagem intacta) */
 .widget-eventos .carousel-mode {
-    margin: -5px -20px -20px -20px; /* Expande até a borda do widget */
+    margin: -5px -20px -20px -20px; 
     padding: 0;
     position: relative;
     overflow: hidden;
     border-radius: 0 0 8px 8px;
-    background-color: #111; /* Fundo preto elegante para o cartaz */
+    background-color: #0c0c0c; /* Fundo cinematográfico elegante */
     flex-grow: 1;
     display: flex;
     min-height: 350px;
@@ -187,7 +180,8 @@
     align-items: center;
     justify-content: center;
 }
-/* O Segredo: contain garante que a foto caiba na tela sem esticar ou cortar */
+
+/* O Segredo do formato 3:4 e 1:1 é o object-fit: contain */
 .ec-slide img {
     width: 100%;
     height: 100%;
@@ -204,7 +198,7 @@
 .ec-slide-info h4 { margin: 0 0 5px 0; font-size: 1.2rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
 .ec-slide-info p { margin: 0; font-size: 0.95rem; color: #e9ecef; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
 
-/* Setas Overlay Eventos */
+/* Setas Overlay */
 .ec-btn, .carrossel-btn {
     position: absolute;
     top: 50%;
@@ -266,7 +260,7 @@
 
 .card-fundo-wrapper {
     width: 100%; 
-    flex: 0 0 100%; 
+    flex: 0 0 100%; /* Fixa a largura em exatos 1 card por vez */
     padding: 5px 2px; 
     box-sizing: border-box;
     scroll-snap-align: center;
