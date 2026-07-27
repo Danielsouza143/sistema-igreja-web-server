@@ -153,7 +153,6 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Listener dos botões de View do Evento
     document.getElementById('btn-view-list').addEventListener('click', () => {
         viewModeEventos = 'list';
         atualizarViewEventos();
@@ -247,6 +246,7 @@ const iniciarDashboard = () => {
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
 
+        // No resumo geral, excluímos movimentações de fundos para refletir o caixa
         const lancamentosCaixa = dadosLancamentos.filter(l => !l.fundoId);
 
         const lancamentosDoMes = lancamentosCaixa.filter(l => {
@@ -264,8 +264,11 @@ const iniciarDashboard = () => {
 
         if (chartFinanceiro) chartFinanceiro.destroy();
 
-        if (financeiroOculto) iconToggle.className = 'bx bx-show';
-        else iconToggle.className = 'bx bx-hide';
+        if (financeiroOculto) {
+            iconToggle.className = 'bx bx-show';
+        } else {
+            iconToggle.className = 'bx bx-hide';
+        }
 
         const formatarValor = (valor) => financeiroOculto ? 'R$ ****' : formatarDinheiro(valor);
 
@@ -360,7 +363,6 @@ const iniciarDashboard = () => {
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
 
-            // Cria o wrapper que garante os 100% de largura
             const wrapper = document.createElement('div');
             wrapper.className = 'card-fundo-wrapper';
 
