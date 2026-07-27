@@ -111,7 +111,7 @@
 }
 .btn-toggle-eye:hover { color: var(--cor-secundaria); }
 
-/* --- AÇÕES RÁPIDAS (Grid 2x2 ajustado para a coluna mais fina) --- */
+/* --- AÇÕES RÁPIDAS --- */
 .acoes-rapidas {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -141,32 +141,44 @@
 /* =========================================================
    MÓDULO: EVENTOS (LISTA E CARROSSEL)
 ========================================================== */
-.eventos-view-toggles { display: flex; gap: 5px; }
+.eventos-view-toggles { display: flex; gap: 8px; }
+
+/* CORREÇÃO DO CONTRASTE DOS BOTÕES DO CARD EVENTO */
 .btn-view-toggle {
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    color: #888;
-    border-radius: 4px;
+    background: transparent;
+    border: 1px solid #ccc;
+    color: #555;
+    border-radius: 6px;
     cursor: pointer;
-    padding: 4px 8px;
-    font-size: 1.1rem;
+    padding: 5px 10px;
+    font-size: 1.2rem;
     transition: all 0.2s;
 }
-.btn-view-toggle.active { background: var(--cor-secundaria); color: white; border-color: var(--cor-secundaria); }
-.btn-view-toggle:hover:not(.active) { background: #e9ecef; color: #333; }
+.btn-view-toggle.active { background: var(--cor-secundaria, #0033a0); color: white; border-color: var(--cor-secundaria, #0033a0); }
+.btn-view-toggle:hover:not(.active) { background: #f0f0f0; color: #222; }
 
-/* Layout Modo Carrossel Eventos (Mantém proporção da imagem intacta) */
+
+/* Layout Modo Carrossel Eventos */
 .widget-eventos .carousel-mode {
     margin: -5px -20px -20px -20px; 
     padding: 0;
     position: relative;
     overflow: hidden;
     border-radius: 0 0 8px 8px;
-    background-color: #0c0c0c; /* Fundo cinematográfico escuro */
+    background-color: #ffffff; /* Fundo padrão branco quando não houver imagens */
     flex-grow: 1;
     display: flex;
     min-height: 350px;
 }
+
+/* O fundo preto de cinema vai EXCLUSIVAMENTE onde rola as imagens */
+.eventos-carousel {
+    background-color: #0c0c0c; 
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
 .ec-track {
     display: flex;
     width: 100%;
@@ -182,13 +194,11 @@
     justify-content: center;
 }
 
-/* Object-fit contain não deixa esticar nem cortar o cartaz! */
 .ec-slide img {
     width: 100%;
     height: 100%;
     object-fit: contain; 
 }
-
 .ec-slide-info {
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -262,7 +272,7 @@
 
 .card-fundo-wrapper {
     width: 100%; 
-    flex: 0 0 100%; /* Fixa a largura em exatos 1 card por vez */
+    flex: 0 0 100%; 
     padding: 5px 2px; 
     box-sizing: border-box;
     scroll-snap-align: center;
