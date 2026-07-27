@@ -1,67 +1,51 @@
 /* --- GERAL DA PÁGINA --- */
-.header-dashboard {
-    margin-bottom: 30px;
-}
-.title-page {
-    margin: 0;
-}
-.subtitulo-pagina {
-    font-size: 1.1rem;
-    color: #6c757d;
-    margin-top: 5px;
-}
+.header-dashboard { margin-bottom: 30px; }
+.title-page { margin: 0; }
+.subtitulo-pagina { font-size: 1.1rem; color: #6c757d; margin-top: 5px; }
 
-/* --- GRID PRINCIPAL DO DASHBOARD --- */
+/* =========================================================
+   GRID PRINCIPAL RESPONSIVA (O SEGREDO DO ALINHAMENTO)
+========================================================== */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 25px;
 }
 
-@media (min-width: 992px) {
+/* Tablet (2 Colunas) */
+@media (min-width: 768px) and (max-width: 1199px) {
     .dashboard-grid {
-        grid-template-columns: 2fr 1fr; /* Coluna da esquerda maior */
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
     }
+    .widget-eventos { grid-column: 1; grid-row: 1; }
+    .widget-fundos { grid-column: 2; grid-row: 1; }
+    .widget-acoes { grid-column: 2; grid-row: 2; }
+    .widget-financeiro { grid-column: 1; grid-row: 2; }
+    .widget-aniversarios { grid-column: 1 / -1; grid-row: 3; }
+    .widget-atrasos { grid-column: 1 / -1; grid-row: 4; }
 }
 
-.coluna-widgets {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
-/* --- NOVA LINHA: EVENTOS E FUNDOS LADO A LADO --- */
-.row-eventos-fundos {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 25px;
-    align-items: stretch; 
-}
-
-@media (min-width: 768px) {
-    .row-eventos-fundos {
-        /* Metade para Eventos, Metade para Fundos = Proporção quase quadrada! */
-        grid-template-columns: 1fr 1fr; 
+/* Desktop (3 Colunas: 1.2fr | 2fr | 1.5fr) */
+@media (min-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1.2fr 2fr 1.5fr; 
+        align-items: stretch; /* Estica os blocos verticalmente de forma igual */
     }
-}
-
-.widget-eventos-compacto, .widget-fundos {
-    display: flex;
-    flex-direction: column;
-    height: 100%; 
-    min-height: 380px; 
-}
-
-.scrollable-content {
-    overflow-y: auto;
-    flex-grow: 1;
-    padding-right: 5px;
-}
-
-.widget-fundos {
-    min-width: 0; 
-    display: flex;
-    flex-direction: column;
+    
+    /* Eventos ocupa toda a primeira coluna (linha 1 e 2) */
+    .widget-eventos { grid-column: 1; grid-row: 1 / 3; }
+    
+    /* Fundos e Ações na coluna do meio */
+    .widget-fundos { grid-column: 2; grid-row: 1; }
+    .widget-acoes { grid-column: 2; grid-row: 2; }
+    
+    /* Financeiro e Aniversários na coluna da direita */
+    .widget-financeiro { grid-column: 3; grid-row: 1; }
+    .widget-aniversarios { grid-column: 3; grid-row: 2; }
+    
+    /* Atrasos ocupa o fundo todo se aparecer */
+    .widget-atrasos { grid-column: 1 / -1; grid-row: 3; }
 }
 
 /* --- ESTILO DOS WIDGETS --- */
@@ -72,6 +56,7 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
+    min-height: 250px;
 }
 
 .widget h3 {
@@ -82,98 +67,49 @@
     color: #333;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
 }
-.widget h3 i {
-    color: var(--cor-secundaria);
-}
-
-.btn-toggle-eye {
-    background: none;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0;
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    transition: color 0.2s;
-}
-
-.btn-toggle-eye:hover {
-    color: var(--cor-secundaria);
-}
+.widget h3 span { display: flex; align-items: center; gap: 8px; }
+.widget h3 i { color: var(--cor-secundaria); }
 
 .widget-conteudo {
     flex-grow: 1;
-    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+}
+.scrollable-content {
+    overflow-y: auto;
+    padding-right: 5px;
 }
 
-.loading-text {
-    color: #888;
-}
-
-/* Lista de Itens (Eventos, Aniversários, Atrasos) */
+/* --- LISTAS (ANIVERSÁRIOS E ATRASOS) --- */
 .lista-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
+    padding: 12px 0;
     border-bottom: 1px solid #f0f0f0;
     font-size: 0.95rem;
 }
-.lista-item:last-child {
-    border-bottom: none;
-}
-
-.item-principal {
-    font-weight: 600;
-    color: #333;
-}
-.item-detalhe {
-    color: #6c757d;
-    font-size: 0.9rem;
-}
-.lista-item > div {
-    display: flex;
-    flex-direction: column;
-}
-.btn-whatsapp {
-    color: #25D366;
-    font-size: 1.8rem;
-    text-decoration: none;
-    transition: transform 0.2s;
-    margin-left: 15px;
-}
-.btn-whatsapp:hover {
-    transform: scale(1.1);
-}
-
-.sem-itens {
-    color: #888;
-}
+.lista-item:last-child { border-bottom: none; }
+.item-principal { font-weight: 600; color: #333; }
+.item-detalhe { color: #6c757d; font-size: 0.85rem; margin-top: 2px;}
+.lista-item > div { display: flex; flex-direction: column; }
+.btn-whatsapp { color: #25D366; font-size: 1.8rem; text-decoration: none; transition: transform 0.2s; margin-left: 15px; }
+.btn-whatsapp:hover { transform: scale(1.1); }
+.sem-itens { color: #888; padding: 20px 0; text-align: center; }
 
 /* Widget de Alerta (Atrasos) */
-.widget-alerta h3 i {
-    color: #dc3545;
-}
-.widget-alerta .item-detalhe {
-    color: #dc3545;
-    font-weight: 600;
-}
+.widget-alerta h3 i { color: #dc3545; }
+.widget-alerta .item-detalhe { color: #dc3545; font-weight: 600; }
 
-/* Widget Financeiro */
-.chart-container {
-    position: relative;
-    height: 100%;
-}
-
-/* Widget de Ações Rápidas */
+/* --- AÇÕES RÁPIDAS --- */
 .acoes-rapidas {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 15px;
+    align-content: start;
 }
 .btn-acao {
     display: flex;
@@ -181,29 +117,102 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 15px;
+    padding: 15px 10px;
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: #333;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
 }
-.btn-acao:hover {
-    background-color: var(--cor-secundaria);
-    color: #fff;
-    border-color: var(--cor-secundaria);
-    transform: translateY(-3px);
-}
-.btn-acao i {
-    font-size: 2rem;
-}
+.btn-acao:hover { background-color: var(--cor-secundaria); color: #fff; border-color: var(--cor-secundaria); transform: translateY(-3px); }
+.btn-acao i { font-size: 1.8rem; }
 
 /* =========================================================
-   CARROSSEL E CARDS DE FUNDOS
+   MÓDULO: EVENTOS (LISTA E CARROSSEL)
+========================================================== */
+.eventos-view-toggles { display: flex; gap: 5px; }
+.btn-view-toggle {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #888;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+.btn-view-toggle.active { background: var(--cor-secundaria); color: white; border-color: var(--cor-secundaria); }
+.btn-view-toggle:hover:not(.active) { background: #e9ecef; color: #333; }
+
+/* Layout Modo Carrossel */
+.widget-eventos .carousel-mode {
+    margin: -5px -20px -20px -20px; /* Expande até a borda do widget */
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0 0 8px 8px;
+    background-color: #000;
+}
+.ec-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.ec-slide {
+    min-width: 100%;
+    height: 100%;
+    position: relative;
+}
+.ec-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+}
+.ec-slide-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 40px 20px 20px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    color: white;
+}
+.ec-slide-info h4 { margin: 0 0 5px 0; font-size: 1.2rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+.ec-slide-info p { margin: 0; font-size: 0.95rem; color: #e9ecef; }
+
+/* Setas Overlay */
+.ec-btn, .carrossel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #333;
+    transition: opacity 0.3s ease, background 0.2s;
+    z-index: 10;
+    opacity: 0; 
+}
+.ec-btn.prev, .carrossel-btn.prev { left: 10px; }
+.ec-btn.next, .carrossel-btn.next { right: 10px; }
+.ec-btn:hover, .carrossel-btn:hover { background: #fff; }
+
+.carousel-mode:hover .ec-btn { opacity: 1; }
+
+/* =========================================================
+   MÓDULO: CARROSSEL DE FUNDOS E METAS
 ========================================================== */
 .carrossel-container-principal {
     display: flex;
@@ -222,24 +231,29 @@
     overflow: hidden;
 }
 
+.carrossel-container-principal:hover .carrossel-btn { opacity: 1; }
+
 .carrossel-track {
     display: flex;
-    gap: 20px; /* Respiro entre os cards */
+    gap: 0; /* O espaçamento é gerido pela div wrapper interna */
     overflow-x: auto;
     scroll-behavior: smooth;
-    scrollbar-width: none; /* Firefox */
-    padding: 5px 0; /* Removido padding lateral para o card bater nas bordas */
+    scrollbar-width: none; 
     flex-grow: 1;
     scroll-snap-type: x mandatory;
-    align-items: stretch; 
 }
-.carrossel-track::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+.carrossel-track::-webkit-scrollbar { display: none; }
+
+.card-fundo-wrapper {
+    width: 100%; 
+    flex: 0 0 100%; /* Pula 1 a 1 de forma precisa */
+    padding: 5px 2px; 
+    box-sizing: border-box;
+    scroll-snap-align: center;
 }
 
-/* Card Fundo - Expandido para 100% da tela */
+/* Card Fundo Interno */
 .card-fundo {
-    scroll-snap-align: center; 
     background: #ffffff;
     border-radius: 12px;
     padding: 25px;
@@ -249,140 +263,31 @@
     border-left: 6px solid #007bff;
     display: flex;
     flex-direction: column;
-    
-    /* CORREÇÃO: Ocupar exatamente 100% do espaço do carrossel */
-    width: 100%; 
-    flex: 0 0 100%; 
-    max-width: 100%; 
-    
-    min-height: 100%; 
+    height: 100%; 
     box-sizing: border-box;
 }
 
-.card-fundo:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
+.card-fundo:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+.card-fundo.meta-concluida { border-left-color: #28a745; }
 
-.card-fundo.meta-concluida {
-    border-left-color: #28a745;
-}
+.card-fundo-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.card-fundo-header h3 { margin: 0; font-size: 1.15rem; color: #333; font-weight: 700; line-height: 1.3; border: none; padding: 0; flex-grow: 1; word-break: break-word; }
 
-.card-fundo-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px; 
-    margin-bottom: 12px;
-}
-
-.card-fundo-header h3 {
-    margin: 0;
-    font-size: 1.15rem;
-    color: #333;
-    font-weight: 700;
-    line-height: 1.3;
-    border: none;
-    padding: 0;
-    flex-grow: 1; 
-    word-break: break-word; 
-}
-
-.badge-status {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    white-space: nowrap;
-    flex-shrink: 0; 
-}
+.badge-status { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
 .badge-andamento { background-color: #e9f5ff; color: #007bff; }
 .badge-concluido { background-color: #e6f4ea; color: #1e8e3e; }
 
-.fundo-desc {
-    font-size: 0.95rem;
-    color: #555;
-    margin: 0 0 15px 0;
-    line-height: 1.5;
-    flex-grow: 1; 
-}
+.fundo-desc { font-size: 0.95rem; color: #555; margin: 0 0 15px 0; line-height: 1.5; flex-grow: 1; }
+.fundo-ritmo { font-size: 0.85rem; color: #d93025; display: flex; align-items: center; gap: 5px; margin-bottom: 10px; font-weight: 500; }
 
-.fundo-ritmo {
-    font-size: 0.85rem;
-    color: #d93025;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 10px;
-    font-weight: 500;
-}
-
-.progresso-container {
-    background-color: #e9ecef;
-    border-radius: 10px;
-    height: 12px;
-    width: 100%;
-    overflow: hidden;
-    margin: 10px 0;
-}
-.progresso-barra {
-    height: 100%;
-    background: linear-gradient(90deg, #28a745, #34ce57);
-    border-radius: 10px;
-    transition: width 0.8s ease-in-out;
-}
+.progresso-container { background-color: #e9ecef; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin: 10px 0; }
+.progresso-barra { height: 100%; background: linear-gradient(90deg, #28a745, #34ce57); border-radius: 10px; transition: width 0.8s ease-in-out; }
 .meta-concluida .progresso-barra { background: #6c757d; }
 
-.progresso-texto {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    color: #555;
-}
-.progresso-porcentagem {
-    text-align: right;
-    font-weight: 800;
-    font-size: 1.2rem;
-    color: var(--cor-primaria);
-    margin-top: 5px;
-}
+.progresso-texto { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
+.progresso-porcentagem { text-align: right; font-weight: 800; font-size: 1.2rem; color: var(--cor-primaria); margin-top: 5px; }
 
-/* Setas Hover */
-.carrossel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    border: none;
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    font-size: 1.5rem;
-    color: #555;
-    transition: opacity 0.3s ease, background 0.2s;
-    z-index: 10;
-    opacity: 0; /* Oculto por padrão */
-    pointer-events: none;
-}
-.carrossel-btn.prev { left: 10px; }
-.carrossel-btn.next { right: 10px; }
-
-/* Só mostra a seta quando passa o mouse por cima do container */
-.carrossel-container-principal:hover .carrossel-btn {
-    opacity: 1;
-    pointer-events: auto;
-}
-.carrossel-btn:hover {
-    background: #e9e9e9;
-}
-
-/* Pontinhos estilo Instagram */
+/* PONTINHOS TIPO INSTAGRAM GERAIS */
 .carrossel-indicators {
     display: flex;
     justify-content: center;
@@ -403,10 +308,11 @@
     border-radius: 4px;
 }
 
-/* Modal Detalhes Fundo (Para o Dashboard) */
+/* Modais Restantes */
 .modal-lg { max-width: 800px; }
 .fundo-header-stats { display: flex; gap: 20px; margin: 20px 0; }
 .fundo-header-stats .stat-box { flex: 1; background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
 .fundo-header-stats .stat-box h3 { margin: 5px 0 0 0; color: var(--cor-primaria); font-size: 1.4rem; }
 .tabela-lancamentos { width: 100%; border-collapse: collapse; margin-top: 10px; }
 .tabela-lancamentos th, .tabela-lancamentos td { border-bottom: 1px solid #eee; }
+.btn-toggle-eye { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #888; }
