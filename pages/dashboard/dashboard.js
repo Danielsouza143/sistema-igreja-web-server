@@ -27,7 +27,7 @@ const iniciarDashboard = () => {
         const proximos = eventos
             .filter(e => new Date(e.dataFim) >= hoje)
             .sort((a, b) => new Date(a.dataInicio) - new Date(b.dataInicio))
-            .slice(0, 5); // Pode pegar até 5 por ser rolável agora
+            .slice(0, 6); // Pode pegar até 6 já que é rolável e agora o card é mais alto
 
         if (proximos.length === 0) {
             container.innerHTML = '<p class="sem-itens">Nenhum evento futuro cadastrado.</p>';
@@ -43,7 +43,7 @@ const iniciarDashboard = () => {
     }
 
     function renderizarAniversariantes(membros) {
-        todosMembros = membros; // Salva para o modal de fundos
+        todosMembros = membros; 
         const container = document.getElementById('widget-aniversariantes');
         const hoje = new Date();
         const proximaSemana = new Date();
@@ -126,7 +126,6 @@ const iniciarDashboard = () => {
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
 
-        // No resumo geral, excluímos movimentações de fundos para refletir o caixa
         const lancamentosCaixa = dadosLancamentos.filter(l => !l.fundoId);
 
         const lancamentosDoMes = lancamentosCaixa.filter(l => {
@@ -144,11 +143,8 @@ const iniciarDashboard = () => {
 
         if (chartFinanceiro) chartFinanceiro.destroy();
 
-        if (financeiroOculto) {
-            iconToggle.className = 'bx bx-show';
-        } else {
-            iconToggle.className = 'bx bx-hide';
-        }
+        if (financeiroOculto) iconToggle.className = 'bx bx-show';
+        else iconToggle.className = 'bx bx-hide';
 
         const formatarValor = (valor) => financeiroOculto ? 'R$ ****' : formatarDinheiro(valor);
 
@@ -190,7 +186,7 @@ const iniciarDashboard = () => {
     }
 
     // ============================================================
-    // NOVO: CARROSSEL DE FUNDOS E METAS
+    // CARROSSEL DE FUNDOS E METAS
     // ============================================================
 
     const calcularRitmoFundo = (fundo) => {
@@ -214,13 +210,26 @@ const iniciarDashboard = () => {
 
     function renderizarFundosCarrossel(fundos) {
         const track = document.getElementById('widget-fundos-track');
+        const dotsContainer = document.getElementById('carrossel-pontinhos');
+        
         if (!fundos || fundos.length === 0) {
             track.innerHTML = '<p class="sem-itens" style="padding: 20px;">Nenhuma meta ou fundo ativo.</p>';
+            if(dotsContainer) dotsContainer.innerHTML = '';
+            document.getElementById('btn-prev-fundos').style.display = 'none';
+            document.getElementById('btn-next-fundos').style.display = 'none';
             return;
         }
 
         track.innerHTML = '';
-        fundos.forEach(fundo => {
+        if(dotsContainer) dotsContainer.innerHTML = '';
+        
+        // Se houver apenas 1 fundo, não precisamos de setas ou pontinhos
+        if(fundos.length === 1) {
+            document.getElementById('btn-prev-fundos').style.display = 'none';
+            document.getElementById('btn-next-fundos').style.display = 'none';
+        }
+
+        fundos.forEach((fundo, index) => {
             const meta = fundo.meta || 1;
             const arrecadado = Math.max(fundo.arrecadado || 0, 0);
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
@@ -249,10 +258,29 @@ const iniciarDashboard = () => {
                 <div class="progresso-porcentagem">${porcentagem}%</div>
             `;
 
-            // Abre o modal de detalhes igual ao financeiro
             card.onclick = () => abrirDetalhesFundo(fundo);
             track.appendChild(card);
+            
+            // Renderiza o pontinho correspondente
+            if(fundos.length > 1 && dotsContainer) {
+                const dot = document.createElement('div');
+                dot.className = `carrossel-dot ${index === 0 ? 'active' : ''}`;
+                dotsContainer.appendChild(dot);
+            }
         });
+
+        // Lógica de atualização visual dos pontinhos no evento de scroll
+        if(fundos.length > 1 && dotsContainer) {
+            track.addEventListener('scroll', () => {
+                const cardWidth = track.querySelector('.card-fundo').offsetWidth + 15; // Largura do card + gap css
+                const scrollPos = track.scrollLeft;
+                const activeIndex = Math.round(scrollPos / cardWidth);
+                
+                document.querySelectorAll('.carrossel-dot').forEach((dot, idx) => {
+                    dot.classList.toggle('active', idx === activeIndex);
+                });
+            });
+        }
     }
 
     // Modal de Detalhes do Fundo
@@ -266,7 +294,6 @@ const iniciarDashboard = () => {
         const porcentagem = ((fundo.arrecadado / (fundo.meta || 1)) * 100).toFixed(1);
         document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
 
-        // Puxa os lançamentos vinculados apenas a esse fundo
         const lancamentosDoFundo = dadosLancamentos.filter(l => l.fundoId === fundo._id);
         const tabela = document.getElementById('tabela-fundo-lancamentos');
         
@@ -294,7 +321,6 @@ const iniciarDashboard = () => {
     const renderizarGraficoFundoEspecifico = (lancamentos) => {
         const canvas = document.getElementById('grafico-fundo-historico');
         if(!canvas) return;
-        
         if (chartFundoDetalhe) chartFundoDetalhe.destroy();
 
         const ctx = canvas.getContext('2d');
@@ -324,14 +350,21 @@ const iniciarDashboard = () => {
         }
     });
 
-    // Controles do Carrossel
-    document.getElementById('btn-prev-fundos').addEventListener('click', () => {
-        document.getElementById('widget-fundos-track').scrollBy({ left: -280, behavior: 'smooth' });
-    });
-    document.getElementById('btn-next-fundos').addEventListener('click', () => {
-        document.getElementById('widget-fundos-track').scrollBy({ left: 280, behavior: 'smooth' });
-    });
-
+    // Ações das Setas do Carrossel
+    const btnPrev = document.getElementById('btn-prev-fundos');
+    const btnNext = document.getElementById('btn-next-fundos');
+    if(btnPrev && btnNext) {
+        btnPrev.addEventListener('click', () => {
+            const track = document.getElementById('widget-fundos-track');
+            const cardWidth = track.querySelector('.card-fundo')?.offsetWidth || 280;
+            track.scrollBy({ left: -(cardWidth + 15), behavior: 'smooth' });
+        });
+        btnNext.addEventListener('click', () => {
+            const track = document.getElementById('widget-fundos-track');
+            const cardWidth = track.querySelector('.card-fundo')?.offsetWidth || 280;
+            track.scrollBy({ left: (cardWidth + 15), behavior: 'smooth' });
+        });
+    }
 
     // --- EVENT LISTENERS GERAIS ---
     document.getElementById('btn-toggle-financeiro').addEventListener('click', () => {
@@ -370,7 +403,6 @@ const iniciarDashboard = () => {
     document.getElementById('btn-add-emprestimo').addEventListener('click', () => window.location.href = '../utensilios/utensilios.html');
     document.getElementById('btn-registrar-presenca').addEventListener('click', () => window.location.href = '../lista.membros/lista.membros.html');
 
-    // Inicia tudo
     carregarDashboard();
 };
 
