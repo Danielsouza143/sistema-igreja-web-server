@@ -1,456 +1,526 @@
+/* =========================================================
+   ESTRUTURA GERAL DA AGENDA
+========================================================== */
+.header-pagina {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+.title-page { margin: 0; font-size: 1.8rem; color: #001f5d; }
+.subtitulo-pagina { margin: 5px 0 0 0; color: #6c757d; font-size: 1rem; }
 
-/* --- Estilos para a Pré-visualização de Eventos no Calendário (v3 - Isolado) --- */
-#calendario .fc-event-main-frame {
-    height: 100%; /* Garante que o frame do evento ocupe todo o espaço */
+.acoes-header {
+    display: flex;
+    gap: 15px;
 }
 
-#calendario .fc-event-main {
-    padding: 0 !important; /* Remove padding padrão do FullCalendar */
-    height: 100%;
+/* =========================================================
+   CUSTOMIZAÇÃO DO FULLCALENDAR (Design Premium)
+========================================================== */
+.calendario-wrapper {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
 }
 
-#calendario .fc-event {
-    border: none !important; /* Remove borda padrão do FullCalendar */
-    background-color: transparent !important; /* Remove background padrão */
-    padding: 0 !important;
+.fc {
+    font-family: 'Montserrat', sans-serif !important;
 }
 
-#calendario .fc-custom-preview-wrapper {
+/* Toolbar (Topo do Calendário) */
+.fc .fc-toolbar-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #001f5d !important;
+    text-transform: capitalize;
+}
+
+.fc .fc-button-primary {
+    background-color: #f8f9fa !important;
+    border-color: #ddd !important;
+    color: #333 !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #e9ecef !important;
+    border-color: #ccc !important;
+}
+
+.fc .fc-button-primary:not(:disabled):active, 
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #0033a0 !important;
+    border-color: #0033a0 !important;
+    color: #ffffff !important;
+}
+
+/* Grid e Células */
+.fc-theme-standard th {
+    background-color: #f8f9fa;
+    padding: 10px 0 !important;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    border-color: #eee !important;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: #eee !important;
+}
+
+.fc-daygrid-day-number {
+    font-weight: 600;
+    color: #333;
+    padding: 8px !important;
+}
+
+.fc-day-today {
+    background-color: rgba(0, 123, 255, 0.05) !important; /* Destaque leve para o dia de hoje */
+}
+
+/* Eventos no Calendário (Chips Premium) */
+.fc-event {
+    border: none !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    margin: 2px 4px !important;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+    z-index: 5;
+}
+
+/* Injeção Customizada do Evento (Thumbnails e Texto) */
+.custom-event-chip {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 4px;
     width: 100%;
-    height: 100%;
+    padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--fc-event-border-radius);
-    overflow: hidden;
-    position: relative;
-    /* A cor de fundo será definida pelo FullCalendar via `event.color` */
+    gap: 8px;
 }
 
-#calendario .fc-custom-preview-type-badge {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.5);
-}
-
-#calendario .fc-custom-preview-type-badge.evento {
-    background-color: #e36e00; /* Laranja */
-}
-
-#calendario .fc-custom-preview-type-badge.programacao {
-    background-color: var(--cor-acao); /* Azul */
-}
-
-#calendario .fc-custom-preview-thumb {
-    width: 20px;
-    height: 20px;
+.custom-event-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
     object-fit: cover;
-    border-radius: 2px;
     flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    background-color: rgba(255,255,255,0.2);
 }
 
-#calendario .fc-custom-preview-content {
+.custom-event-info {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
     overflow: hidden;
     line-height: 1.2;
 }
 
-#calendario .fc-custom-preview-time {
-    font-size: 0.7rem;
-    font-weight: 500;
-    opacity: 0.9;
-    color: inherit; /* Herda a cor do texto do evento */
-}
-
-#calendario .fc-custom-preview-title {
+.custom-event-title {
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: inherit; /* Herda a cor do texto do evento */
 }
 
-/* Ajustes para a visualização de lista (listWeek) */
-#calendario .fc-list-event-graphic {
-    display: none; /* Esconde o ícone padrão na lista */
+.custom-event-time {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.9;
 }
 
-#calendario .fc-list-event-title {
+/* Botão "Ver Mais" do Calendário */
+.fc-daygrid-more-link {
+    font-weight: 600 !important;
+    color: #007bff !important;
+    padding: 2px 6px !important;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+.fc-daygrid-more-link:hover {
+    background-color: #f0f8ff !important;
+    text-decoration: none !important;
+}
+
+/* =========================================================
+   LISTA DE EVENTOS (Aba Alternativa)
+========================================================== */
+.lista-eventos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.evento-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.evento-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.evento-card-cartaz {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.evento-card-body {
+    padding: 20px;
     flex-grow: 1;
 }
 
-#calendario .fc-list-event-title a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.evento-card-body h4 {
+    margin: 0 0 15px 0;
+    font-size: 1.15rem;
+    color: #001f5d;
 }
 
-#calendario .fc-list-event-title .fc-custom-preview-thumb {
-    width: 30px;
-    height: 30px;
-    border-radius: 3px;
+.evento-card-body p {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.evento-card-body p i {
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.evento-card-footer {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #eee;
+    text-align: right;
+}
+
+/* =========================================================
+   NOVO MODAL DE DETALHES (Estilo Cinema / Premium)
+========================================================== */
+.modal-detalhes-premium {
+    max-width: 900px !important;
+    width: 95% !important;
+    padding: 0 !important; /* Remove padding pra imagem colar na borda */
+    border-radius: 16px !important;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.modal-close-flutuante {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.modal-close-flutuante:hover {
+    background: #ff4d4d;
+    color: white;
+}
+
+.detalhes-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    max-height: 80vh;
+}
+
+/* Lado do Cartaz */
+.detalhes-imagem-lateral {
+    flex: 0 0 45%;
+    background-color: #111;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detalhes-imagem-lateral img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+    cursor: zoom-in;
+    transition: opacity 0.3s;
+}
+
+.detalhes-imagem-lateral img:hover {
+    opacity: 1;
+}
+
+.cartaz-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #666;
+    font-size: 1.2rem;
+    gap: 10px;
+}
+.cartaz-placeholder i { font-size: 4rem; color: #444; }
+
+/* Lado das Informações */
+.detalhes-info-lateral {
+    flex: 1;
+    padding: 35px 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.detalhes-cabecalho {
+    margin-bottom: 25px;
+}
+
+.badge-tipo {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #e9f5ff;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.detalhes-titulo {
+    margin: 0 0 5px 0;
+    font-size: 1.8rem;
+    color: #111;
+    line-height: 1.2;
+}
+
+.detalhes-categoria {
+    font-size: 0.9rem;
+    color: #888;
+    font-weight: 500;
+}
+
+/* Lista de Infos com Ícones */
+.detalhes-lista-infos {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #0033a0;
     flex-shrink: 0;
 }
 
-#calendario .fc-list-event-title .fc-custom-preview-type-badge {
-    width: 8px;
-    height: 8px;
+.info-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-#calendario .fc-list-event-title .fc-custom-preview-title {
-    font-size: 0.9rem;
-}
-
-#calendario .fc-list-event-time {
+.info-label {
     font-size: 0.8rem;
-    color: var(--cor-texto-claro);
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
 }
 
-/* --- MODAIS ESPECÍFICOS PARA AGENDA --- */
-#detalhes-evento-modal.modal-overlay {
-    display: none !important;               /* Esconde por padrão */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    justify-content: center;
-    align-items: center;
-    z-index: 2000 !important; /* Ajustado para 2000 para garantir visibilidade */
-}
-
-#detalhes-evento-modal.modal-overlay.active {
-    display: flex !important;
-}
-
-#detalhes-evento-modal .modal-content {
-    background: #fff !important;
-    padding: 20px !important;
-    border-radius: var(--border-radius-padrao) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-    max-width: 1531px !important;
-    max-height: 633px !important;
-    width: 100% !important;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: fadeIn 0.3s ease !important;
-}
-
-#detalhes-evento-modal .modal-body {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-bottom: 20px; /* Add some space above buttons */
-}
-
-#detalhes-evento-modal .modal-body-content {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    height: 100%;
-}
-
-#detalhes-evento-modal #detalhes-cartaz-container {
-    flex: 1;
-    min-width: 250px; /* Slightly reduced min-width */
-    max-width: 30%; /* Decreased max-width */
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Align image to top */
-    overflow: hidden;
-}
-
-#detalhes-evento-modal #detalhes-cartaz-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: var(--border-radius-padrao);
-    box-shadow: var(--sombra-padrao);
-}
-
-#detalhes-evento-modal #detalhes-info-container {
-    flex: 1;
-    min-width: 350px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    #detalhes-evento-modal .modal-body-content {
-        flex-direction: column;
-    }
-    #detalhes-evento-modal #detalhes-cartaz-container {
-        max-width: 100%;
-        min-width: unset;
-        height: auto;
-
-
-#detalhes-evento-modal .modal-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px; /* Spacing between button groups */
-    margin-top: 20px;
-}
-
-#detalhes-evento-modal .modal-secondary-actions {
-    display: flex;
-    gap: 10px; /* Spacing between individual buttons */
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-/* Responsive adjustments for buttons */
-@media (max-width: 600px) {
-    #detalhes-evento-modal .modal-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    #detalhes-evento-modal .modal-secondary-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    #detalhes-evento-modal .modal-actions button,
-    #detalhes-evento-modal .modal-secondary-actions button {
-        width: 100%;
-    }
-}
-
-/* --- Estilos Específicos para Botões do Modal de Detalhes do Evento --- */
-#detalhes-evento-modal .btn-detalhes-excluir {
-    background-color: var(--cor-perigo) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#detalhes-evento-modal .btn-detalhes-excluir:hover {
-    background-color: #c82333 !important; /* Darker red */
-}
-
-#detalhes-evento-modal .btn-detalhes-ics,
-#detalhes-evento-modal .btn-detalhes-lembrete,
-#detalhes-evento-modal .btn-detalhes-editar {
-    background-color: var(--cor-secundaria) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#detalhes-evento-modal .btn-detalhes-ics:hover,
-#detalhes-evento-modal .btn-detalhes-lembrete:hover,
-#detalhes-evento-modal .btn-detalhes-editar:hover {
-    background-color: #0056b3 !important; /* Darker blue */
-}
-
-#detalhes-evento-modal .btn-detalhes-fechar {
-    background-color: var(--cor-acao) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#detalhes-evento-modal .btn-detalhes-fechar:hover {
-    background-color: #0069d9 !important; /* Darker action color */
-}
-
-/* Ensure icons are styled correctly within these buttons */
-#detalhes-evento-modal .modal-actions button i {
-    margin-right: 5px;
-}
-
-#detalhes-evento-modal #detalhes-info-container {
-    flex: 1;
-    min-width: 350px;
-    padding: 20px;
-    background-color: var(--cor-fundo-card);
-    border-radius: var(--border-radius-padrao);
-    box-shadow: var(--sombra-padrao);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-#detalhes-evento-modal .info-section {
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--cor-borda-fraca);
-}
-
-#detalhes-evento-modal .info-section:last-of-type {
-    border-bottom: none;
-}
-
-#detalhes-evento-modal #detalhes-info-container p {
-    margin-bottom: 12px;
+.info-text strong {
     font-size: 1rem;
-    line-height: 1.5;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#detalhes-evento-modal #detalhes-info-container p:last-child {
-    margin-bottom: 0;
-}
-
-#detalhes-evento-modal #detalhes-info-container p strong {
-    color: var(--cor-primaria);
-    min-width: 130px;
-    margin-right: 15px;
-    font-weight: 700;
-}
-
-#detalhes-evento-modal #detalhes-info-container p i {
-    font-size: 1.2rem;
-    color: var(--cor-acao);
-}
-
-#detalhes-evento-modal #detalhes-info-container h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: var(--cor-secundaria);
-    font-size: 1.2rem;
-    border-bottom: 1px solid var(--cor-borda-fraca);
-    padding-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#detalhes-evento-modal #detalhes-financeiro-container {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
-    padding: 15px;
-    background-color: var(--cor-fundo);
-    border-radius: var(--border-radius-padrao);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-}
-
-#detalhes-evento-modal #detalhes-financeiro-container h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.1rem;
-    color: var(--cor-primaria);
-    border-bottom: 1px solid var(--cor-borda-fraca);
-    padding-bottom: 5px;
-}
-
-#detalhes-evento-modal #detalhes-financeiro-container p {
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-}
-
-#detalhes-evento-modal #detalhes-financeiro-container p strong {
-    color: var(--cor-secundaria);
-    min-width: 100px;
-    margin-right: 10px;
-}
-
-#detalhes-evento-modal #detalhes-descricao-container {
-    margin-top: 0;
-    padding: 15px;
-    background-color: var(--cor-fundo);
-    border-radius: var(--border-radius-padrao);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-}
-
-#detalhes-evento-modal #detalhes-descricao-container h4 {
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 10px;
-    color: var(--cor-primaria);
-}
-
-#detalhes-evento-modal #detalhes-descricao-container p {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--cor-texto-claro);
-}
-
-/* Responsive adjustments for info container */
-@media (max-width: 768px) {
-    #detalhes-evento-modal #detalhes-info-container {
-        padding-left: 0;
-        border-left: none;
-        padding-top: 20px;
-        border-top: 1px solid var(--cor-borda-fraca);
-    }
-}
-
-#detalhes-evento-modal #detalhes-descricao-container {
-    background-color: var(--cor-fundo);
-    padding: 15px;
-    border-radius: var(--border-radius-padrao);
-    margin-top: 15px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-}
-
-#detalhes-evento-modal #detalhes-descricao-container p {
-    font-size: 0.9rem;
-    color: var(--cor-texto);
-    margin-bottom: 0;
-    line-height: 1.5;
-}
-
-/* Responsive adjustments for info container */
-@media (max-width: 768px) {
-    #detalhes-evento-modal #detalhes-info-container {
-        padding-left: 0;
-        border-left: none;
-        padding-top: 20px;
-        border-top: 1px solid var(--cor-borda-fraca);
-    }
-}
-
-#detalhes-evento-modal #detalhes-info-container p span {
-    color: var(--cor-texto);
-    font-weight: 500;
-    flex-grow: 1; /* Allow span to take remaining space */
-}
-
-#detalhes-evento-modal #detalhes-info-container p strong {
+    color: #333;
     font-weight: 600;
-    color: var(--cor-primaria);
+}
+.info-text a {
+    color: #007bff;
+    text-decoration: none;
+}
+.info-text a:hover { text-decoration: underline; }
+
+/* Box de Descrição e Financeiro */
+.detalhes-descricao-box, .detalhes-financeiro-box {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
-#detalhes-evento-modal #detalhes-financeiro-container {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px dashed var(--cor-borda-fraca);
+.detalhes-descricao-box h4, .detalhes-financeiro-box h4 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #444;
 }
 
-#detalhes-evento-modal #detalhes-financeiro-container p {
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-}
-
-#detalhes-evento-modal #detalhes-financeiro-container p strong {
-    color: var(--cor-secundaria);
-}
-
-#detalhes-evento-modal #detalhes-descricao-container {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: var(--cor-fundo);
-    border-radius: var(--border-radius-padrao);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-}
-
-#detalhes-evento-modal #detalhes-descricao-container h4 {
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 10px;
-    color: var(--cor-primaria);
-}
-
-#detalhes-evento-modal #detalhes-descricao-container p {
-    font-size: 0.9rem;
+.detalhes-descricao-box p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #555;
     line-height: 1.6;
-    color: var(--cor-texto-claro);
+}
+
+.financeiro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.fin-item { display: flex; flex-direction: column; }
+.fin-item span { font-size: 0.8rem; color: #888; }
+.fin-valor { font-size: 1.2rem; font-weight: 700; }
+.fin-valor.positiva { color: #28a745; }
+.fin-valor.negativa { color: #dc3545; }
+
+/* Botões do Modal */
+.detalhes-botoes-acao {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.detalhes-botoes-acao .btn {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+}
+
+/* Responsividade do Modal */
+@media (max-width: 900px) {
+    .detalhes-layout {
+        flex-direction: column;
+        max-height: 90vh;
+    }
+    .detalhes-imagem-lateral {
+        flex: 0 0 250px; /* Altura fixa no mobile */
+    }
+    .detalhes-info-lateral {
+        padding: 20px;
+    }
+}
+
+/* =========================================================
+   MODAL DE CRIAÇÃO/EDIÇÃO (Ajustes Visuais)
+========================================================== */
+.recurrence-box, .financial-box {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+.financial-box h4 { margin: 0 0 15px 0; color: #001f5d; display: flex; align-items: center; gap: 8px; }
+
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.input-cor {
+    width: 50px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.input-cor::-webkit-color-swatch-wrapper { padding: 0; }
+.input-cor::-webkit-color-swatch { border: none; border-radius: 8px; }
+
+.cartaz-preview-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+}
+.cartaz-preview-wrapper img {
+    max-width: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.btn-remover-cartaz {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Imagem Fullscreen */
+.fullscreen-container {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.95);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.fullscreen-container.active { display: flex; }
+.fullscreen-container img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
+.fullscreen-close {
+    position: absolute; top: 20px; right: 30px;
+    color: white; font-size: 3rem; cursor: pointer;
 }
