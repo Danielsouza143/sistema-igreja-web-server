@@ -84,7 +84,7 @@
 }
 
 .fc-day-today {
-    background-color: rgba(0, 123, 255, 0.05) !important; /* Destaque leve para o dia de hoje */
+    background-color: rgba(0, 123, 255, 0.05) !important;
 }
 
 /* Eventos no Calendário (Chips Premium) */
@@ -94,7 +94,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     margin: 2px 4px !important;
     overflow: hidden;
-    cursor: pointer;
+    cursor: context-menu; /* Indica que tem click direito */
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -145,7 +145,6 @@
     opacity: 0.9;
 }
 
-/* Botão "Ver Mais" do Calendário */
 .fc-daygrid-more-link {
     font-weight: 600 !important;
     color: #007bff !important;
@@ -159,7 +158,7 @@
 }
 
 /* =========================================================
-   LISTA DE EVENTOS (Aba Alternativa)
+   LISTA DE EVENTOS (Aba Alternativa e Botões de Ação)
 ========================================================== */
 .lista-eventos-grid {
     display: grid;
@@ -177,6 +176,8 @@
     flex-direction: column;
     overflow: hidden;
     transition: transform 0.2s ease;
+    cursor: pointer;
+    position: relative;
 }
 
 .evento-card:hover {
@@ -184,9 +185,45 @@
     box-shadow: 0 8px 15px rgba(0,0,0,0.1);
 }
 
+/* Botões de Ação por cima da Imagem */
+.evento-card-acoes {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+}
+
+.evento-card-acoes .btn-acao-sm {
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #333;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: all 0.2s;
+}
+
+.evento-card-acoes .btn-acao-sm:hover {
+    background: #0033a0;
+    color: white;
+    transform: scale(1.1);
+}
+
+.evento-card-acoes .btn-acao-sm.excluir:hover {
+    background: #dc3545;
+}
+
 .evento-card-cartaz {
     width: 100%;
-    height: 160px;
+    height: 180px;
     object-fit: cover;
     background-color: #f8f9fa;
     border-bottom: 1px solid #eee;
@@ -217,20 +254,13 @@
     font-size: 1.1rem;
 }
 
-.evento-card-footer {
-    padding: 15px 20px;
-    background-color: #f8f9fa;
-    border-top: 1px solid #eee;
-    text-align: right;
-}
-
 /* =========================================================
-   NOVO MODAL DE DETALHES (Estilo Cinema / Premium)
+   NOVO MODAL DE DETALHES (Fundo Inteligente)
 ========================================================== */
 .modal-detalhes-premium {
     max-width: 900px !important;
     width: 95% !important;
-    padding: 0 !important; /* Remove padding pra imagem colar na borda */
+    padding: 0 !important; 
     border-radius: 16px !important;
     overflow: hidden;
     background-color: #fff;
@@ -267,38 +297,37 @@
     max-height: 80vh;
 }
 
-/* Lado do Cartaz */
+/* Lado do Cartaz e Fundo Branco Dinâmico */
 .detalhes-imagem-lateral {
     flex: 0 0 45%;
-    background-color: #111;
+    background-color: #111; /* Padrão Preto */
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.detalhes-imagem-lateral.fundo-branco {
+    background-color: #f8f9fa; /* Fundo claro se não tiver foto */
 }
 
 .detalhes-imagem-lateral img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    opacity: 0.9;
+    object-fit: contain; /* Não corta a foto */
     cursor: zoom-in;
-    transition: opacity 0.3s;
-}
-
-.detalhes-imagem-lateral img:hover {
-    opacity: 1;
 }
 
 .cartaz-placeholder {
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: #666;
+    color: #888;
     font-size: 1.2rem;
     gap: 10px;
 }
-.cartaz-placeholder i { font-size: 4rem; color: #444; }
+.cartaz-placeholder i { font-size: 4rem; color: #ccc; }
 
 /* Lado das Informações */
 .detalhes-info-lateral {
@@ -309,9 +338,7 @@
     flex-direction: column;
 }
 
-.detalhes-cabecalho {
-    margin-bottom: 25px;
-}
+.detalhes-cabecalho { margin-bottom: 25px; }
 
 .badge-tipo {
     display: inline-block;
@@ -325,202 +352,97 @@
     margin-bottom: 10px;
 }
 
-.detalhes-titulo {
-    margin: 0 0 5px 0;
-    font-size: 1.8rem;
-    color: #111;
-    line-height: 1.2;
-}
+.detalhes-titulo { margin: 0 0 5px 0; font-size: 1.8rem; color: #111; line-height: 1.2; }
+.detalhes-categoria { font-size: 0.9rem; color: #888; font-weight: 500; }
 
-.detalhes-categoria {
-    font-size: 0.9rem;
-    color: #888;
-    font-weight: 500;
-}
-
-/* Lista de Infos com Ícones */
-.detalhes-lista-infos {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.info-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-}
+.detalhes-lista-infos { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+.info-item { display: flex; align-items: flex-start; gap: 15px; }
 
 .info-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: #0033a0;
-    flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: 10px; background-color: #f8f9fa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #0033a0; flex-shrink: 0;
 }
 
-.info-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.info-label {
-    font-size: 0.8rem;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 2px;
-}
-
-.info-text strong {
-    font-size: 1rem;
-    color: #333;
-    font-weight: 600;
-}
-.info-text a {
-    color: #007bff;
-    text-decoration: none;
-}
+.info-text { display: flex; flex-direction: column; justify-content: center; }
+.info-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.info-text strong { font-size: 1rem; color: #333; font-weight: 600; }
+.info-text a { color: #007bff; text-decoration: none; }
 .info-text a:hover { text-decoration: underline; }
 
-/* Box de Descrição e Financeiro */
 .detalhes-descricao-box, .detalhes-financeiro-box {
-    background-color: #f8f9fa;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
+    background-color: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px;
 }
+.detalhes-descricao-box h4, .detalhes-financeiro-box h4 { margin: 0 0 10px 0; font-size: 1rem; color: #444; }
+.detalhes-descricao-box p { margin: 0; font-size: 0.95rem; color: #555; line-height: 1.6; }
 
-.detalhes-descricao-box h4, .detalhes-financeiro-box h4 {
-    margin: 0 0 10px 0;
-    font-size: 1rem;
-    color: #444;
-}
-
-.detalhes-descricao-box p {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #555;
-    line-height: 1.6;
-}
-
-.financeiro-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
+.financeiro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .fin-item { display: flex; flex-direction: column; }
 .fin-item span { font-size: 0.8rem; color: #888; }
 .fin-valor { font-size: 1.2rem; font-weight: 700; }
 .fin-valor.positiva { color: #28a745; }
 .fin-valor.negativa { color: #dc3545; }
 
-/* Botões do Modal */
-.detalhes-botoes-acao {
-    margin-top: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-}
-
-.detalhes-botoes-acao .btn {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px;
-}
-
 /* Responsividade do Modal */
 @media (max-width: 900px) {
-    .detalhes-layout {
-        flex-direction: column;
-        max-height: 90vh;
-    }
-    .detalhes-imagem-lateral {
-        flex: 0 0 250px; /* Altura fixa no mobile */
-    }
-    .detalhes-info-lateral {
-        padding: 20px;
-    }
+    .detalhes-layout { flex-direction: column; max-height: 90vh; }
+    .detalhes-imagem-lateral { flex: 0 0 250px; }
+    .detalhes-info-lateral { padding: 20px; }
 }
 
 /* =========================================================
-   MODAL DE CRIAÇÃO/EDIÇÃO (Ajustes Visuais)
+   MENU DE CONTEXTO (CLIQUE DIREITO NO CALENDÁRIO)
 ========================================================== */
-.recurrence-box, .financial-box {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
+.context-menu {
+    position: absolute;
+    z-index: 3000;
+    width: 220px;
+    background-color: #fff;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 15px;
-    margin-top: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    padding: 8px 0;
+    font-family: 'Montserrat', sans-serif;
 }
-.financial-box h4 { margin: 0 0 15px 0; color: #001f5d; display: flex; align-items: center; gap: 8px; }
 
-.color-picker-wrapper {
+.context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu li {
+    padding: 10px 20px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: #333;
+    transition: background-color 0.2s;
 }
-.input-cor {
-    width: 50px;
-    height: 40px;
-    padding: 0;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.input-cor::-webkit-color-swatch-wrapper { padding: 0; }
-.input-cor::-webkit-color-swatch { border: none; border-radius: 8px; }
 
-.cartaz-preview-wrapper {
-    position: relative;
-    display: inline-block;
-    margin-top: 10px;
+.context-menu li:hover {
+    background-color: #f1f3f5;
 }
-.cartaz-preview-wrapper img {
-    max-width: 200px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+.context-menu li i {
+    font-size: 1.2rem;
+    color: #555;
 }
-.btn-remover-cartaz {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+
+/* =========================================================
+   MODAL DO CROPPER (CORTE DE IMAGEM)
+========================================================== */
+.btn-ratio { padding: 5px 10px; font-size: 0.85rem; }
+.btn-ratio.active { background-color: var(--cor-secundaria); color: white; border-color: var(--cor-secundaria); }
+
+.cartaz-preview-wrapper { position: relative; display: inline-block; margin-top: 10px; }
+.cartaz-preview-wrapper img { max-width: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.btn-remover-cartaz { position: absolute; top: -10px; right: -10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 /* Imagem Fullscreen */
-.fullscreen-container {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.95);
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-}
+.fullscreen-container { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; }
 .fullscreen-container.active { display: flex; }
 .fullscreen-container img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
-.fullscreen-close {
-    position: absolute; top: 20px; right: 30px;
-    color: white; font-size: 3rem; cursor: pointer;
-}
+.fullscreen-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 3rem; cursor: pointer; }
