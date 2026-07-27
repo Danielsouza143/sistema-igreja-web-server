@@ -5,36 +5,35 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/preload.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- O Guardião deve ser o PRIMEIRO script a ser carregado -->
     <script src="/auth-guard.js"></script>
 
     <title>Agenda da Igreja</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <link rel="stylesheet" href="/pages/styles/global.css">
     <link rel="stylesheet" href="/components/menu.css">
-    <link rel="stylesheet" href="/components/notifications.css"> <!-- NOVO -->
+    <link rel="stylesheet" href="/components/notifications.css">
     <link rel="stylesheet" href="/pages/styles/tabelas-abas.css">
     <link rel="stylesheet" href="agenda.css">
     
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <!-- PACOTE DE IDIOMAS PARA TRADUZIR O CALENDÁRIO 100% PARA PORTUGUÊS -->
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales-all.global.min.js'></script>
 </head>
 <body hx-boost="true" hx-ext="preload">
-    <!-- Barra de Progresso do HTMX -->
     <div class="htmx-indicator"></div>
 
 <header id="menu-placeholder"></header>
 
 <main class="conteudo">
     <div class="header-pagina">
-        <h2>Agenda e Eventos</h2>
+        <div>
+            <h1 class="title-page">Agenda e Eventos</h1>
+            <p class="subtitulo-pagina">Gerencie cultos, programações e eventos da igreja</p>
+        </div>
         <div class="acoes-header">
-            <div id="calendar-zoom-controls">
-                <button id="btn-zoom-out" class="btn btn-secundario">-</button>
-                <button id="btn-zoom-in" class="btn btn-secundario">+</button>
-            </div>
             <button id="btn-novo-evento" class="btn btn-principal">
                 <i class='bx bx-plus'></i> Novo Lançamento
             </button>
@@ -43,196 +42,252 @@
 
     <div class="container-abas">
         <div class="abas-links">
-            <button id="tab-calendario" class="aba-link active">Calendário</button>
-            <button id="tab-lista" class="aba-link">Lista</button>
+            <button id="tab-calendario" class="aba-link active"><i class='bx bx-calendar'></i> Calendário</button>
+            <button id="tab-lista" class="aba-link"><i class='bx bx-list-ul'></i> Lista de Eventos</button>
         </div>
         <div class="abas-conteudo-wrapper">
             <div id="view-calendario" class="aba-conteudo active">
-                <div id="calendario"></div>
+                <div class="calendario-wrapper">
+                    <div id="calendario"></div>
+                </div>
             </div>
             <div id="view-lista" class="aba-conteudo">
-                <div id="lista-eventos-container"></div>
+                <div id="lista-eventos-container" class="lista-eventos-grid"></div>
             </div>
         </div>
     </div>
 </main>
 
+<!-- Modal de Criação / Edição -->
 <div id="evento-modal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content modal-md">
         <div class="modal-header">
             <h2 id="modal-title">Novo Evento</h2>
             <button class="modal-close">&times;</button>
         </div>
-        <form id="evento-form">
+        <form id="evento-form" class="modal-body scrollable">
             <input type="hidden" id="evento-id">
-            <div class="form-group">
-                <label for="evento-tipo">Tipo</label>
-                <select id="evento-tipo" required>
-                    <option value="Evento">Evento</option>
-                    <option value="Programação">Programação</option>
-                </select>
+            <div class="form-group-grid">
+                <div class="form-group">
+                    <label for="evento-tipo">Tipo</label>
+                    <select id="evento-tipo" required>
+                        <option value="Evento">Evento Especial</option>
+                        <option value="Programação">Programação Normal (Culto/Reunião)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="evento-categoria">Categoria</label>
+                    <select id="evento-categoria" required>
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
             </div>
+
             <div class="form-group">
-                <label for="evento-nome">Nome</label>
-                <input type="text" id="evento-nome" required>
+                <label for="evento-nome">Nome do Evento</label>
+                <input type="text" id="evento-nome" required placeholder="Ex: Culto de Jovens">
             </div>
-            <div class="form-group">
-                <label for="evento-categoria">Categoria</label>
-                <select id="evento-categoria" required>
-                    <option value="">Carregando...</option>
-                </select>
-            </div>
+
             <div class="form-group full-width">
-                <label>Recorrência (Opcional)</label>
                 <div class="recurrence-wrapper">
                     <label class="checkbox-container">
-                        <input type="checkbox" id="evento-repetir"> Repetir este evento?
+                        <input type="checkbox" id="evento-repetir"> <strong>Repetir este evento?</strong> (Criar em lote)
                         <span class="checkmark"></span>
                     </label>
                     
-                    <div id="recurrence-options" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <div id="recurrence-options" class="recurrence-box">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="evento-frequencia">Frequência</label>
                                 <select id="evento-frequencia" class="form-control">
-                                    <option value="semanal">Semanal (Todo dia da semana escolhido)</option>
+                                    <option value="semanal">Semanalmente</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="evento-periodo">Período de Repetição</label>
+                                <label for="evento-periodo">Repetir até</label>
                                 <select id="evento-periodo" class="form-control">
-                                    <option value="mes">Até o final deste mês</option>
-                                    <option value="ano">Até o final deste ano</option>
-                                    <option value="personalizado">Data personalizada</option>
+                                    <option value="mes">O final deste mês</option>
+                                    <option value="ano">O final do ano</option>
+                                    <option value="personalizado">Data específica</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group" id="container-data-limite" style="display: none;">
-                            <label for="evento-data-limite">Repetir até</label>
+                        <div class="form-group" id="container-data-limite" style="display: none; margin-top: 10px;">
+                            <label for="evento-data-limite">Data Limite</label>
                             <input type="date" id="evento-data-limite" class="form-control">
                         </div>
-                        <small style="color: #666;">Isso criará cópias independentes do evento para cada data.</small>
                     </div>
                 </div>
             </div>
+
             <div class="form-group-grid">
                 <div class="form-group">
-                    <label for="evento-data-inicio">Data de Início</label>
+                    <label for="evento-data-inicio">Início</label>
                     <input type="datetime-local" id="evento-data-inicio" required>
                 </div>
                 <div class="form-group">
-                    <label for="evento-data-fim">Data de Fim</label>
+                    <label for="evento-data-fim">Fim</label>
                     <input type="datetime-local" id="evento-data-fim" required>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="evento-local">Local</label>
-                <input type="text" id="evento-local" required>
+
+            <div class="form-group-grid">
+                <div class="form-group">
+                    <label for="evento-local">Local</label>
+                    <input type="text" id="evento-local" required placeholder="Ex: Templo Principal">
+                </div>
+                <div class="form-group">
+                    <label for="evento-responsavel">Responsável</label>
+                    <select id="evento-responsavel" required>
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
             </div>
+
             <div class="form-group">
-                <label for="evento-responsavel">Responsável</label>
-                <select id="evento-responsavel" required>
-                    <option value="">Carregando...</option>
-                </select>
+                <label for="evento-descricao">Descrição (Opcional)</label>
+                <textarea id="evento-descricao" rows="2" placeholder="Detalhes adicionais do evento..."></textarea>
             </div>
+
             <div class="form-group">
                 <label for="evento-cor">Cor no Calendário</label>
-                <input type="color" id="evento-cor" class="input-cor">
+                <div class="color-picker-wrapper">
+                    <input type="color" id="evento-cor" class="input-cor">
+                    <span class="color-hint">Escolha uma cor de destaque</span>
+                </div>
             </div>
-                            <div class="form-group">
-                                <label for="evento-descricao">Descrição</label>
-                                <textarea id="evento-descricao" rows="3"></textarea>
-                            </div>
             
-                            <!-- NOVO: Campos Financeiros para Eventos -->
-                            <div id="financial-fields" style="display: none; border-top: 1px solid var(--cor-borda); padding-top: 15px; margin-top: 15px;">
-                                <h4><i class='bx bxs-dollar-circle'></i> Gestão Financeira do Evento</h4>
-                                <div class="form-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="evento-envolve-fundos">
-                                        Este evento envolve arrecadação de fundos ou tem custos?
-                                    </label>
-                                </div>
-                                <div class="form-group-grid">
-                                    <div class="form-group">
-                                        <label for="evento-meta">Meta de Arrecadação (R$)</label>
-                                        <input type="number" id="evento-meta" step="0.01" placeholder="2500.00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="evento-custo">Custo Estimado (R$)</label>
-                                        <input type="number" id="evento-custo" step="0.01" placeholder="750.00">
-                                    </div>
-                                </div>
-                            </div>
+            <!-- Campos Financeiros para Eventos -->
+            <div id="financial-fields" class="financial-box">
+                <h4><i class='bx bxs-dollar-circle'></i> Gestão Financeira</h4>
+                <div class="form-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="evento-envolve-fundos">
+                        Vincular orçamento a este evento?
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+                <div class="form-group-grid">
+                    <div class="form-group">
+                        <label for="evento-meta">Meta de Arrecadação (R$)</label>
+                        <input type="number" id="evento-meta" step="0.01" placeholder="Ex: 1000.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="evento-custo">Custo Estimado (R$)</label>
+                        <input type="number" id="evento-custo" step="0.01" placeholder="Ex: 500.00">
+                    </div>
+                </div>
+            </div>
             
-                            <div class="form-group">
-                                <label for="evento-cartaz">Cartaz do Evento/Programação</label>
-                                <input type="file" id="evento-cartaz-input" accept="image/*">
-                                <input type="hidden" id="evento-cartaz-url">
-                                <img id="cartaz-preview" src="" alt="Pré-visualização do cartaz" style="max-width: 100%; margin-top: 10px; display: none;">
-                            </div>
-            <div class="modal-actions">
+            <div class="form-group cartaz-upload-box">
+                <label for="evento-cartaz-input">Cartaz de Divulgação (Opcional)</label>
+                <input type="file" id="evento-cartaz-input" accept="image/*" class="file-input">
+                <input type="hidden" id="evento-cartaz-url">
+                <div id="cartaz-preview-wrapper" class="cartaz-preview-wrapper hidden">
+                    <img id="cartaz-preview" src="" alt="Pré-visualização do cartaz">
+                    <button type="button" id="btn-remover-cartaz" class="btn-remover-cartaz">&times;</button>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px;">
                 <button type="button" class="btn btn-secundario modal-cancel">Cancelar</button>
-                <button type="submit" class="btn btn-principal">Salvar</button>
+                <button type="submit" class="btn btn-principal">Salvar Evento</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- NOVO: Modal de Detalhes do Evento -->
+<!-- NOVO MODAL DE DETALHES (Premium Cinematic Design) -->
 <div id="detalhes-evento-modal" class="modal-overlay">
-    <div class="modal-content modal-detalhes">
-        <div class="modal-header">
-            <h2 id="detalhes-modal-title">Detalhes do Evento</h2>
-            <button id="detalhes-modal-close" class="modal-close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="modal-body-content">
-                <div id="detalhes-cartaz-container">
-                    <img id="detalhes-cartaz-img" src="" alt="Cartaz do Evento">
-                </div>
-                <div id="detalhes-info-container">
-                    <div class="info-section">
-                        <p><strong><i class='bx bx-calendar'></i> Data e Hora:</strong> <span id="detalhes-data"></span></p>
-                        <p><strong><i class='bx bx-map'></i> Local:</strong> <span id="detalhes-local"></span></p>
-                        <p><strong><i class='bx bx-user'></i> Responsável:</strong> <span id="detalhes-responsavel"></span></p>
-                        <p><strong><i class='bx bx-info-circle'></i> Categoria:</strong> <span id="detalhes-categoria"></span></p>
-                        <p id="detalhes-recorrencia-p" style="display:none;"><strong><i class='bx bx-sync'></i> Recorrência:</strong> <span id="detalhes-recorrencia"></span></p>
-                    </div>
-                    <div id="detalhes-financeiro-container" style="display:none;">
-                        <h4><i class='bx bxs-dollar-circle'></i> Detalhes Financeiros</h4>
-                        <p><strong>Meta de Arrecadação:</strong> <span id="detalhes-meta"></span></p>
-                        <p><strong>Custo Estimado:</strong> <span id="detalhes-custo"></span></p>
-                    </div>
-                    <div id="detalhes-descricao-container">
-                        <h4>Descrição</h4>
-                        <p id="detalhes-descricao"></p>
-                    </div>
+    <div class="modal-content modal-detalhes-premium">
+        <button id="detalhes-modal-close" class="modal-close-flutuante">&times;</button>
+        
+        <div class="detalhes-layout">
+            <!-- Lado Esquerdo: Cartaz -->
+            <div id="detalhes-cartaz-container" class="detalhes-imagem-lateral">
+                <img id="detalhes-cartaz-img" src="" alt="Cartaz do Evento">
+                <div id="detalhes-placeholder" class="cartaz-placeholder">
+                    <i class='bx bx-calendar-star'></i>
+                    <span>Sem Cartaz</span>
                 </div>
             </div>
-        </div>
-        <div class="modal-actions">
-            <button id="btn-excluir-evento" class="btn btn-perigo btn-detalhes-excluir">Excluir</button>
-            <div class="modal-secondary-actions">
-                <button id="btn-exportar-ics" class="btn btn-secundario btn-detalhes-ics"><i class='bx bx-calendar-plus'></i> Adicionar ao Calendário</button>
-                <button id="btn-lembrete" class="btn btn-secundario btn-detalhes-lembrete"><i class='bx bx-bell-plus'></i> Me Lembre</button>
-                <button id="btn-editar-evento" class="btn btn-secundario btn-detalhes-editar">Editar</button>
-                <button id="btn-fechar-detalhes" class="btn btn-principal btn-detalhes-fechar">Fechar</button>
+
+            <!-- Lado Direito: Informações -->
+            <div class="detalhes-info-lateral">
+                <div class="detalhes-cabecalho">
+                    <span id="detalhes-tipo-badge" class="badge-tipo">Programação</span>
+                    <h2 id="detalhes-modal-title" class="detalhes-titulo">Nome do Evento</h2>
+                    <span id="detalhes-categoria" class="detalhes-categoria">Categoria</span>
+                </div>
+
+                <div class="detalhes-lista-infos">
+                    <div class="info-item">
+                        <div class="info-icon"><i class='bx bx-calendar'></i></div>
+                        <div class="info-text">
+                            <span class="info-label">Data e Hora</span>
+                            <strong id="detalhes-data">--</strong>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon"><i class='bx bx-map'></i></div>
+                        <div class="info-text">
+                            <span class="info-label">Local</span>
+                            <strong id="detalhes-local">--</strong>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon"><i class='bx bx-user'></i></div>
+                        <div class="info-text">
+                            <span class="info-label">Responsável</span>
+                            <strong id="detalhes-responsavel">--</strong>
+                        </div>
+                    </div>
+                    <div class="info-item" id="detalhes-recorrencia-wrapper" style="display:none;">
+                        <div class="info-icon"><i class='bx bx-sync'></i></div>
+                        <div class="info-text">
+                            <span class="info-label">Recorrência</span>
+                            <strong id="detalhes-recorrencia">--</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="detalhes-descricao-container" class="detalhes-descricao-box">
+                    <h4>Sobre o Evento</h4>
+                    <p id="detalhes-descricao">--</p>
+                </div>
+
+                <div id="detalhes-financeiro-container" class="detalhes-financeiro-box" style="display:none;">
+                    <h4><i class='bx bx-money'></i> Orçamento do Evento</h4>
+                    <div class="financeiro-grid">
+                        <div class="fin-item">
+                            <span>Meta de Arrecadação</span>
+                            <strong id="detalhes-meta" class="fin-valor positiva">R$ 0,00</strong>
+                        </div>
+                        <div class="fin-item">
+                            <span>Custo Estimado</span>
+                            <strong id="detalhes-custo" class="fin-valor negativa">R$ 0,00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detalhes-botoes-acao">
+                    <button id="btn-editar-evento" class="btn btn-principal"><i class='bx bxs-edit'></i> Editar</button>
+                    <button id="btn-exportar-ics" class="btn btn-secundario"><i class='bx bx-export'></i> Exportar Agenda</button>
+                    <button id="btn-excluir-evento" class="btn btn-perigo"><i class='bx bx-trash'></i> Excluir</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal de Tela Cheia para Cartazes -->
+<div id="fullscreen-container" class="fullscreen-container">
+    <span class="fullscreen-close">&times;</span>
+    <img id="fullscreen-image" src="">
+</div>
 
-<!-- Scripts no final do body -->
 <script src="/js/global-loader.js" defer></script>
-<script src="/components/notifications.js" defer></script>
 <script src="/js/api.js"></script>
 <script src="agenda.js"></script>
-    <!-- NOVO: Container para o cartaz em tela cheia -->
-    <div id="fullscreen-container" class="fullscreen-container">
-        <span class="fullscreen-close">&times;</span>
-        <img id="fullscreen-image" src="">
-    </div>
 
 </body></html>
