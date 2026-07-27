@@ -107,10 +107,14 @@ var iniciarFinanceiro = () => {
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
+    // FUNÇÃO NATIVA PARA BAIXAR DO S3 VIA CORS SEM PROXY
     const getBase64FromUrl = async (url) => {
         try {
-            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-            const data = await fetch(proxyUrl);
+            // Tenta fazer o fetch com cache-busting para ignorar bloqueios velhos do navegador
+            const data = await fetch(url + '?nocache=' + new Date().getTime(), { 
+                mode: 'cors',
+                cache: 'no-cache'
+            });
             const blob = await data.blob();
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -118,7 +122,7 @@ var iniciarFinanceiro = () => {
                 reader.onloadend = () => { resolve(reader.result); };
             });
         } catch (e) {
-            console.error('Falha ao usar o Proxy CORS.', e);
+            console.warn('Falha no Fetch Nativo. Retornando URL pura para o PDF.', e);
             return url; 
         }
     };
@@ -225,9 +229,6 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    // ==========================================
-    // 5. RENDERIZAÇÃO: GRÁFICOS
-    // ==========================================
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
         if (tituloEl) tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
@@ -314,9 +315,6 @@ var iniciarFinanceiro = () => {
         });
     };
 
-    // ==========================================
-    // 6. MÓDULO DE FUNDOS E METAS
-    // ==========================================
     const carregarFundos = async () => {
         try {
             const response = await window.api.get(`/api/financeiro/fundos?_t=${Date.now()}`);
@@ -500,9 +498,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // ==========================================
-    // 7. LÓGICA DE FILTROS E PESQUISAS
-    // ==========================================
     const aplicarFiltros = async (retornarArray = false) => {
         const ano = filtroAno ? filtroAno.value : 'todos';
         const mes = filtroMes ? filtroMes.value : 'todos';
@@ -567,7 +562,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 8. MODAIS E GERAÇÃO DE RECIBOS (COM BASE64)
+    // 8. MODAIS E GERAÇÃO DE RECIBOS 
     // ==========================================
     const preencherRecibo = async (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
