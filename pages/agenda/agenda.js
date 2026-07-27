@@ -11,8 +11,8 @@ const iniciarAgenda = async () => {
 
     // --- Modal de Detalhes ---
     const detalhesModal = document.getElementById('detalhes-evento-modal');
-    const detalhesCloseBtn = document.getElementById('detalhes-modal-close');
-    
+    let currentEventId = null; 
+
     // --- Menu de Contexto ---
     const ctxMenu = document.getElementById('context-menu-agenda');
     let ctxEventId = null;
@@ -42,7 +42,6 @@ const iniciarAgenda = async () => {
     configurarCropper();
 
     // --- LÓGICA DE API E DADOS ---
-
     async function carregarDadosIniciais() {
         const selectResponsaveis = document.getElementById('evento-responsavel');
         const selectCategorias = document.getElementById('evento-categoria');
@@ -68,7 +67,7 @@ const iniciarAgenda = async () => {
     // --- CALENDÁRIO ---
     function inicializarCalendario() {
         calendar = new FullCalendar.Calendar(calendarioEl, {
-            locale: 'pt-br', // 100% Traduzido
+            locale: 'pt-br', // Força português
             initialView: 'dayGridMonth',
             contentHeight: 'auto',
             headerToolbar: {
@@ -80,16 +79,13 @@ const iniciarAgenda = async () => {
             dayMaxEventRows: 4, 
             events: formatarEventosParaCalendario(todosEventos),
             
-            // Clique normal (abre detalhes)
             eventClick: (info) => abrirDetalhesEvento(info.event.id),
-            
-            // Clique num dia vazio (Criação de evento)
             dateClick: (info) => abrirModalParaCriacao(info.dateStr),
             
-            // Clique DIREITO no evento (Menu de Contexto)
+            // Adiciona listener do botão direito em cada evento renderezado
             eventDidMount: function(info) {
                 info.el.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
+                    e.preventDefault(); // Impede o menu do navegador
                     ctxEventId = info.event.id;
                     ctxEventDate = info.event.start;
                     ctxMenu.style.display = 'block';
@@ -98,10 +94,9 @@ const iniciarAgenda = async () => {
                 });
             },
             
-            // Estilização Premium
+            // Design visual (Thumbnail + Título)
             eventContent: function(arg) {
                 const evento = arg.event.extendedProps;
-                const isProgramacao = evento.tipo === 'Programação';
                 
                 const dataObj = arg.event.start;
                 const startTime = dataObj ? dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
@@ -138,12 +133,30 @@ const iniciarAgenda = async () => {
                 id: evento._id,
                 title: evento.nome,
                 start: evento.dataInicio,
-                end: evento.dataFim,
+                // O SEGREDO ESTÁ AQUI: Ao omitir o 'end', o FullCalendar é forçado a desenhar o evento apenas no dia do Início, nunca esticando barras.
                 backgroundColor: corEvento,
                 textColor: corTexto,
+                allDay: false, // Garante comportamento de evento com hora
                 extendedProps: evento
             }
         });
+    }
+
+    // --- MENU DE CONTEXTO ---
+    function configurarContexto() {
+        // Fechar ao clicar em qualquer lugar
+        document.addEventListener('click', () => {
+            if (ctxMenu) ctxMenu.style.display = 'none';
+        });
+
+        // Ações usando Optional Chaining (?.) para não quebrar se o HTML não tiver carregado
+        document.getElementById('ctx-ver-detalhes')?.addEventListener('click', () => abrirDetalhesEvento(ctxEventId));
+        document.getElementById('ctx-ver-dia')?.addEventListener('click', () => {
+            if (ctxEventDate) calendar.changeView('timeGridDay', ctxEventDate);
+        });
+        document.getElementById('ctx-editar')?.addEventListener('click', () => abrirModalParaEdicao(ctxEventId));
+        document.getElementById('ctx-exportar')?.addEventListener('click', () => exportarEvento(ctxEventId));
+        document.getElementById('ctx-excluir')?.addEventListener('click', () => excluirEvento(ctxEventId));
     }
 
     // --- FORMULÁRIO E SALVAMENTO ---
@@ -188,30 +201,27 @@ const iniciarAgenda = async () => {
             const dataInicioBase = new Date(document.getElementById('evento-data-inicio').value);
             const dataFimBase = new Date(document.getElementById('evento-data-fim').value);
             
-            // VERIFICAÇÃO CONTRA O "ESTICAMENTO" INVOLUNTÁRIO
             if (dataFimBase <= dataInicioBase) {
                 return alert("A data de fim deve ser posterior à data de início.");
             }
+            
+            // Alerta de segurança contra eventos esticados por meses
             const horasDuracao = (dataFimBase - dataInicioBase) / (1000 * 60 * 60);
             if (horasDuracao > 24) {
-                const confirmar = confirm(`Atenção! Este evento durará ${Math.round(horasDuracao)} horas. Ele aparecerá "esticado" por vários dias na visualização mensal do calendário. As datas estão corretas?`);
+                const confirmar = confirm(`Atenção! Este evento está programado para durar ${Math.round(horasDuracao)} horas seguidas. As datas de início e fim estão corretas?`);
                 if (!confirmar) return;
             }
 
             const dataInicioStr = dataInicioBase.toISOString();
             const dataFimStr = dataFimBase.toISOString();
 
-            // Lógica sem recorrência
             if (id || !checkboxRepetir.checked) {
                 const formData = new FormData();
                 Object.keys(baseData).forEach(key => formData.append(key, baseData[key]));
                 formData.append('dataInicio', dataInicioStr);
                 formData.append('dataFim', dataFimStr);
                 
-                // Anexa o Blob da imagem cortada, se houver
-                if (croppedBlob) {
-                    formData.append('cartaz', croppedBlob, 'cartaz.jpg');
-                }
+                if (croppedBlob) formData.append('cartaz', croppedBlob, 'cartaz.jpg');
 
                 try {
                     if (id) await window.api.put(`/api/eventos/${id}`, formData);
@@ -220,7 +230,6 @@ const iniciarAgenda = async () => {
                     return alert(`Erro ao salvar: ${error.message}`);
                 }
             } else {
-                // Lógica Lote (Recorrência)
                 let finalCartazUrl = baseData.cartazUrl;
                 let dataLimite = new Date();
                 const periodo = selectPeriodo.value;
@@ -284,7 +293,7 @@ const iniciarAgenda = async () => {
         });
     }
 
-    // --- LISTA DE EVENTOS E AÇÕES ---
+    // --- LISTA DE EVENTOS ---
     function renderizarLista() {
         listaEventosContainer.innerHTML = '';
         if (todosEventos.length === 0) {
@@ -318,26 +327,15 @@ const iniciarAgenda = async () => {
                 </div>
             `;
             
-            // Clicar no card inteiro abre os detalhes
             card.addEventListener('click', (e) => {
                 if(!e.target.closest('.btn-acao-sm')) {
                     abrirDetalhesEvento(evento._id);
                 }
             });
 
-            // Botões de Ação na Lista
-            card.querySelector('.btn-editar-list').addEventListener('click', (e) => {
-                e.stopPropagation();
-                abrirModalParaEdicao(evento._id);
-            });
-            card.querySelector('.btn-export-list').addEventListener('click', (e) => {
-                e.stopPropagation();
-                exportarEvento(evento._id);
-            });
-            card.querySelector('.btn-excluir-list').addEventListener('click', (e) => {
-                e.stopPropagation();
-                excluirEvento(evento._id);
-            });
+            card.querySelector('.btn-editar-list').addEventListener('click', (e) => { e.stopPropagation(); abrirModalParaEdicao(evento._id); });
+            card.querySelector('.btn-export-list').addEventListener('click', (e) => { e.stopPropagation(); exportarEvento(evento._id); });
+            card.querySelector('.btn-excluir-list').addEventListener('click', (e) => { e.stopPropagation(); excluirEvento(evento._id); });
 
             listaEventosContainer.appendChild(card);
         });
@@ -394,23 +392,7 @@ const iniciarAgenda = async () => {
         });
     }
 
-    // --- MENU DE CONTEXTO E MODAL DE DETALHES ---
-    function configurarContexto() {
-        document.addEventListener('click', () => {
-            if (ctxMenu) ctxMenu.style.display = 'none';
-        });
-
-        document.getElementById('ctx-ver-detalhes').addEventListener('click', () => abrirDetalhesEvento(ctxEventId));
-        
-        document.getElementById('ctx-ver-dia').addEventListener('click', () => {
-            if (ctxEventDate) calendar.changeView('timeGridDay', ctxEventDate);
-        });
-        
-        document.getElementById('ctx-editar').addEventListener('click', () => abrirModalParaEdicao(ctxEventId));
-        document.getElementById('ctx-exportar').addEventListener('click', () => exportarEvento(ctxEventId));
-        document.getElementById('ctx-excluir').addEventListener('click', () => excluirEvento(ctxEventId));
-    }
-
+    // --- MODAL DE DETALHES ---
     function abrirDetalhesEvento(id) {
         currentEventId = id;
         const evento = todosEventos.find(e => e._id === id);
@@ -428,7 +410,6 @@ const iniciarAgenda = async () => {
         const cartazImg = document.getElementById('detalhes-cartaz-img');
         const placeholder = document.getElementById('detalhes-placeholder');
         
-        // Controle do fundo inteligente (Branco se não tiver cartaz)
         if (evento.cartazUrl) {
             cartazImg.src = evento.cartazUrl;
             cartazImg.style.display = 'block';
@@ -468,29 +449,29 @@ const iniciarAgenda = async () => {
     }
 
     function configurarDetalhesModal() {
-        detalhesCloseBtn.addEventListener('click', () => detalhesModal.classList.remove('active'));
+        // Uso de ?. previne quebra de JS caso elemento carregue depois
+        detalhesCloseBtn?.addEventListener('click', () => detalhesModal.classList.remove('active'));
 
-        document.getElementById('btn-editar-evento').addEventListener('click', () => {
+        document.getElementById('btn-editar-evento')?.addEventListener('click', () => {
             detalhesModal.classList.remove('active');
             abrirModalParaEdicao(currentEventId);
         });
 
-        document.getElementById('btn-excluir-evento').addEventListener('click', () => excluirEvento(currentEventId));
-        document.getElementById('btn-exportar-ics').addEventListener('click', () => exportarEvento(currentEventId));
+        document.getElementById('btn-excluir-evento')?.addEventListener('click', () => excluirEvento(currentEventId));
+        document.getElementById('btn-exportar-ics')?.addEventListener('click', () => exportarEvento(currentEventId));
 
-        // Cartaz em tela cheia
         const cartazImg = document.getElementById('detalhes-cartaz-img');
         const fullscreenContainer = document.getElementById('fullscreen-container');
         const fullscreenImage = document.getElementById('fullscreen-image');
         
-        cartazImg.addEventListener('click', () => {
+        cartazImg?.addEventListener('click', () => {
             fullscreenImage.src = cartazImg.src;
             fullscreenContainer.classList.add('active');
         });
 
         const fecharFullscreen = () => fullscreenContainer.classList.remove('active');
-        fullscreenContainer.addEventListener('click', fecharFullscreen);
-        document.querySelector('.fullscreen-close').addEventListener('click', fecharFullscreen);
+        fullscreenContainer?.addEventListener('click', fecharFullscreen);
+        document.querySelector('.fullscreen-close')?.addEventListener('click', fecharFullscreen);
     }
 
     // --- FUNÇÕES DE ROTINA ---
