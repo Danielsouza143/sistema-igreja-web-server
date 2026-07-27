@@ -64,7 +64,7 @@ const iniciarDashboard = () => {
             container.classList.remove('carousel-mode');
             container.classList.add('scrollable-content');
             
-            const eventosExibir = todosEventosFuturos.slice(0, 7);
+            const eventosExibir = todosEventosFuturos.slice(0, 8);
             if (eventosExibir.length === 0) {
                 container.innerHTML = '<p class="sem-itens">Nenhum evento futuro cadastrado.</p>';
             } else {
@@ -95,7 +95,7 @@ const iniciarDashboard = () => {
             }
 
             container.innerHTML = `
-                <div class="eventos-carousel" id="eventos-carousel-wrapper">
+                <div class="eventos-carousel" id="eventos-carousel-wrapper" style="width:100%; height:100%; position:relative;">
                     <button class="ec-btn prev" id="btn-ec-prev"><i class='bx bx-chevron-left'></i></button>
                     <div class="ec-track" id="ec-track">
                         ${eventosComCartaz.map(e => `
@@ -153,7 +153,7 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Listener dos botões de View
+    // Listener dos botões de View do Evento
     document.getElementById('btn-view-list').addEventListener('click', () => {
         viewModeEventos = 'list';
         atualizarViewEventos();
@@ -393,7 +393,6 @@ const iniciarDashboard = () => {
             }
         });
 
-        // Atualização visual dos pontinhos no evento de scroll
         if(fundos.length > 1 && dotsContainer) {
             track.addEventListener('scroll', () => {
                 const cardWidth = track.clientWidth; 
