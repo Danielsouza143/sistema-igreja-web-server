@@ -14,11 +14,10 @@
 /* --- GRID PRINCIPAL DO DASHBOARD --- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Começa com uma coluna para mobile */
+    grid-template-columns: 1fr;
     gap: 25px;
 }
 
-/* Em telas maiores, divide em duas colunas */
 @media (min-width: 992px) {
     .dashboard-grid {
         grid-template-columns: 2fr 1fr; /* Coluna da esquerda maior */
@@ -29,6 +28,39 @@
     display: flex;
     flex-direction: column;
     gap: 25px;
+}
+
+/* --- NOVA LINHA: EVENTOS E FUNDOS LADO A LADO --- */
+.row-eventos-fundos {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+}
+
+@media (min-width: 768px) {
+    .row-eventos-fundos {
+        /* Proporção 35% Eventos (para ficar 4:3 aprox) e 65% Carrossel de Fundos */
+        grid-template-columns: 1.2fr 2fr; 
+    }
+}
+
+.widget-eventos-compacto {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    flex-direction: column;
+    max-height: 350px;
+}
+
+.scrollable-content {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 5px;
+}
+
+.widget-fundos {
+    min-width: 0; /* Previne que o carrossel estoure o Grid */
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- ESTILO DOS WIDGETS --- */
@@ -62,7 +94,7 @@
     cursor: pointer;
     font-size: 1.2rem;
     padding: 0;
-    margin-left: auto; /* Empurra para a direita se estiver no flex container */
+    margin-left: auto;
     display: flex;
     align-items: center;
     transition: color 0.2s;
@@ -80,8 +112,6 @@
 .loading-text {
     color: #888;
 }
-
-/* --- ESTILOS ESPECÍFICOS DOS WIDGETS --- */
 
 /* Lista de Itens (Eventos, Aniversários, Atrasos) */
 .lista-item {
@@ -170,3 +200,158 @@
 .btn-acao i {
     font-size: 2rem;
 }
+
+/* =========================================================
+   CARROSSEL E CARDS DE FUNDOS (Importado do Financeiro) 
+========================================================== */
+.carrossel-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    flex-grow: 1;
+}
+
+.carrossel-track {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    padding: 10px 5px;
+    flex-grow: 1;
+}
+.carrossel-track::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.carrossel-btn {
+    background: #f0f0f0;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #555;
+    transition: background 0.2s;
+    flex-shrink: 0;
+    z-index: 2;
+}
+.carrossel-btn:hover {
+    background: #ddd;
+}
+
+/* Card Fundo */
+.card-fundo {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 6px solid #007bff;
+    display: flex;
+    flex-direction: column;
+    min-width: 260px;
+    max-width: 280px;
+    flex-shrink: 0;
+}
+
+.card-fundo:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card-fundo.meta-concluida {
+    border-left-color: #28a745;
+}
+
+.card-fundo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.card-fundo-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 700;
+    line-height: 1.3;
+    border: none;
+    padding: 0;
+}
+
+.badge-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.badge-andamento { background-color: #e9f5ff; color: #007bff; }
+.badge-concluido { background-color: #e6f4ea; color: #1e8e3e; }
+
+.fundo-desc {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.fundo-ritmo {
+    font-size: 0.8rem;
+    color: #d93025;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.progresso-container {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    height: 10px;
+    width: 100%;
+    overflow: hidden;
+    margin: 10px 0;
+}
+.progresso-barra {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #34ce57);
+    border-radius: 10px;
+    transition: width 0.8s ease-in-out;
+}
+.meta-concluida .progresso-barra { background: #6c757d; }
+
+.progresso-texto {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #555;
+}
+.progresso-porcentagem {
+    text-align: right;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--cor-primaria);
+    margin-top: 5px;
+}
+
+/* Modal Detalhes Fundo (Para o Dashboard) */
+.modal-lg { max-width: 800px; }
+.fundo-header-stats { display: flex; gap: 20px; margin: 20px 0; }
+.fundo-header-stats .stat-box { flex: 1; background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+.fundo-header-stats .stat-box h3 { margin: 5px 0 0 0; color: var(--cor-primaria); font-size: 1.4rem; }
+.tabela-lancamentos { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.tabela-lancamentos th, .tabela-lancamentos td { border-bottom: 1px solid #eee; }
