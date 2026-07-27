@@ -185,7 +185,7 @@ var iniciarConfiguracoes = () => {
                     }
                 } 
 
-                // Salva todos os campos de texto na raiz do documento
+                // Salva todos os campos de texto na raiz do documento, garantindo o padrão do MongoDB
                 await window.api.patch('/api/configs', {
                     name: name,
                     cnpj: cnpj,
@@ -236,7 +236,48 @@ var iniciarConfiguracoes = () => {
 
     if(categoriasContainer) {
         categoriasContainer.addEventListener('click', async (e) => {
-            // Lógica de Categorias inalterada...
+            if (e.target.matches('.btn-add-categoria')) {
+                const tipo = e.target.dataset.tipo;
+                const subtipo = e.target.dataset.subtipo;
+                const input = e.target.previousElementSibling;
+                const novaCategoria = input.value.trim();
+                if (novaCategoria) {
+                    const path = subtipo ? `${tipo}.${subtipo}` : tipo;
+                    const listaAtual = subtipo ? (configs.config?.[tipo]?.[subtipo] || configs[tipo]?.[subtipo]) : (configs.config?.[tipo] || configs[tipo]);
+                    if (listaAtual && !listaAtual.includes(novaCategoria)) {
+                        const novaLista = [...listaAtual, novaCategoria];
+                        await salvarConfiguracao(path, novaLista);
+                        
+                        if(configs.config) {
+                            if (subtipo) configs.config[tipo][subtipo] = novaLista; else configs.config[tipo] = novaLista;
+                        } else {
+                            if (subtipo) configs[tipo][subtipo] = novaLista; else configs[tipo] = novaLista;
+                        }
+                        
+                        renderizarCategorias();
+                        input.value = '';
+                    } else { alert('Esta categoria já existe.'); }
+                }
+            }
+            if (e.target.matches('.bxs-trash')) {
+                const categoria = e.target.dataset.categoria;
+                const tipo = e.target.dataset.tipo;
+                const subtipo = e.target.dataset.subtipo;
+                if (confirm(`Tem certeza que deseja remover a categoria "${categoria}"?`)) {
+                    const path = subtipo ? `${tipo}.${subtipo}` : tipo;
+                    const listaAtual = subtipo ? (configs.config?.[tipo]?.[subtipo] || configs[tipo]?.[subtipo]) : (configs.config?.[tipo] || configs[tipo]);
+                    const novaLista = listaAtual.filter(c => c !== categoria);
+                    await salvarConfiguracao(path, novaLista);
+                    
+                    if(configs.config) {
+                        if (subtipo) configs.config[tipo][subtipo] = novaLista; else configs.config[tipo] = novaLista;
+                    } else {
+                        if (subtipo) configs[tipo][subtipo] = novaLista; else configs[tipo] = novaLista;
+                    }
+                    
+                    renderizarCategorias();
+                }
+            }
         });
     }
 
@@ -270,11 +311,20 @@ var iniciarConfiguracoes = () => {
             const currentPassword = document.getElementById('perfil-senha-atual').value;
             const newPassword = document.getElementById('perfil-nova-senha').value;
             const confirmPassword = document.getElementById('perfil-confirmar-senha').value;
+            
             if (!currentPassword || !newPassword) return alert('Por favor, preencha a senha atual e a nova senha.');
             if (newPassword !== confirmPassword) return alert('A nova senha e a confirmação não coincidem.');
             if (newPassword.length < 6) return alert('A nova senha deve ter pelo menos 6 caracteres.');
+            
+            // Adicionado o ID do usuário para evitar erro 500 no Backend
+            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+
             try {
-                await window.api.put('/api/users/change-password', { currentPassword, newPassword });
+                await window.api.put('/api/users/change-password', { 
+                    userId: userInfo.id,
+                    currentPassword: currentPassword, 
+                    newPassword: newPassword 
+                });
                 alert('Senha alterada com sucesso!');
                 document.getElementById('perfil-senha-atual').value = '';
                 document.getElementById('perfil-nova-senha').value = '';
