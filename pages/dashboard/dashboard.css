@@ -35,20 +35,20 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 25px;
-    align-items: stretch; /* Garante que os dois widgets cresçam igual na altura */
+    align-items: stretch; 
 }
 
 @media (min-width: 768px) {
     .row-eventos-fundos {
-        /* Proporção para manter 4:3 aprox. nos Eventos e o resto para os Fundos */
-        grid-template-columns: 1.2fr 2fr; 
+        /* Metade para Eventos, Metade para Fundos = Proporção quase quadrada! */
+        grid-template-columns: 1fr 1fr; 
     }
 }
 
 .widget-eventos-compacto, .widget-fundos {
     display: flex;
     flex-direction: column;
-    height: 100%; /* Força a ocupar a altura da grid */
+    height: 100%; 
     min-height: 380px; 
 }
 
@@ -59,7 +59,7 @@
 }
 
 .widget-fundos {
-    min-width: 0; /* Previne que o carrossel estoure o Grid */
+    min-width: 0; 
     display: flex;
     flex-direction: column;
 }
@@ -208,7 +208,7 @@
 .carrossel-container-principal {
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Estica para preencher o widget */
+    flex-grow: 1; 
     position: relative;
     overflow: hidden;
 }
@@ -218,7 +218,7 @@
     align-items: stretch;
     position: relative;
     width: 100%;
-    flex-grow: 1; /* Estica a área do card */
+    flex-grow: 1; 
     overflow: hidden;
 }
 
@@ -228,21 +228,21 @@
     overflow-x: auto;
     scroll-behavior: smooth;
     scrollbar-width: none; /* Firefox */
-    padding: 5px; 
+    padding: 5px 0; /* Removido padding lateral para o card bater nas bordas */
     flex-grow: 1;
     scroll-snap-type: x mandatory;
-    align-items: stretch; /* Força os cards a manterem a mesma altura */
+    align-items: stretch; 
 }
 .carrossel-track::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
 }
 
-/* Card Fundo - Agora com a largura fixa corrigida */
+/* Card Fundo - Expandido para 100% da tela */
 .card-fundo {
-    scroll-snap-align: start; /* Alinha no começo ao rolar */
+    scroll-snap-align: center; 
     background: #ffffff;
     border-radius: 12px;
-    padding: 22px;
+    padding: 25px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -250,12 +250,12 @@
     display: flex;
     flex-direction: column;
     
-    /* CORREÇÃO DA LARGURA */
-    width: 320px; 
-    flex: 0 0 320px; /* Fixa a largura, não deixa esticar nem encolher */
-    max-width: 100%; /* Proteção para telas de celular pequenas */
+    /* CORREÇÃO: Ocupar exatamente 100% do espaço do carrossel */
+    width: 100%; 
+    flex: 0 0 100%; 
+    max-width: 100%; 
     
-    min-height: 100%; /* Estica para preencher a altura que divide com os eventos */
+    min-height: 100%; 
     box-sizing: border-box;
 }
 
@@ -272,7 +272,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px; /* Garante espaço entre título e badge */
+    gap: 12px; 
     margin-bottom: 12px;
 }
 
@@ -284,8 +284,8 @@
     line-height: 1.3;
     border: none;
     padding: 0;
-    flex-grow: 1; /* Permite que o título ocupe o espaço vazio e quebre a linha */
-    word-break: break-word; /* Se o título for gigante, quebra a linha */
+    flex-grow: 1; 
+    word-break: break-word; 
 }
 
 .badge-status {
@@ -295,7 +295,7 @@
     font-weight: 700;
     text-transform: uppercase;
     white-space: nowrap;
-    flex-shrink: 0; /* Impede a bolha de status de ser "esmagada" para fora */
+    flex-shrink: 0; 
 }
 .badge-andamento { background-color: #e9f5ff; color: #007bff; }
 .badge-concluido { background-color: #e6f4ea; color: #1e8e3e; }
@@ -305,7 +305,7 @@
     color: #555;
     margin: 0 0 15px 0;
     line-height: 1.5;
-    flex-grow: 1; /* Joga a barra de progresso para a parte inferior do card */
+    flex-grow: 1; 
 }
 
 .fundo-ritmo {
@@ -368,7 +368,7 @@
     transition: opacity 0.3s ease, background 0.2s;
     z-index: 10;
     opacity: 0; /* Oculto por padrão */
-    pointer-events: none; /* Não clica quando oculto */
+    pointer-events: none;
 }
 .carrossel-btn.prev { left: 10px; }
 .carrossel-btn.next { right: 10px; }
@@ -399,7 +399,7 @@
 }
 .carrossel-dot.active {
     background-color: var(--cor-secundaria, #0033a0);
-    width: 18px; /* Alongado para dar destaque ao ativo */
+    width: 18px; 
     border-radius: 4px;
 }
 
