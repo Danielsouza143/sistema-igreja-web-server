@@ -18,17 +18,17 @@
         <div class="menu-logo-wrapper">
             <img src="/conekta-white.png" alt="Conekta Logo" class="menu-conekta-logo">
         </div>
-        <div class="menu-notifications">
-            <i class='bx bxs-bell'></i>
-            <span class="notification-badge" style="display: none;"></span>
-            <div class="notifications-dropdown">
-                <div class="notifications-header">
-                    <h3>Notificações</h3>
-                    <a class="mark-all-read">Marcar todas como lidas</a>
-                </div>
-                <ul class="notifications-list"></ul>
-            </div>
+        <div class="menu-notifications" onclick="if(!event.target.closest('.notifications-dropdown')) document.querySelector('.notifications-dropdown').classList.toggle('active')">
+    <i class='bx bxs-bell'></i>
+    <span class="notification-badge" style="display: none;"></span>
+    <div class="notifications-dropdown">
+        <div class="notifications-header">
+            <h3>Notificações</h3>
+            <a class="mark-all-read" onclick="event.stopPropagation(); window.markAllAsRead && window.markAllAsRead()">Marcar todas como lidas</a>
         </div>
+        <ul class="notifications-list"></ul>
+    </div>
+</div>
         <div id="conta-area-trigger" class="conta-area">
             <div id="user-avatar" class="user-avatar">?</div>
             <a href="#" class="link-conta">Minha Conta</a>
