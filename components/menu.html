@@ -108,4 +108,20 @@
             <button id="btn-modal-logout" class="btn btn-perigo">Sair (Logout)</button>
         </div>
     </div>
+    <!-- Coloque isso no final do seu menu.html -->
+<script>
+    document.addEventListener('click', function(e) {
+        // Verifica se clicou no sino, mas não dentro do menu aberto
+        const sino = e.target.closest('.menu-notifications');
+        const dropdown = document.querySelector('.notifications-dropdown');
+        
+        if (sino && !e.target.closest('.notifications-dropdown')) {
+            e.preventDefault();
+            if (dropdown) dropdown.classList.toggle('active');
+        } else if (dropdown && !sino) {
+            // Se clicou em qualquer outro lugar da tela, fecha o modal
+            dropdown.classList.remove('active');
+        }
+    });
+</script>
 </div>
