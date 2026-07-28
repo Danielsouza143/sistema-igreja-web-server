@@ -1,34 +1,35 @@
-var initNotifications = () => {
-    const bellIcon = document.querySelector('.menu-notifications i');
-    const badge = document.querySelector('.notification-badge');
-    const notificationList = document.querySelector('.notifications-list');
-    const notificationDropdown = document.querySelector('.notifications-dropdown');
-    const markAllReadBtn = document.querySelector('.mark-all-read');
+// Limpa o intervalo antigo para não duplicar requisições se a função for chamada novamente
+if (window.notifInterval) clearInterval(window.notifInterval);
 
-    // Estado local
+var initNotifications = () => {
     let notifications = [];
 
     // --- FUNÇÕES ---
-
     const fetchNotifications = async () => {
+        // Busca os elementos dinamicamente toda vez que a função roda
+        const badge = document.querySelector('.notification-badge');
+        const notificationList = document.querySelector('.notifications-list');
+        
+        if (!badge || !notificationList) return;
+
         try {
-            if (!window.api) return; // Aguarda API carregar
+            if (!window.api) return; 
             
             const data = await window.api.get('/api/notifications');
             notifications = data.notifications;
-            updateBadge(data.unreadCount);
-            renderNotifications();
+            updateBadge(data.unreadCount, badge);
+            renderNotifications(notificationList);
         } catch (error) {
             console.error('Erro ao buscar notificações:', error);
         }
     };
 
-    const updateBadge = (count) => {
+    const updateBadge = (count, badgeElement) => {
         if (count > 0) {
-            badge.style.display = 'flex'; // Exibe apenas se houver notificações
-            badge.textContent = count > 99 ? '99+' : count;
+            badgeElement.style.display = 'flex';
+            badgeElement.textContent = count > 99 ? '99+' : count;
         } else {
-            badge.style.display = 'none'; // Oculta completamente se zero
+            badgeElement.style.display = 'none';
         }
     };
 
@@ -57,17 +58,23 @@ var initNotifications = () => {
         return date.toLocaleDateString('pt-BR');
     };
 
-    const renderNotifications = () => {
-        notificationList.innerHTML = '';
+    const renderNotifications = (listElement) => {
+        listElement.innerHTML = '';
 
         if (notifications.length === 0) {
-            notificationList.innerHTML = '<li class="no-notifications">Nenhuma notificação recente.</li>';
+            listElement.innerHTML = '<li class="no-notifications">Nenhuma notificação recente.</li>';
             return;
         }
 
         notifications.forEach(notif => {
             const li = document.createElement('li');
             li.className = `notification-item ${notif.read ? 'read' : 'unread'}`;
+            
+            // Usamos atributos data-* para não precisar criar eventListeners individuais no loop
+            li.dataset.id = notif._id;
+            li.dataset.link = notif.link || '#';
+            li.dataset.read = notif.read;
+            
             li.innerHTML = `
                 <div class="notification-icon">
                     ${getIconByType(notif.type)}
@@ -79,62 +86,67 @@ var initNotifications = () => {
                 </div>
                 ${!notif.read ? '<span class="unread-dot"></span>' : ''}
             `;
-
-            li.addEventListener('click', async () => {
-                // Marca como lida e redireciona
-                if (!notif.read) {
-                    try {
-                        await window.api.put(`/api/notifications/${notif._id}/read`);
-                        fetchNotifications(); // Atualiza contador
-                    } catch (e) { console.error(e); }
-                }
-                if (notif.link && notif.link !== '#') {
-                    window.location.href = notif.link;
-                }
-            });
-
-            notificationList.appendChild(li);
+            listElement.appendChild(li);
         });
     };
 
-    const markAllAsRead = async () => {
+    window.markAllAsRead = async () => {
         try {
             await window.api.put('/api/notifications/read-all');
-            fetchNotifications(); // Recarrega lista (deve vir vazia ou tudo lido)
+            fetchNotifications(); 
         } catch (error) {
             console.error('Erro ao limpar notificações:', error);
         }
     };
 
-    // --- EVENT LISTENERS ---
+    // Remove listener antigo para evitar duplicação em navegações HTMX
+    document.removeEventListener('click', window.notificationsClickHandler);
 
-    // Toggle Dropdown
-    document.querySelector('.menu-notifications').addEventListener('click', (e) => {
-        e.stopPropagation();
-        notificationDropdown.classList.toggle('active');
-    });
-
-    // Fechar ao clicar fora
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.menu-notifications')) {
-            notificationDropdown.classList.remove('active');
-        }
-    });
-
-    // Marcar todas como lidas
-    if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', (e) => {
+    // --- EVENT LISTENER GLOBAL (DELEGAÇÃO) ---
+    window.notificationsClickHandler = async (e) => {
+        const dropdown = document.querySelector('.notifications-dropdown');
+        
+        // 1. Toggle Dropdown ao clicar no sino
+        if (e.target.closest('.menu-notifications')) {
             e.stopPropagation();
-            markAllAsRead();
-        });
-    }
+            if (dropdown) dropdown.classList.toggle('active');
+        } 
+        // 2. Fechar ao clicar fora
+        else if (dropdown && !e.target.closest('.notifications-dropdown')) {
+            dropdown.classList.remove('active');
+        }
+
+        // 3. Marcar todas como lidas
+        if (e.target.closest('.mark-all-read')) {
+            e.stopPropagation();
+            window.markAllAsRead();
+        }
+
+        // 4. Redirecionamento da notificação individual
+        const notifItem = e.target.closest('.notification-item');
+        if (notifItem) {
+            const isRead = notifItem.dataset.read === 'true';
+            const notifId = notifItem.dataset.id;
+            const notifLink = notifItem.dataset.link;
+
+            if (!isRead && notifId) {
+                try {
+                    await window.api.put(`/api/notifications/${notifId}/read`);
+                    fetchNotifications();
+                } catch (err) { console.error(err); }
+            }
+            if (notifLink && notifLink !== '#') {
+                window.location.href = notifLink;
+            }
+        }
+    };
+
+    document.addEventListener('click', window.notificationsClickHandler);
 
     // --- INICIALIZAÇÃO ---
-    // Aguarda um pouco para garantir que o token esteja pronto (api.js)
     setTimeout(() => {
         fetchNotifications();
-        // Polling: Atualiza a cada 60 segundos
-        setInterval(fetchNotifications, 60000);
+        window.notifInterval = setInterval(fetchNotifications, 60000);
     }, 1000);
 };
 
@@ -143,3 +155,8 @@ if (document.readyState === 'loading') {
 } else {
     initNotifications();
 }
+
+// Escuta as atualizações do HTMX para as notificações não pararem após a troca de páginas
+document.body.addEventListener('htmx:afterSwap', () => {
+    initNotifications();
+});
