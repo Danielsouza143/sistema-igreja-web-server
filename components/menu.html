@@ -110,23 +110,17 @@
     </div>
     <!-- Coloque isso no final do seu menu.html -->
 <script>
-    // A checagem abaixo evita que o HTMX crie eventos duplicados a cada troca de página
-    if (!window.menuSinoConfigurado) {
+    // Se o evento global já não existir, cria um para fechar o menu de notificações
+    if (!window.fecharNotificacaoGlobal) {
         document.addEventListener('click', function(e) {
-            const sino = e.target.closest('.menu-notifications');
             const dropdown = document.querySelector('.notifications-dropdown');
+            const sino = e.target.closest('.menu-notifications');
             
-            // 1. Se clicou no sino (e não dentro da lista aberta)
-            if (sino && !e.target.closest('.notifications-dropdown')) {
-                e.preventDefault();
-                if (dropdown) dropdown.classList.toggle('active');
-            } 
-            // 2. Se clicou em qualquer outro lugar da tela e o dropdown existir
-            else if (dropdown && !sino) {
+            if (dropdown && dropdown.classList.contains('active') && !sino) {
                 dropdown.classList.remove('active');
             }
         });
-        window.menuSinoConfigurado = true;
+        window.fecharNotificacaoGlobal = true;
     }
 </script>
 </div>
