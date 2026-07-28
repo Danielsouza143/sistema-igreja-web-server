@@ -18,16 +18,17 @@
         <div class="menu-logo-wrapper">
             <img src="/conekta-white.png" alt="Conekta Logo" class="menu-conekta-logo">
         </div>
-        <div class="menu-notifications" onclick="if(!event.target.closest('.notifications-dropdown')) document.querySelector('.notifications-dropdown').classList.toggle('active')">
+    <div class="menu-notifications">
     <i class='bx bxs-bell'></i>
     <span class="notification-badge" style="display: none;"></span>
     <div class="notifications-dropdown">
         <div class="notifications-header">
             <h3>Notificações</h3>
-            <a class="mark-all-read" onclick="event.stopPropagation(); window.markAllAsRead && window.markAllAsRead()">Marcar todas como lidas</a>
+            <a class="mark-all-read">Marcar todas como lidas</a>
         </div>
         <ul class="notifications-list"></ul>
     </div>
+</div>
 </div>
         <div id="conta-area-trigger" class="conta-area">
             <div id="user-avatar" class="user-avatar">?</div>
@@ -109,20 +110,5 @@
         </div>
     </div>
     <!-- Coloque isso no final do seu menu.html -->
-<script>
-    // Se o evento global já não existir, cria um para fechar o menu de notificações
-    if (!window.fecharNotificacaoGlobal) {
-        document.addEventListener('click', function(e) {
-            const dropdown = document.querySelector('.notifications-dropdown');
-            const sino = e.target.closest('.menu-notifications');
-            
-            if (dropdown && dropdown.classList.contains('active') && !sino) {
-                dropdown.classList.remove('active');
-            }
-        });
-        window.fecharNotificacaoGlobal = true;
-    }
-</script>
-    <!-- Coloque isso no final do seu menu.html, perto de onde o menu.js é chamado -->
 <script src="/components/notifications.js"></script>
 </div>
