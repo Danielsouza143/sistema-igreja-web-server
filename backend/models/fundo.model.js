@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
 const fundoSchema = new mongoose.Schema({
-    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant' },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
     nome: { type: String, required: true },
     descricao: { type: String },
     meta: { type: Number, default: 0 },
     prazo: { type: Date },
-    // O SEGREDO ESTÁ AQUI: O banco agora aceita os itens!
+    // AQUI ESTÁ O SEGREDO: O BANCO AGORA ACEITA OS ITENS!
     itens: [{
         nome: { type: String, required: true },
         valor: { type: Number, required: true },
