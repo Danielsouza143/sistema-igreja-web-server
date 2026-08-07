@@ -166,7 +166,6 @@ body.fade-in {
     border: #68affb 2px solid;
 }
 /* --- GERAL E LAYOUT --- */
-/* --- GERAL E LAYOUT --- */
 .conteudo {
     padding: 0 20px 40px; /* Adiciona um respiro no final */
 }
@@ -279,29 +278,12 @@ body.fade-in {
 .add-categoria-form {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px; /* Alterado de margin-top */
-    border-bottom: 1px solid #eee; /* Alterado de border-top */
-    padding-bottom: 20px; /* Alterado de padding-top */
+    margin-bottom: 20px; 
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 20px; 
 }
 .add-categoria-form input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
 /* --- ESTILOS PARA A ABA DÍZIMOS E OFERTAS --- */
-
-.dizimos-busca-container {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-
-.dizimos-busca-container h2 {
-    margin-top: 0;
-}
-/* --- ESTILOS PARA A ABA DÍZIMOS E OFERTAS --- */
-
-.hidden {
-    display: none !important;
-}
 
 .dizimos-busca-container {
     background-color: #fff;
@@ -1188,7 +1170,7 @@ body > .context-menu li i {
 
 .card-fundo.status-concluido {
     border-left-color: #28a745; /* Fica verde apenas na borda quando conclui */
-    background-color: #ffffff; /* Mantém branco */
+    background-color: #ffffff !important; /* Mantém branco */
 }
 
 /* Badges de Status ajustadas */
@@ -1202,14 +1184,16 @@ body > .context-menu li i {
     white-space: nowrap;
 }
 
-.status-ativo .badge-status { 
-    background-color: #e9f5ff; 
-    color: #007bff; 
-}
-.status-concluido .badge-status { 
+.status-ativo { 
     background-color: #e6f4ea; 
     color: #1e8e3e; 
 }
+.status-concluido { 
+    background-color: #e8eaed; 
+    color: #5f6368; 
+}
+.badge-andamento { background-color: #e9f5ff; color: #007bff; }
+.badge-concluido { background-color: #e6f4ea; color: #1e8e3e; }
 
 /* Cabeçalho dentro do Card */
 .card-fundo-header {
