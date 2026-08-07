@@ -25,6 +25,42 @@ var iniciarFinanceiro = () => {
     const selectFundoItem = document.getElementById('fundo-itemId');
     const grupoFundoItem = document.getElementById('grupo-fundo-item');
 
+    // --- MODAL CUSTOMIZADO (SIM / NÃO) ---
+    window.showConfirmCustom = (msg) => {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-confirmacao');
+            const msgEl = document.getElementById('msg-confirmacao');
+            const btnSim = document.getElementById('btn-confirm-sim');
+            const btnNao = document.getElementById('btn-confirm-nao');
+
+            if(!modal || !msgEl || !btnSim || !btnNao) {
+                // Fallback de segurança caso o HTML do modal falte
+                resolve(confirm(msg));
+                return;
+            }
+
+            msgEl.innerText = msg;
+            modal.style.display = 'flex';
+
+            const limparEventos = () => {
+                btnSim.onclick = null;
+                btnNao.onclick = null;
+            };
+
+            btnSim.onclick = () => {
+                modal.style.display = 'none';
+                limparEventos();
+                resolve(true);
+            };
+
+            btnNao.onclick = () => {
+                modal.style.display = 'none';
+                limparEventos();
+                resolve(false);
+            };
+        });
+    };
+
     const fecharMenusGlobais = (e) => {
         const cbContainer = document.getElementById('categorias-checkboxes');
         if (cbContainer && !e.target.closest('#multi-select-categoria')) {
@@ -545,13 +581,15 @@ var iniciarFinanceiro = () => {
             let novaMeta = parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0');
             const totalItens = itensLimpos.reduce((acc, i) => acc + i.valor, 0);
 
-            // Pergunta inteligente se a meta deve ser o total dos itens novos
             if (fundoEmEdicaoId) {
                 const fundoOriginal = fundosAtivos.find(f => f._id === fundoEmEdicaoId);
                 const tinhaItensAntes = fundoOriginal && fundoOriginal.itens && fundoOriginal.itens.length > 0;
                 
                 if (!tinhaItensAntes && itensLimpos.length > 0 && novaMeta !== totalItens) {
-                    if (confirm(`Este fundo não possuía itens detalhados.\nDeseja ajustar a Meta Total (R$ ${novaMeta}) para o valor exato da soma dos novos itens (R$ ${totalItens.toFixed(2).replace('.', ',')})?`)) {
+                    const querAjustar = await window.showConfirmCustom(
+                        `A soma dos itens detalhados do orçamento é ${formatarMoeda(totalItens)}.\n\nVocê deseja ajustar a Meta Total do Fundo para este exato valor?`
+                    );
+                    if (querAjustar) {
                         novaMeta = totalItens;
                     }
                 }
@@ -575,7 +613,6 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    // Abertura de Modal de Lançamento direto para o Item
     window.abrirModalLancamentoItem = (tipo, fundoId, itemId) => {
         if (modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
         abrirModal(); 
@@ -609,7 +646,6 @@ var iniciarFinanceiro = () => {
 
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
         
-        // --- 1. RENDERIZAR ITENS DO ORÇAMENTO E PROGRESSO INDIVIDUAL ---
         const containerItens = document.getElementById('fundo-detalhes-itens-lista');
         if(containerItens && fundo.itens && fundo.itens.length > 0) {
             containerItens.innerHTML = fundo.itens.map(item => {
@@ -650,7 +686,6 @@ var iniciarFinanceiro = () => {
             containerItens.innerHTML = '<p style="color:#888; font-size: 0.9rem; text-align:center; padding: 20px;">Orçamento sem itens detalhados.</p>';
         }
 
-        // --- 2. RENDERIZAR TABELA DE HISTÓRICO ---
         const tabela = document.getElementById('tabela-fundo-lancamentos');
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
@@ -1421,7 +1456,7 @@ var iniciarFinanceiro = () => {
                 if(fundoObj && fundoObj.itens && fundoObj.itens.length > 0) {
                     grupoFundoItem.classList.remove('hidden');
                     selectFundoItem.innerHTML = '<option value="">Lançamento Livre (Geral do Fundo)</option>' + 
-                        fundoObj.itens.map(i => `<option value="${i._id}">${i.nome} (Ref: ${formatarMoeda(i.valor)})</option>`).join('');
+                        fundoObj.itens.map(i => `<option value="${i._id}">${i.nome} (Custo: ${formatarMoeda(i.valor)})</option>`).join('');
                 } else {
                     grupoFundoItem.classList.add('hidden');
                     selectFundoItem.value = '';
