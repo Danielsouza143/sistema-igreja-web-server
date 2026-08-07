@@ -157,14 +157,28 @@ var iniciarFinanceiro = () => {
                 reader.readAsDataURL(blob);
                 reader.onloadend = () => { resolve(reader.result); };
             });
-        } catch (e) { return url; }
+        } catch (e) {
+            return url; 
+        }
     };
 
     if(inputValorLancamento) inputValorLancamento.oninput = aplicarMascaraMoeda;
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
     if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
 
-    // --- PREVENIR ENVIO COM ENTER ---
+    // --- PREVENIR ENVIO DO FORMULÁRIO COM ENTER ---
+    const inputNovoItemNome = document.getElementById('novo-item-nome');
+    if(inputNovoItemNome) {
+        inputNovoItemNome.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-item-orcamento').click(); }
+        });
+    }
+    if(inputNovoItemValor) {
+        inputNovoItemValor.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-item-orcamento').click(); }
+        });
+    }
+
     const prevenirEnter = (formId) => {
         const form = document.getElementById(formId);
         if(form) {
@@ -487,7 +501,10 @@ var iniciarFinanceiro = () => {
     }
 
     if(btnAddItem) {
-        btnAddItem.onclick = async () => {
+        btnAddItem.onclick = async (e) => {
+            e.preventDefault(); // Impede qualquer submissão de form acidental
+            e.stopPropagation();
+
             const nomeInput = document.getElementById('novo-item-nome');
             const valorOriginal = parseMoedaToFloat(inputNovoItemValor.value);
             
@@ -508,7 +525,7 @@ var iniciarFinanceiro = () => {
                 } catch (err) {
                     alert('Erro ao enviar o anexo do item.');
                 }
-                btnAddItem.textContent = "Add";
+                btnAddItem.textContent = "Adicionar";
                 btnAddItem.disabled = false;
             }
 
@@ -538,7 +555,6 @@ var iniciarFinanceiro = () => {
     }
 
     const abrirModalFundo = (fundo) => {
-        // Bloqueia se 'fundo' for um Evento de mouse em vez de um objeto
         const fundoObj = (fundo && !(fundo instanceof Event)) ? fundo : null;
 
         if(formFundo) formFundo.reset();
