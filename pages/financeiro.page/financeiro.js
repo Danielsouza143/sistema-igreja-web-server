@@ -19,7 +19,7 @@ var iniciarFinanceiro = () => {
     let graficoContribuicoesMembro = null;
     let graficoFundoAtual = null;
 
-    // --- NOVAS VARIÁVEIS PARA ORÇAMENTO ---
+    // --- VARIÁVEIS PARA ORÇAMENTO ---
     let itensOrcamentoTemp = []; 
     const inputNovoItemValor = document.getElementById('novo-item-valor');
     const selectFundoItem = document.getElementById('fundo-itemId');
@@ -113,7 +113,6 @@ var iniciarFinanceiro = () => {
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
-    // FUNÇÃO NATIVA PARA BAIXAR DO S3 VIA CORS SEM PROXY
     const getBase64FromUrl = async (url) => {
         try {
             const data = await fetch(url + '?nocache=' + new Date().getTime(), { 
@@ -136,7 +135,7 @@ var iniciarFinanceiro = () => {
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
     if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
 
-    // --- PREVENIR ENVIO DO FORMULÁRIO COM ENTER ---
+    // --- PREVENIR ENVIO COM ENTER ---
     const prevenirEnter = (formId) => {
         const form = document.getElementById(formId);
         if(form) {
@@ -389,7 +388,7 @@ var iniciarFinanceiro = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            const cardStatusClass = porcentagemNum >= 100 ? 'meta-concluida' : 'meta-andamento';
+            const cardStatusClass = porcentagemNum >= 100 ? 'status-concluido' : 'status-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
@@ -443,7 +442,6 @@ var iniciarFinanceiro = () => {
             `;
         });
 
-        // Atualiza a meta automaticamente se houver itens
         const inputMeta = document.getElementById('fundo-meta');
         if(inputMeta && itensOrcamentoTemp.length > 0) {
             inputMeta.value = "R$ " + total.toFixed(2).replace('.', ',');
@@ -491,7 +489,6 @@ var iniciarFinanceiro = () => {
                 btnAddItem.disabled = false;
             }
 
-            // Gera um ID fake temporário para controle no frontend antes de salvar no backend
             const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
             
             itensOrcamentoTemp.push({
@@ -513,7 +510,7 @@ var iniciarFinanceiro = () => {
     const abrirModalFundo = (fundo = null) => {
         if(formFundo) formFundo.reset();
         fundoEmEdicaoId = null;
-        itensOrcamentoTemp = []; // Limpa cache de itens
+        itensOrcamentoTemp = []; 
         const nomeAnexo = document.getElementById('novo-item-anexo-nome');
         if(nomeAnexo) nomeAnexo.textContent = '';
 
@@ -545,22 +542,61 @@ var iniciarFinanceiro = () => {
                 return (_id && !_id.startsWith('temp_')) ? item : resto;
             });
 
+            let novaMeta = parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0');
+            const totalItens = itensLimpos.reduce((acc, i) => acc + i.valor, 0);
+
+            // Pergunta inteligente se a meta deve ser o total dos itens novos
+            if (fundoEmEdicaoId) {
+                const fundoOriginal = fundosAtivos.find(f => f._id === fundoEmEdicaoId);
+                const tinhaItensAntes = fundoOriginal && fundoOriginal.itens && fundoOriginal.itens.length > 0;
+                
+                if (!tinhaItensAntes && itensLimpos.length > 0 && novaMeta !== totalItens) {
+                    if (confirm(`Este fundo não possuía itens detalhados.\nDeseja ajustar a Meta Total (R$ ${novaMeta}) para o valor exato da soma dos novos itens (R$ ${totalItens.toFixed(2).replace('.', ',')})?`)) {
+                        novaMeta = totalItens;
+                    }
+                }
+            }
+
             const dados = { 
                 nome: document.getElementById('fundo-nome').value, 
                 descricao: document.getElementById('fundo-descricao').value, 
-                meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'), 
+                meta: novaMeta, 
                 prazo: document.getElementById('fundo-prazo').value,
                 itens: itensLimpos
             };
+            
             try {
                 if(fundoEmEdicaoId) await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
                 else await window.api.post('/api/financeiro/fundos', dados);
                 if(modalFundo) modalFundo.style.display = 'none';
-                carregarFundos();
+                await carregarFundos();
                 alert('Fundo salvo com sucesso!');
             } catch(error) { alert('Erro ao salvar fundo.'); }
         };
     }
+
+    // Abertura de Modal de Lançamento direto para o Item
+    window.abrirModalLancamentoItem = (tipo, fundoId, itemId) => {
+        if (modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
+        abrirModal(); 
+        setTimeout(() => {
+            if(selectTipo) {
+                selectTipo.value = tipo;
+                atualizarCategoriasModal(tipo);
+            }
+            if(selectFundo) { 
+                selectFundo.value = fundoId; 
+                toggleMembroSearch(); 
+                selectFundo.dispatchEvent(new Event('change'));
+            }
+            setTimeout(() => {
+                const selectFundoItem = document.getElementById('fundo-itemId');
+                if(selectFundoItem) {
+                    selectFundoItem.value = itemId;
+                }
+            }, 100);
+        }, 100);
+    };
 
     const abrirDetalhesFundo = (fundo) => {
         if(!modalDetalhesFundo) return;
@@ -573,26 +609,39 @@ var iniciarFinanceiro = () => {
 
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
         
-        // --- 1. RENDERIZAR ITENS DO ORÇAMENTO ---
+        // --- 1. RENDERIZAR ITENS DO ORÇAMENTO E PROGRESSO INDIVIDUAL ---
         const containerItens = document.getElementById('fundo-detalhes-itens-lista');
         if(containerItens && fundo.itens && fundo.itens.length > 0) {
             containerItens.innerHTML = fundo.itens.map(item => {
-                // Pagamentos (Saídas) reduzem o valor restante do item
-                const pago = lancamentosDoFundo
+                const arrecadadoItem = lancamentosDoFundo
+                    .filter(l => l.itemId === item._id && l.tipo === 'entrada')
+                    .reduce((acc, l) => acc + l.valor, 0);
+
+                const pagoItem = lancamentosDoFundo
                     .filter(l => l.itemId === item._id && l.tipo === 'saida') 
                     .reduce((acc, l) => acc + l.valor, 0);
                 
-                const pct = Math.min((pago / item.valor) * 100, 100);
-                const corBarra = pct >= 100 ? '#28a745' : (pct > 0 ? '#007bff' : '#ccc');
+                const pctArrecadado = Math.min((arrecadadoItem / item.valor) * 100, 100);
+                const statusItem = pagoItem >= item.valor ? 'Pago' : 'Pendente';
+                const classBadge = statusItem === 'Pago' ? 'badge-concluido' : 'badge-andamento';
                 
                 return `
                     <div class="item-progresso-card">
-                        <div class="item-progresso-header">
-                            <strong>${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Anexo do orçamento"><i class='bx bx-link-external'></i></a>` : ''}</strong>
-                            <span>Pago: <b>${formatarMoeda(pago)}</b> / ${formatarMoeda(item.valor)}</span>
+                        <div class="item-progresso-header" style="margin-bottom:4px;">
+                            <strong>${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Anexo"><i class='bx bx-link-external'></i></a>` : ''}</strong>
+                            <span class="badge-status ${classBadge}" style="font-size:0.65rem;">${statusItem}</span>
                         </div>
-                        <div class="progresso-container" style="height: 6px; margin:0;">
-                            <div class="progresso-barra" style="width: ${pct}%; background-color: ${corBarra}"></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                            <span style="color:#555;">Custo: <b>${formatarMoeda(item.valor)}</b></span>
+                            <span style="color:#28a745;">Arrecadado: <b>${formatarMoeda(arrecadadoItem)}</b></span>
+                            <span style="color:#dc3545;">Pago: <b>${formatarMoeda(pagoItem)}</b></span>
+                        </div>
+                        <div class="progresso-container" style="height: 6px; margin:0 0 10px 0;">
+                            <div class="progresso-barra" style="width: ${pctArrecadado}%; background-color: #007bff;"></div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-sucesso btn-sm" onclick="window.abrirModalLancamentoItem('entrada', '${fundo._id}', '${item._id}')"><i class='bx bx-plus'></i> Arrecadar</button>
+                            <button class="btn-perigo btn-sm" onclick="window.abrirModalLancamentoItem('saida', '${fundo._id}', '${item._id}')"><i class='bx bx-minus'></i> Pagar</button>
                         </div>
                     </div>
                 `;
@@ -647,7 +696,6 @@ var iniciarFinanceiro = () => {
                 if(selectFundo && fundoEmVisualizacao) { 
                     selectFundo.value = fundoEmVisualizacao._id; 
                     toggleMembroSearch(); 
-                    // Trigger o change manualmente para carregar os itens no selectFundoItem
                     selectFundo.dispatchEvent(new Event('change'));
                 }
             }, 100);
@@ -736,9 +784,6 @@ var iniciarFinanceiro = () => {
         if(grupoMembro) grupoMembro.classList.toggle('hidden', !isContribuicao);
     };
 
-    // ==========================================
-    // 8. MODAIS E GERAÇÃO DE RECIBOS 
-    // ==========================================
     const preencherRecibo = async (lancamento, membro) => {
         document.getElementById('recibo-nome-membro').textContent = membro ? membro.nome : 'Doador Avulso';
         document.getElementById('recibo-valor').textContent = formatarMoeda(lancamento.valor);
@@ -747,11 +792,7 @@ var iniciarFinanceiro = () => {
         document.getElementById('recibo-categoria').textContent = lancamento.categoria;
 
         if (!tenantInfo) {
-            try {
-                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
-            } catch (e) {
-                console.error("Erro ao buscar info da igreja");
-            }
+            try { tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); } catch (e) {}
         }
 
         if (tenantInfo) {
@@ -763,12 +804,8 @@ var iniciarFinanceiro = () => {
             if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.name || 'Nossa Igreja';
             
             if (elCnpjIgreja) {
-                if (tenantInfo.cnpj) {
-                    elCnpjIgreja.textContent = `CNPJ / CPF: ${tenantInfo.cnpj}`;
-                    elCnpjIgreja.style.display = 'block';
-                } else {
-                    elCnpjIgreja.style.display = 'none';
-                }
+                if (tenantInfo.cnpj) { elCnpjIgreja.textContent = `CNPJ / CPF: ${tenantInfo.cnpj}`; elCnpjIgreja.style.display = 'block'; } 
+                else { elCnpjIgreja.style.display = 'none'; }
             }
             
             if (tenantInfo.config && tenantInfo.config.logoUrl) {
@@ -808,7 +845,6 @@ var iniciarFinanceiro = () => {
     const compartilharRecibo = async (lancamento) => {
         const membro = todosMembros.find(m => m._id === lancamento.membroId);
         await preencherRecibo(lancamento, membro);
-        
         const reciboElement = document.getElementById('recibo-template');
 
         setTimeout(async () => {
@@ -823,9 +859,8 @@ var iniciarFinanceiro = () => {
                         text: `Olá ${membro ? membro.nome : ''}, segue o seu recibo.`,
                     };
 
-                    if (navigator.canShare && navigator.canShare(shareData)) {
-                        await navigator.share(shareData);
-                    } else {
+                    if (navigator.canShare && navigator.canShare(shareData)) await navigator.share(shareData);
+                    else {
                         alert('O compartilhamento não é suportado neste navegador. O recibo será baixado.');
                         const link = document.createElement('a');
                         link.href = URL.createObjectURL(blob);
@@ -833,9 +868,7 @@ var iniciarFinanceiro = () => {
                         link.click();
                     }
                 }, 'image/png');
-            } catch (error) {
-                console.error('Erro ao compartilhar:', error);
-            }
+            } catch (error) { console.error('Erro ao compartilhar:', error); }
         }, 800);
     };
 
@@ -870,14 +903,8 @@ var iniciarFinanceiro = () => {
         const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
         
         if (lancamento.tipo === 'entrada') {
-            if(btnImprimir) {
-                btnImprimir.classList.remove('hidden');
-                btnImprimir.onclick = () => gerarReciboPDF(lancamento);
-            }
-            if(btnCompartilhar) {
-                btnCompartilhar.classList.remove('hidden');
-                btnCompartilhar.onclick = () => compartilharRecibo(lancamento);
-            }
+            if(btnImprimir) { btnImprimir.classList.remove('hidden'); btnImprimir.onclick = () => gerarReciboPDF(lancamento); }
+            if(btnCompartilhar) { btnCompartilhar.classList.remove('hidden'); btnCompartilhar.onclick = () => compartilharRecibo(lancamento); }
         } else {
             if(btnImprimir) btnImprimir.classList.add('hidden');
             if(btnCompartilhar) btnCompartilhar.classList.add('hidden');
@@ -909,7 +936,6 @@ var iniciarFinanceiro = () => {
             
             if(lancamento.fundoId && selectFundo) {
                 selectFundo.value = lancamento.fundoId;
-                // Popula manualmente os itens
                 const fundoObj = fundosAtivos.find(f => f._id === lancamento.fundoId);
                 if(fundoObj && fundoObj.itens && fundoObj.itens.length > 0) {
                     grupoFundoItem.classList.remove('hidden');
@@ -1060,11 +1086,8 @@ var iniciarFinanceiro = () => {
 
     const imprimirRelatorioAnualMembro = async (membro, contribuicoes) => {
         if (!tenantInfo) {
-            try {
-                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
-            } catch (e) {}
+            try { tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); } catch (e) {}
         }
-
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const anoCorrente = new Date().getFullYear();
@@ -1076,11 +1099,9 @@ var iniciarFinanceiro = () => {
         doc.text('Declaração Anual de Contribuições', 105, 22, { align: 'center' });
         doc.setFontSize(12);
         doc.text(`Ano de Referência: ${anoCorrente}`, 105, 30, { align: 'center' });
-
         doc.setFontSize(11);
         doc.text(`Declaramos para os devidos fins que o(a) irmão(ã) ${membro.nome},\n`, 14, 50);
         doc.text(`membro desta igreja, contribuiu durante o ano de ${anoCorrente} com o valor total de:`, 14, 57);
-        
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.text(formatarMoeda(totalContribuido), 105, 70, { align: 'center' });
@@ -1179,10 +1200,7 @@ var iniciarFinanceiro = () => {
     // ==========================================
     const carregarDados = async () => {
         try {
-            try {
-                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`);
-            } catch (err) {}
-
+            try { tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); } catch (err) {}
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
@@ -1209,7 +1227,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 11. EVENT LISTENERS
+    // 11. EVENT LISTENERS GERAIS
     // ==========================================
     if(formLancamento) {
         formLancamento.onsubmit = async (e) => {
@@ -1325,21 +1343,9 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    if(btnEditarCtx) {
-        btnEditarCtx.onclick = () => {
-            if (!rightClickedRowId) return;
-            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
-            if(lancamento) abrirModal(lancamento);
-        };
-    }
-
-    if(btnExcluirCtx) {
-        btnExcluirCtx.onclick = () => {
-            if (!rightClickedRowId) return;
-            iniciarExclusaoComDesfazer(rightClickedRowId);
-        };
-    }
-
+    if(btnEditarCtx) { btnEditarCtx.onclick = () => { if (!rightClickedRowId) return; const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId); if(lancamento) abrirModal(lancamento); }; }
+    if(btnExcluirCtx) { btnExcluirCtx.onclick = () => { if (!rightClickedRowId) return; iniciarExclusaoComDesfazer(rightClickedRowId); }; }
+    
     if(btnCopiarCtx) {
         btnCopiarCtx.onclick = () => {
             if (!rightClickedRowId) return;
@@ -1356,11 +1362,8 @@ var iniciarFinanceiro = () => {
             if (!rightClickedRowId) return;
             const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
             if (lancamento) {
-                if(lancamento.tipo === 'entrada') {
-                    gerarReciboPDF(lancamento);
-                } else {
-                    alert("A emissão de recibos está disponível apenas para entradas/receitas.");
-                }
+                if(lancamento.tipo === 'entrada') gerarReciboPDF(lancamento);
+                else alert("A emissão de recibos está disponível apenas para entradas/receitas.");
             }
         };
     }
@@ -1431,13 +1434,7 @@ var iniciarFinanceiro = () => {
     }
 
     if(btnNovaMeta) btnNovaMeta.onclick = () => abrirModalFundo();
-    
-    if(btnAplicarFiltros) {
-        btnAplicarFiltros.onclick = (e) => {
-            e.preventDefault();
-            aplicarFiltros();
-        };
-    }
+    if(btnAplicarFiltros) { btnAplicarFiltros.onclick = (e) => { e.preventDefault(); aplicarFiltros(); }; }
 
     if(buscaMembroModalInput) {
         buscaMembroModalInput.oninput = () => {
