@@ -19,6 +19,12 @@ var iniciarFinanceiro = () => {
     let graficoContribuicoesMembro = null;
     let graficoFundoAtual = null;
 
+    // --- NOVAS VARIÁVEIS PARA ORÇAMENTO ---
+    let itensOrcamentoTemp = []; 
+    const inputNovoItemValor = document.getElementById('novo-item-valor');
+    const selectFundoItem = document.getElementById('fundo-itemId');
+    const grupoFundoItem = document.getElementById('grupo-fundo-item');
+
     const fecharMenusGlobais = (e) => {
         const cbContainer = document.getElementById('categorias-checkboxes');
         if (cbContainer && !e.target.closest('#multi-select-categoria')) {
@@ -110,7 +116,6 @@ var iniciarFinanceiro = () => {
     // FUNÇÃO NATIVA PARA BAIXAR DO S3 VIA CORS SEM PROXY
     const getBase64FromUrl = async (url) => {
         try {
-            // Tenta fazer o fetch com cache-busting para ignorar bloqueios velhos do navegador
             const data = await fetch(url + '?nocache=' + new Date().getTime(), { 
                 mode: 'cors',
                 cache: 'no-cache'
@@ -129,6 +134,21 @@ var iniciarFinanceiro = () => {
 
     if(inputValorLancamento) inputValorLancamento.oninput = aplicarMascaraMoeda;
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
+    if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
+
+    // --- PREVENIR ENVIO DO FORMULÁRIO COM ENTER ---
+    const prevenirEnter = (formId) => {
+        const form = document.getElementById(formId);
+        if(form) {
+            form.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                }
+            });
+        }
+    };
+    prevenirEnter('form-fundo');
+    prevenirEnter('form-lancamento');
 
     window.toggleMultiSelect = () => { if(categoriasCheckboxes) categoriasCheckboxes.classList.toggle('active'); };
 
@@ -401,9 +421,102 @@ var iniciarFinanceiro = () => {
         });
     };
 
+    // --- LÓGICA DE ITENS DO ORÇAMENTO ---
+    const renderizarItensOrcamento = () => {
+        const lista = document.getElementById('lista-itens-orcamento');
+        if(!lista) return;
+        lista.innerHTML = '';
+        
+        let total = 0;
+        itensOrcamentoTemp.forEach((item, index) => {
+            total += item.valor;
+            lista.innerHTML += `
+                <li>
+                    <div class="item-orcamento-info">
+                        <span class="item-orcamento-nome">${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Ver Anexo"><i class='bx bx-link-external' style="color:#007bff; font-size:1rem;"></i></a>` : ''}</span>
+                        <span class="item-orcamento-valor">${formatarMoeda(item.valor)}</span>
+                    </div>
+                    <div class="item-orcamento-acoes">
+                        <i class='bx bxs-trash' onclick="removerItemOrcamento(${index})"></i>
+                    </div>
+                </li>
+            `;
+        });
+
+        // Atualiza a meta automaticamente se houver itens
+        const inputMeta = document.getElementById('fundo-meta');
+        if(inputMeta && itensOrcamentoTemp.length > 0) {
+            inputMeta.value = "R$ " + total.toFixed(2).replace('.', ',');
+        }
+    };
+
+    window.removerItemOrcamento = (index) => {
+        itensOrcamentoTemp.splice(index, 1);
+        renderizarItensOrcamento();
+    };
+
+    const btnAddItem = document.getElementById('btn-add-item-orcamento');
+    const anexoItemInput = document.getElementById('novo-item-anexo');
+
+    if(anexoItemInput) {
+        anexoItemInput.onchange = (e) => {
+            const file = e.target.files[0];
+            document.getElementById('novo-item-anexo-nome').textContent = file ? file.name : '';
+        };
+    }
+
+    if(btnAddItem) {
+        btnAddItem.onclick = async () => {
+            const nomeInput = document.getElementById('novo-item-nome');
+            const valorOriginal = parseMoedaToFloat(inputNovoItemValor.value);
+            
+            if(!nomeInput.value || valorOriginal <= 0) {
+                alert('Preencha o nome e um valor válido para o item.');
+                return;
+            }
+
+            let anexoUrl = null;
+            if(anexoItemInput && anexoItemInput.files[0]) {
+                btnAddItem.textContent = "...";
+                btnAddItem.disabled = true;
+                try {
+                    const formData = new FormData();
+                    formData.append('comprovante', anexoItemInput.files[0]);
+                    const res = await window.api.post('/api/financeiro/upload-comprovante', formData);
+                    anexoUrl = res.filePath;
+                } catch (err) {
+                    alert('Erro ao enviar o anexo do item.');
+                }
+                btnAddItem.textContent = "Add";
+                btnAddItem.disabled = false;
+            }
+
+            // Gera um ID fake temporário para controle no frontend antes de salvar no backend
+            const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
+            
+            itensOrcamentoTemp.push({
+                _id: tempId,
+                nome: nomeInput.value,
+                valor: valorOriginal,
+                anexoUrl: anexoUrl
+            });
+
+            nomeInput.value = '';
+            inputNovoItemValor.value = '';
+            if(anexoItemInput) anexoItemInput.value = '';
+            document.getElementById('novo-item-anexo-nome').textContent = '';
+            
+            renderizarItensOrcamento();
+        };
+    }
+
     const abrirModalFundo = (fundo = null) => {
         if(formFundo) formFundo.reset();
         fundoEmEdicaoId = null;
+        itensOrcamentoTemp = []; // Limpa cache de itens
+        const nomeAnexo = document.getElementById('novo-item-anexo-nome');
+        if(nomeAnexo) nomeAnexo.textContent = '';
+
         if(fundo) {
             document.getElementById('modal-fundo-titulo').textContent = 'Editar Fundo / Meta';
             fundoEmEdicaoId = fundo._id;
@@ -411,16 +524,34 @@ var iniciarFinanceiro = () => {
             document.getElementById('fundo-descricao').value = fundo.descricao;
             document.getElementById('fundo-meta').value = "R$ " + (fundo.meta || 0).toFixed(2).replace('.', ',');
             document.getElementById('fundo-prazo').value = fundo.prazo ? fundo.prazo.split('T')[0] : '';
+            
+            if(fundo.itens && Array.isArray(fundo.itens)) {
+                itensOrcamentoTemp = [...fundo.itens];
+            }
         } else {
             document.getElementById('modal-fundo-titulo').textContent = 'Novo Fundo / Meta';
         }
+        
+        renderizarItensOrcamento();
         if(modalFundo) modalFundo.style.display = 'flex';
     };
 
     if(formFundo) {
         formFundo.onsubmit = async (e) => {
             e.preventDefault();
-            const dados = { nome: document.getElementById('fundo-nome').value, descricao: document.getElementById('fundo-descricao').value, meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'), prazo: document.getElementById('fundo-prazo').value };
+            
+            const itensLimpos = itensOrcamentoTemp.map(item => {
+                const { _id, ...resto } = item;
+                return (_id && !_id.startsWith('temp_')) ? item : resto;
+            });
+
+            const dados = { 
+                nome: document.getElementById('fundo-nome').value, 
+                descricao: document.getElementById('fundo-descricao').value, 
+                meta: parseMoedaToFloat(inputMetaFundo ? inputMetaFundo.value : '0'), 
+                prazo: document.getElementById('fundo-prazo').value,
+                itens: itensLimpos
+            };
             try {
                 if(fundoEmEdicaoId) await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
                 else await window.api.post('/api/financeiro/fundos', dados);
@@ -437,19 +568,58 @@ var iniciarFinanceiro = () => {
         document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
         document.getElementById('fundo-valor-arrecadado').textContent = formatarMoeda(fundo.arrecadado);
         document.getElementById('fundo-valor-meta').textContent = formatarMoeda(fundo.meta);
-        const porcentagem = ((fundo.arrecadado / (fundo.meta || 1)) * 100).toFixed(1);
-        document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
+        const porcentagemNum = Math.min(((fundo.arrecadado / (fundo.meta || 1)) * 100), 100);
+        document.getElementById('fundo-porcentagem').textContent = `${porcentagemNum.toFixed(1)}%`;
 
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
+        
+        // --- 1. RENDERIZAR ITENS DO ORÇAMENTO ---
+        const containerItens = document.getElementById('fundo-detalhes-itens-lista');
+        if(containerItens && fundo.itens && fundo.itens.length > 0) {
+            containerItens.innerHTML = fundo.itens.map(item => {
+                // Pagamentos (Saídas) reduzem o valor restante do item
+                const pago = lancamentosDoFundo
+                    .filter(l => l.itemId === item._id && l.tipo === 'saida') 
+                    .reduce((acc, l) => acc + l.valor, 0);
+                
+                const pct = Math.min((pago / item.valor) * 100, 100);
+                const corBarra = pct >= 100 ? '#28a745' : (pct > 0 ? '#007bff' : '#ccc');
+                
+                return `
+                    <div class="item-progresso-card">
+                        <div class="item-progresso-header">
+                            <strong>${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Anexo do orçamento"><i class='bx bx-link-external'></i></a>` : ''}</strong>
+                            <span>Pago: <b>${formatarMoeda(pago)}</b> / ${formatarMoeda(item.valor)}</span>
+                        </div>
+                        <div class="progresso-container" style="height: 6px; margin:0;">
+                            <div class="progresso-barra" style="width: ${pct}%; background-color: ${corBarra}"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else if (containerItens) {
+            containerItens.innerHTML = '<p style="color:#888; font-size: 0.9rem; text-align:center; padding: 20px;">Orçamento sem itens detalhados.</p>';
+        }
+
+        // --- 2. RENDERIZAR TABELA DE HISTÓRICO ---
         const tabela = document.getElementById('tabela-fundo-lancamentos');
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
                 tabela.innerHTML = lancamentosDoFundo.map(l => {
-                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Caixa Geral (Transferência)';
-                    return `<tr><td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td><td>${membroNome}</td><td style="color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}</td></tr>`;
+                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Geral';
+                    const nomeItem = (l.itemId && fundo.itens) ? (fundo.itens.find(i => i._id === l.itemId)?.nome || 'Livre') : 'Livre';
+                    
+                    return `
+                        <tr>
+                            <td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                            <td>${membroNome}</td>
+                            <td><span class="badge-item-tag">${nomeItem}</span></td>
+                            <td style="color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}</td>
+                        </tr>
+                    `;
                 }).join('');
             } else {
-                tabela.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento vinculado ainda.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento.</td></tr>';
             }
         }
         renderizarGraficoFundoEspecifico(lancamentosDoFundo);
@@ -474,7 +644,12 @@ var iniciarFinanceiro = () => {
             setTimeout(() => {
                 if(selectTipo) selectTipo.value = 'entrada';
                 atualizarCategoriasModal('entrada');
-                if(selectFundo && fundoEmVisualizacao) { selectFundo.value = fundoEmVisualizacao._id; toggleMembroSearch(); }
+                if(selectFundo && fundoEmVisualizacao) { 
+                    selectFundo.value = fundoEmVisualizacao._id; 
+                    toggleMembroSearch(); 
+                    // Trigger o change manualmente para carregar os itens no selectFundoItem
+                    selectFundo.dispatchEvent(new Event('change'));
+                }
             }, 100);
         };
     }
@@ -731,7 +906,19 @@ var iniciarFinanceiro = () => {
             document.getElementById('data').value = lancamento.data.split('T')[0];
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
-            if(lancamento.fundoId && selectFundo) selectFundo.value = lancamento.fundoId;
+            
+            if(lancamento.fundoId && selectFundo) {
+                selectFundo.value = lancamento.fundoId;
+                // Popula manualmente os itens
+                const fundoObj = fundosAtivos.find(f => f._id === lancamento.fundoId);
+                if(fundoObj && fundoObj.itens && fundoObj.itens.length > 0) {
+                    grupoFundoItem.classList.remove('hidden');
+                    selectFundoItem.innerHTML = '<option value="">Lançamento Livre (Geral do Fundo)</option>' + 
+                        fundoObj.itens.map(i => `<option value="${i._id}">${i.nome} (Ref: ${formatarMoeda(i.valor)})</option>`).join('');
+                    if(lancamento.itemId) selectFundoItem.value = lancamento.itemId;
+                }
+            }
+
             atualizarCategoriasModal(lancamento.tipo, lancamento.categoria);
             if (lancamento.membroId) {
                 const membro = todosMembros.find(m => m._id === lancamento.membroId);
@@ -753,7 +940,18 @@ var iniciarFinanceiro = () => {
             document.getElementById('data').value = new Date().toISOString().split('T')[0];
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
-            if(lancamento.fundoId && selectFundo) selectFundo.value = lancamento.fundoId;
+            
+            if(lancamento.fundoId && selectFundo) {
+                selectFundo.value = lancamento.fundoId;
+                const fundoObj = fundosAtivos.find(f => f._id === lancamento.fundoId);
+                if(fundoObj && fundoObj.itens && fundoObj.itens.length > 0) {
+                    grupoFundoItem.classList.remove('hidden');
+                    selectFundoItem.innerHTML = '<option value="">Lançamento Livre (Geral do Fundo)</option>' + 
+                        fundoObj.itens.map(i => `<option value="${i._id}">${i.nome} (Ref: ${formatarMoeda(i.valor)})</option>`).join('');
+                    if(lancamento.itemId) selectFundoItem.value = lancamento.itemId;
+                }
+            }
+
             atualizarCategoriasModal(lancamento.tipo, lancamento.categoria);
             if (lancamento.membroId) {
                  const membro = todosMembros.find(m => m._id === lancamento.membroId);
@@ -768,6 +966,7 @@ var iniciarFinanceiro = () => {
             document.getElementById('modal-titulo').textContent = 'Novo Lançamento';
             document.getElementById('data').value = new Date().toISOString().split('T')[0];
             atualizarCategoriasModal('entrada');
+            if(grupoFundoItem) grupoFundoItem.classList.add('hidden');
         }
         toggleMembroSearch();
         if(modalLancamento) modalLancamento.style.display = 'flex';
@@ -1040,6 +1239,7 @@ var iniciarFinanceiro = () => {
                 descricao: document.getElementById('descricao').value,
                 membroId: membroIdHiddenInput && membroIdHiddenInput.value ? membroIdHiddenInput.value : null,
                 fundoId: selectFundo && selectFundo.value ? selectFundo.value : null,
+                itemId: selectFundoItem && selectFundoItem.value && selectFundo && selectFundo.value ? selectFundoItem.value : null,
                 comprovanteUrl: comprovanteUrl
             };
 
@@ -1208,7 +1408,28 @@ var iniciarFinanceiro = () => {
     if(btnNovoLancamento) btnNovoLancamento.onclick = () => abrirModal();
     if(selectTipo) selectTipo.onchange = (e) => { atualizarCategoriasModal(e.target.value); toggleMembroSearch(); };
     if(selectCategoria) selectCategoria.onchange = toggleMembroSearch;
-    if(selectFundo) selectFundo.onchange = toggleMembroSearch;
+    
+    if(selectFundo) {
+        selectFundo.addEventListener('change', () => {
+            toggleMembroSearch();
+            const idFundo = selectFundo.value;
+            if(idFundo && fundosAtivos) {
+                const fundoObj = fundosAtivos.find(f => f._id === idFundo);
+                if(fundoObj && fundoObj.itens && fundoObj.itens.length > 0) {
+                    grupoFundoItem.classList.remove('hidden');
+                    selectFundoItem.innerHTML = '<option value="">Lançamento Livre (Geral do Fundo)</option>' + 
+                        fundoObj.itens.map(i => `<option value="${i._id}">${i.nome} (Ref: ${formatarMoeda(i.valor)})</option>`).join('');
+                } else {
+                    grupoFundoItem.classList.add('hidden');
+                    selectFundoItem.value = '';
+                }
+            } else {
+                grupoFundoItem.classList.add('hidden');
+                selectFundoItem.value = '';
+            }
+        });
+    }
+
     if(btnNovaMeta) btnNovaMeta.onclick = () => abrirModalFundo();
     
     if(btnAplicarFiltros) {
