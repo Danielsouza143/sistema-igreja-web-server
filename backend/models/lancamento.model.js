@@ -1,35 +1,17 @@
 import mongoose from 'mongoose';
-const { Schema, model } = mongoose;
 
-const lancamentoSchema = new Schema({
-    tenantId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Tenant',
-        required: true,
-        index: true
-    },
-    descricao: { type: String, required: true },
+const lancamentoSchema = new mongoose.Schema({
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+    tipo: { type: String, required: true, enum: ['entrada', 'saida'] },
     valor: { type: Number, required: true },
-    data: { type: Date, required: true },
-    tipo: { type: String, enum: ['entrada', 'saida'], required: true },
-    categoria: { type: String, required: true }, // Ex: Dízimo, Oferta, Despesa Administrativa
-    membroId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Membro',
-        required: function() { return this.categoria === 'Dízimo'; } // Dízimo sempre tem membro
-    },
-    comprovanteUrl: { type: String }, // Campo para armazenar o caminho do arquivo de comprovante
-    
-    // NOVO CAMPO: Inserido no local correto da estrutura
-    fundoId: { 
-        type: Schema.Types.ObjectId, 
-        ref: 'Fundo', 
-        default: null 
-    } 
-}, {
-    timestamps: true,
-    collection: 'lancamentos'
-});
+    descricao: { type: String, required: true },
+    data: { type: Date, default: Date.now },
+    categoria: { type: String },
+    membroId: { type: mongoose.Schema.Types.ObjectId, ref: 'Membro', default: null },
+    fundoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Fundo', default: null },
+    // AQUI ESTÁ O SEGREDO: O BANCO AGORA ACEITA VINCULAR O LANÇAMENTO AO ITEM!
+    itemId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    comprovanteUrl: { type: String, default: null }
+}, { collection: 'lancamentos', timestamps: true });
 
-const Lancamento = model('Lancamento', lancamentoSchema);
-export default Lancamento;
+export default mongoose.model('Lancamento', lancamentoSchema);
