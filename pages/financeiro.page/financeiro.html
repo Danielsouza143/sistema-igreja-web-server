@@ -16,10 +16,8 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/auth-guard.js"></script>
 </head>
 <body data-theme="light" hx-boost="true" hx-ext="preload">
-    <!-- Barra de Progresso do HTMX -->
     <div class="htmx-indicator"></div>
 <header id="menu-placeholder"></header>
 
@@ -99,9 +97,7 @@
                             <span id="selected-categories-text">Todas as Categorias</span>
                             <i class='bx bx-chevron-down'></i>
                         </div>
-                        <div class="checkboxes" id="categorias-checkboxes">
-                            <!-- Categorias serão injetadas aqui -->
-                        </div>
+                        <div class="checkboxes" id="categorias-checkboxes"></div>
                     </div>
                 </div>
 
@@ -164,22 +160,9 @@
             </div>
 
             <table class="tabela-lancamentos">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Categoria</th>
-                        <th>Descrição</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-historico-corpo">
-                    </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3">Total Geral do Histórico</td>
-                        <td id="total-geral-historico">R$ 0,00</td>
-                    </tr>
-                </tfoot>
+                <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead>
+                <tbody id="tabela-historico-corpo"></tbody>
+                <tfoot><tr><td colspan="3">Total Geral do Histórico</td><td id="total-geral-historico">R$ 0,00</td></tr></tfoot>
             </table>
 
             <section class="grafico-container-membro">
@@ -188,10 +171,7 @@
                 </div>
                 <div id="grafico-contribuicoes-container" class="grafico-body"></div>
             </section>
-            
-            <div id="aviso-sem-historico" class="aviso-historico hidden">
-                <p>Nenhuma contribuição encontrada para este membro.</p>
-            </div>
+            <div id="aviso-sem-historico" class="aviso-historico hidden"><p>Nenhuma contribuição encontrada para este membro.</p></div>
         </section>
         
         <section id="aviso-inicial-dizimos" class="aviso-historico">
@@ -206,10 +186,7 @@
             <h2>Metas de Arrecadação</h2>
             <button id="btn-nova-meta" class="btn-primario">Criar Novo Fundo</button>
         </div>
-
-        <div id="grid-fundos" class="grid-fundos">
-            <!-- Os cards serão injetados aqui pelo JS -->
-        </div>
+        <div id="grid-fundos" class="grid-fundos"></div>
     </div>
 
 </main>
@@ -248,7 +225,7 @@
     </div>
 </div>
 
-<!-- Modal de Lançamento (NOVO) -->
+<!-- Modal de Lançamento -->
 <div id="modal-lancamento" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <form id="form-lancamento">
@@ -289,7 +266,7 @@
     </div>
 </div>
 
-<!-- Modal de Criar/Editar Fundo (NOVO) -->
+<!-- Modal de Criar/Editar Fundo -->
 <div id="modal-fundo" class="modal-overlay" style="display: none;">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -313,15 +290,15 @@
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Adicione os itens que compõem este projeto. A meta total será calculada automaticamente.</p>
                 
                 <div class="orcamento-add-container">
-                    <div style="flex: 2;">
+                    <div class="campo-item-nome">
                         <label style="font-size: 0.8rem;">Nome do Item</label>
                         <input type="text" id="novo-item-nome" placeholder="Ex: Cimento">
                     </div>
-                    <div style="flex: 1;">
+                    <div class="campo-item-valor">
                         <label style="font-size: 0.8rem;">Valor (R$)</label>
                         <input type="text" id="novo-item-valor" placeholder="R$ 0,00">
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 5px;">
+                    <div class="campo-item-acoes">
                         <label for="novo-item-anexo" class="btn-anexo-icon" title="Anexar Orçamento/Foto">
                             <i class='bx bx-paperclip'></i>
                         </label>
@@ -400,7 +377,7 @@
                 <h3 style="margin-top: 25px; margin-bottom: 10px;">Histórico de Lançamentos</h3>
                 <div class="table-responsive" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
                     <table class="tabela-lancamentos" style="margin:0;">
-                        <thead style="position: sticky; top: 0; background: #fff;">
+                        <thead style="position: sticky; top: 0; background: #fff; z-index: 10;">
                             <tr><th>Data</th><th>Membro/Origem</th><th>Item</th><th>Valor</th></tr>
                         </thead>
                         <tbody id="tabela-fundo-lancamentos"></tbody>
@@ -451,7 +428,6 @@
     </div>
 </div>
 
-<!-- Bibliotecas para Geração de PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -460,7 +436,6 @@
 <script src="/js/api.js"></script>
 <script src="/pages/financeiro.page/financeiro.js"></script>
 
-<!-- Menu de Contexto para a Tabela de Lançamentos -->
 <div id="context-menu" class="context-menu">
     <ul>
         <li id="context-selecionar"><i class='bx bx-check-square'></i> Selecionar</li>
