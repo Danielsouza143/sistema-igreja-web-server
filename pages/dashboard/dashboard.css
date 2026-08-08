@@ -23,6 +23,7 @@
     display: flex;
     flex-direction: column;
     gap: 25px;
+    min-width: 0; /* CORREÇÃO: Impede que a coluna estique e quebre a tela */
 }
 
 /* PROPORÇÕES CORRIGIDAS PARA DEIXAR A COLUNA 2 COM ASPECTO 4:3 */
@@ -52,6 +53,7 @@
     display: flex;
     flex-direction: column;
     min-height: 250px;
+    min-width: 0; /* CORREÇÃO: Garante que o widget respeite os limites dentro da coluna flex */
 }
 
 .widget h3 {
@@ -237,7 +239,7 @@
 .carousel-mode:hover .ec-btn { opacity: 1; }
 
 /* =========================================================
-   MÓDULO: CARROSSEL DE FUNDOS E METAS (REVISADO)
+   MÓDULO: CARROSSEL DE FUNDOS E METAS
 ========================================================== */
 .carrossel-container-principal {
     display: flex;
@@ -277,15 +279,15 @@
     scroll-snap-align: center;
 }
 
-/* Card Fundo Interno - Correção de cor aplicada */
+/* Card Fundo Interno */
 .card-fundo {
-    background: #ffffff;
+    background: #ffffff !important; /* CORREÇÃO: Mantém sempre branco */
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 6px solid #007bff; /* Azul padrão */
+    border-left: 6px solid #007bff;
     display: flex;
     flex-direction: column;
     height: 100%; 
@@ -293,7 +295,7 @@
 }
 
 .card-fundo:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
-.card-fundo.status-concluido { border-left-color: #28a745; background-color: #ffffff; }
+.card-fundo.status-concluido, .card-fundo.meta-concluida { border-left-color: #28a745; }
 
 .card-fundo-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .card-fundo-header h3 { margin: 0; font-size: 1.15rem; color: #333; font-weight: 700; line-height: 1.3; border: none; padding: 0; flex-grow: 1; word-break: break-word; }
@@ -309,7 +311,7 @@
 
 .progresso-container { background-color: #e9ecef; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin: 10px 0; }
 .progresso-barra { height: 100%; background: linear-gradient(90deg, #28a745, #34ce57); border-radius: 10px; transition: width 0.8s ease-in-out; }
-.status-concluido .progresso-barra { background: #6c757d; }
+.meta-concluida .progresso-barra, .status-concluido .progresso-barra { background: #6c757d; }
 
 .progresso-texto { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
 .progresso-porcentagem { text-align: right; font-weight: 800; font-size: 1.2rem; color: var(--cor-primaria); margin-top: 5px; }
@@ -338,12 +340,12 @@
 /* Modais Restantes */
 .modal-lg { max-width: 800px; }
 .fundo-header-stats { display: flex; gap: 20px; margin: 20px 0; }
-.fundo-header-stats .stat-box { flex: 1; background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+.fundo-header-stats .stat-box { flex: 1; background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
 .fundo-header-stats .stat-box h3 { margin: 5px 0 0 0; color: var(--cor-primaria); font-size: 1.4rem; }
 .tabela-lancamentos { width: 100%; border-collapse: collapse; margin-top: 10px; }
 .tabela-lancamentos th, .tabela-lancamentos td { border-bottom: 1px solid #eee; }
 
-/* --- NOVOS ESTILOS MODAL HORIZONTAL (REUTILIZADOS DO FINANCEIRO) --- */
+/* --- NOVOS ESTILOS MODAL HORIZONTAL (ORÇAMENTO) --- */
 .modal-xl { width: 900px; max-width: 95%; }
 .layout-horizontal { display: flex; flex-wrap: wrap; gap: 30px; }
 .coluna-esquerda { flex: 1; min-width: 300px; }
@@ -357,6 +359,16 @@
 .btn-sm { padding: 4px 8px !important; font-size: 0.75rem !important; border-radius: 4px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #fff; }
 .btn-sucesso { background-color: #28a745; }
 .btn-sucesso:hover { background-color: #218838; }
+.btn-perigo { background-color: #dc3545; }
+.btn-perigo:hover { background-color: #c82333; }
+
+/* MODAL SIM/NÃO CUSTOMIZADO */
+#modal-confirmacao .modal-content {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 30px 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
 
 @media (max-width: 768px) {
     .layout-horizontal { flex-direction: column; }
