@@ -431,7 +431,8 @@ var iniciarFinanceiro = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            const cardStatusClass = porcentagemNum >= 100 ? 'status-concluido' : 'status-ativo';
+            // Substitua "status-concluido" por "card-concluido" e "status-ativo" por "card-ativo"
+            const cardStatusClass = porcentagemNum >= 100 ? 'card-concluido' : 'card-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
