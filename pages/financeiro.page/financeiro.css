@@ -1151,27 +1151,12 @@ body > .context-menu li i {
 }
 
 /* Estilo do Card individual */
-.card-fundo {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 6px solid #007bff; /* Azul para Em Andamento */
-    display: flex;
-    flex-direction: column;
-}
+/* Correção para não pintar o card de verde, apenas a borda azul e verde quando concluído */
+.card-fundo { background: #ffffff !important; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; border-left: 6px solid #007bff; display: flex; flex-direction: column; }
+.card-fundo:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.card-fundo.card-concluido { border-left-color: #28a745; background-color: #ffffff; }
 
-.card-fundo:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-}
-
-.card-fundo.status-concluido {
-    /*border-left-color: #28a745; /* Fica verde apenas na borda quando conclui */
-    background-color: #ffffff !important; /* Mantém branco */
-}
+/* ... (O resto das badges continuam como te passei na mensagem anterior) ... */
 
 /* Badges de Status ajustadas */
 .badge-status {
