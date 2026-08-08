@@ -1,14 +1,17 @@
 const iniciarDashboard = () => {
     
+    // --- FUNÇÕES AUXILIARES ---
     const formatarDataSimples = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' });
     const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+    // --- ESTADO LOCAL ---
     let chartFinanceiro = null;
     let chartFundoDetalhe = null;
     let dadosLancamentos = [];
     let todosMembros = [];
     let financeiroOculto = true;
     
+    // Estado Eventos
     let todosEventosFuturos = [];
     let viewModeEventos = 'list'; 
     let eventoCarouselInterval = null;
@@ -45,20 +48,32 @@ const iniciarDashboard = () => {
         document.getElementById('data-atual').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
     }
     
+    // --- CORREÇÃO DO FILTRO DE EVENTOS (IGNORANDO TIMEZONE) ---
     function processarEventos(eventos) {
         const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
+        hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar só o dia
 
         todosEventosFuturos = eventos
-            .filter(e => new Date(e.dataFim) >= hoje)
+            .filter(e => {
+                // Pega exatamente a string "YYYY-MM-DD" que vem do banco para não dar problema de fuso
+                const dataRefStr = (e.dataFim || e.dataInicio).split('T')[0]; 
+                const [ano, mes, dia] = dataRefStr.split('-').map(Number);
+                const dataEvento = new Date(ano, mes - 1, dia);
+                dataEvento.setHours(0, 0, 0, 0);
+                
+                // Só passa se o evento for de hoje em diante
+                return dataEvento >= hoje;
+            })
             .sort((a, b) => new Date(a.dataInicio) - new Date(b.dataInicio));
 
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
         
+        // Verifica se há cartazes neste mês 
         const eventosComCartazMes = todosEventosFuturos.filter(e => {
-            const d = new Date(e.dataInicio);
-            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
+            const dataRefStr = e.dataInicio.split('T')[0];
+            const [eAno, eMes] = dataRefStr.split('-').map(Number);
+            return (eMes - 1) === mesAtual && eAno === anoAtual && e.cartazUrl;
         });
 
         if (eventosComCartazMes.length > 0) viewModeEventos = 'carousel';
@@ -101,8 +116,9 @@ const iniciarDashboard = () => {
             const anoAtual = hoje.getFullYear();
 
             const eventosComCartaz = todosEventosFuturos.filter(e => {
-                const d = new Date(e.dataInicio);
-                return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
+                const dataRefStr = e.dataInicio.split('T')[0];
+                const [eAno, eMes] = dataRefStr.split('-').map(Number);
+                return (eMes - 1) === mesAtual && eAno === anoAtual && e.cartazUrl;
             });
 
             if(eventosComCartaz.length === 0) {
@@ -162,11 +178,16 @@ const iniciarDashboard = () => {
         const aniversariantes = membros
             .filter(m => {
                 if (!m.dataNascimento) return false;
-                const niver = new Date(m.dataNascimento);
-                const niverEsteAno = new Date(hoje.getFullYear(), niver.getMonth(), niver.getDate());
+                const dataRefStr = m.dataNascimento.split('T')[0];
+                const [ano, mes, dia] = dataRefStr.split('-').map(Number);
+                const niverEsteAno = new Date(hoje.getFullYear(), mes - 1, dia);
                 return niverEsteAno >= hoje && niverEsteAno <= proximaSemana;
             })
-            .sort((a,b) => new Date(a.dataNascimento) - new Date(b.dataNascimento))
+            .sort((a,b) => {
+                const dataA = a.dataNascimento.split('T')[0].split('-').slice(1).join('');
+                const dataB = b.dataNascimento.split('T')[0].split('-').slice(1).join('');
+                return dataA.localeCompare(dataB);
+            })
             .slice(0, 5); 
 
         if (aniversariantes.length === 0) {
@@ -205,7 +226,13 @@ const iniciarDashboard = () => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        const atrasados = emprestimos.filter(e => e.status === 'Emprestado' && new Date(e.dataDevolucaoPrevista) < hoje).slice(0, 3);
+        const atrasados = emprestimos.filter(e => {
+            if (e.status !== 'Emprestado') return false;
+            const dataRefStr = e.dataDevolucaoPrevista.split('T')[0];
+            const [ano, mes, dia] = dataRefStr.split('-').map(Number);
+            const dataDev = new Date(ano, mes - 1, dia);
+            return dataDev < hoje;
+        }).slice(0, 3);
 
         if (atrasados.length === 0) {
             container.innerHTML = '<p class="sem-itens">Nenhum item com devolução atrasada. Ótimo trabalho!</p>';
@@ -213,7 +240,10 @@ const iniciarDashboard = () => {
         }
 
         container.innerHTML = atrasados.map(e => {
-             const diasAtraso = Math.floor((hoje - new Date(e.dataDevolucaoPrevista)) / (1000 * 60 * 60 * 24));
+             const dataRefStr = e.dataDevolucaoPrevista.split('T')[0];
+             const [ano, mes, dia] = dataRefStr.split('-').map(Number);
+             const dataDev = new Date(ano, mes - 1, dia);
+             const diasAtraso = Math.floor((hoje - dataDev) / (1000 * 60 * 60 * 24));
              return `
                 <div class="lista-item">
                     <span class="item-principal">${e.itemId?.nome || 'Item desconhecido'}</span>
@@ -236,8 +266,9 @@ const iniciarDashboard = () => {
 
         const lancamentosCaixa = dadosLancamentos.filter(l => !l.fundoId);
         const lancamentosDoMes = lancamentosCaixa.filter(l => {
-            const dataLancamento = new Date(l.data);
-            return dataLancamento.getMonth() === mesAtual && dataLancamento.getFullYear() === anoAtual;
+            const dataRefStr = l.data.split('T')[0];
+            const [lAno, lMes] = dataRefStr.split('-').map(Number);
+            return (lMes - 1) === mesAtual && lAno === anoAtual;
         });
         
         if(lancamentosDoMes.length === 0){
@@ -367,7 +398,6 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Modal de Detalhes do Fundo (LAYOUT ERP INVERTIDO)
     const abrirDetalhesFundo = (fundo) => {
         const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
         if(!modalDetalhesFundo) return;
@@ -376,10 +406,8 @@ const iniciarDashboard = () => {
         const statusText = porcentagemNum >= 100 ? 'CONCLUÍDO' : 'EM ANDAMENTO';
         const badgeClass = porcentagemNum >= 100 ? 'badge-item-pago' : 'badge-item-tag';
         
-        // Atualiza título e injeta a Badge ao lado
         document.getElementById('fundo-titulo-detalhe').innerHTML = `${fundo.nome} <span class="${badgeClass}" style="margin-left:15px; font-size: 0.75rem;">${statusText} (${porcentagemNum.toFixed(1)}%)</span>`;
         
-        // Atualiza Cards de Resumo
         const faltante = Math.max((fundo.meta || 0) - (fundo.arrecadado || 0), 0);
         document.getElementById('fundo-valor-arrecadado').textContent = formatarDinheiro(fundo.arrecadado);
         document.getElementById('fundo-valor-meta').textContent = formatarDinheiro(fundo.meta);
@@ -387,7 +415,6 @@ const iniciarDashboard = () => {
 
         const lancamentosDoFundo = dadosLancamentos.filter(l => l.fundoId === fundo._id);
         
-        // Renderiza os Itens e Progresso do Orçamento
         const containerItens = document.getElementById('fundo-detalhes-itens-lista');
         if(containerItens && fundo.itens && fundo.itens.length > 0) {
             containerItens.innerHTML = fundo.itens.map(item => {
@@ -423,7 +450,6 @@ const iniciarDashboard = () => {
             containerItens.innerHTML = '<p style="color:#64748b; font-size: 0.9rem; padding: 10px;">Orçamento sem itens detalhados.</p>';
         }
 
-        // Tabela de Histórico
         const tabela = document.getElementById('tabela-fundo-lancamentos');
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
@@ -535,7 +561,7 @@ const iniciarDashboard = () => {
             renderizarResumoFinanceiro(lancamentos);
 
         } catch (error) {
-            document.querySelector('.dashboard-grid').innerHTML = '<p style="color: red; text-align: center;">Não foi possível carregar os dados do painel. Verifique a conexão com o servidor.</p>';
+            document.querySelector('.dashboard-grid').innerHTML = '<p style="color: red; text-align: center;">Não foi possível carregar os dados do painel.</p>';
         }
     }
     
