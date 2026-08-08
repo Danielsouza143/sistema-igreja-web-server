@@ -1169,7 +1169,7 @@ body > .context-menu li i {
 }
 
 .card-fundo.status-concluido {
-    border-left-color: #28a745; /* Fica verde apenas na borda quando conclui */
+    /*border-left-color: #28a745; /* Fica verde apenas na borda quando conclui */
     background-color: #ffffff !important; /* Mantém branco */
 }
 
