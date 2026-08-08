@@ -309,7 +309,7 @@ const iniciarDashboard = () => {
     }
 
     // ============================================================
-    // CARROSSEL DE FUNDOS E METAS
+    // CARROSSEL DE FUNDOS E METAS (CORRIGIDO STATUS)
     // ============================================================
 
     const calcularRitmoFundo = (fundo) => {
@@ -357,12 +357,12 @@ const iniciarDashboard = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            const cardStatusClass = porcentagemNum >= 100 ? 'meta-concluida' : 'meta-andamento';
+            // Correção da classe de status igual ao financeiro principal
+            const cardStatusClass = porcentagemNum >= 100 ? 'status-concluido' : 'status-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
 
-            // Cria o wrapper que garante os 100% de largura
             const wrapper = document.createElement('div');
             wrapper.className = 'card-fundo-wrapper';
 
@@ -408,7 +408,7 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Modal de Detalhes do Fundo
+    // Modal de Detalhes do Fundo (Agora inclui os itens!)
     const abrirDetalhesFundo = (fundo) => {
         const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
         if(!modalDetalhesFundo) return;
@@ -425,17 +425,20 @@ const iniciarDashboard = () => {
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
                 tabela.innerHTML = lancamentosDoFundo.map(l => {
-                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Caixa Geral (Transferência)';
+                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Caixa Geral';
+                    const nomeItem = (l.itemId && fundo.itens) ? (fundo.itens.find(i => i._id === l.itemId)?.nome || 'Livre') : 'Livre';
+
                     return `<tr>
                             <td style="padding: 10px;">${formatarDataSimples(l.data)}</td>
                             <td style="padding: 10px;">${membroNome}</td>
+                            <td style="padding: 10px;"><span class="badge-item-tag" style="background:#e9ecef; padding:3px 6px; border-radius:4px; font-size:0.75rem;">${nomeItem}</span></td>
                             <td style="padding: 10px; color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">
                                 ${l.tipo === 'entrada' ? '+' : '-'} ${formatarDinheiro(l.valor)}
                             </td>
                         </tr>`;
                 }).join('');
             } else {
-                tabela.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento vinculado ainda.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento vinculado ainda.</td></tr>';
             }
         }
         
