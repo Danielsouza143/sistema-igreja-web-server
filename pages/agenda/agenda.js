@@ -333,12 +333,23 @@ const iniciarAgenda = async () => {
     // --- LISTA DE EVENTOS ---
     function renderizarLista() {
         listaEventosContainer.innerHTML = '';
-        if (todosEventos.length === 0) {
+        
+        // CORREÇÃO AQUI: Filtragem rigorosa para exibir apenas eventos futuros ou do dia atual
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas o dia
+        
+        const eventosFuturos = todosEventos.filter(evento => {
+            const dataEvento = new Date(evento.dataInicio || evento.dataFim);
+            dataEvento.setHours(0, 0, 0, 0);
+            return dataEvento >= hoje;
+        }).sort((a, b) => new Date(a.dataInicio) - new Date(b.dataInicio)); // Ordena do mais próximo para o mais distante
+
+        if (eventosFuturos.length === 0) {
             listaEventosContainer.innerHTML = '<p style="color: #666; text-align: center; width: 100%; grid-column: 1/-1;">Nenhum evento ou programação futuro.</p>';
             return;
         }
 
-        todosEventos.forEach(evento => {
+        eventosFuturos.forEach(evento => {
             const tipo = evento.tipo || 'Evento';
             const card = document.createElement('div');
             card.className = 'evento-card';
