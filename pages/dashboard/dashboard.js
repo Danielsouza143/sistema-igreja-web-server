@@ -90,7 +90,6 @@ const iniciarDashboard = () => {
             });
 
             if(eventosComCartaz.length === 0) {
-                // CORREÇÃO DA COR DE FUNDO VAZIA
                 container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%;"><p class="sem-itens" style="color: #888; padding: 20px;">Nenhum cartaz para os eventos deste mês.</p></div>';
                 return;
             }
@@ -154,7 +153,6 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Listener dos botões de View do Evento
     document.getElementById('btn-view-list').addEventListener('click', () => {
         viewModeEventos = 'list';
         atualizarViewEventos();
@@ -248,7 +246,6 @@ const iniciarDashboard = () => {
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
 
-        // No resumo geral, excluímos movimentações de fundos para refletir o caixa
         const lancamentosCaixa = dadosLancamentos.filter(l => !l.fundoId);
 
         const lancamentosDoMes = lancamentosCaixa.filter(l => {
@@ -309,7 +306,7 @@ const iniciarDashboard = () => {
     }
 
     // ============================================================
-    // CARROSSEL DE FUNDOS E METAS (CORRIGIDO STATUS)
+    // CARROSSEL DE FUNDOS E METAS
     // ============================================================
 
     const calcularRitmoFundo = (fundo) => {
@@ -357,8 +354,8 @@ const iniciarDashboard = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            // Correção da classe de status igual ao financeiro principal
-            const cardStatusClass = porcentagemNum >= 100 ? 'status-concluido' : 'status-ativo';
+            // AS CLASSES CORRIGIDAS ESTÃO AQUI: card-ativo e card-concluido
+            const cardStatusClass = porcentagemNum >= 100 ? 'card-concluido' : 'card-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
             const ritmoTexto = calcularRitmoFundo(fundo);
@@ -408,7 +405,7 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Modal de Detalhes do Fundo (Agora inclui os itens!)
+    // Modal de Detalhes do Fundo (Idêntico ao do Módulo Financeiro)
     const abrirDetalhesFundo = (fundo) => {
         const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
         if(!modalDetalhesFundo) return;
@@ -416,12 +413,48 @@ const iniciarDashboard = () => {
         document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
         document.getElementById('fundo-valor-arrecadado').textContent = formatarDinheiro(fundo.arrecadado);
         document.getElementById('fundo-valor-meta').textContent = formatarDinheiro(fundo.meta);
-        const porcentagem = ((fundo.arrecadado / (fundo.meta || 1)) * 100).toFixed(1);
-        document.getElementById('fundo-porcentagem').textContent = `${porcentagem}%`;
+        const porcentagemNum = Math.min(((fundo.arrecadado / (fundo.meta || 1)) * 100), 100);
+        document.getElementById('fundo-porcentagem').textContent = `${porcentagemNum.toFixed(1)}%`;
 
         const lancamentosDoFundo = dadosLancamentos.filter(l => l.fundoId === fundo._id);
-        const tabela = document.getElementById('tabela-fundo-lancamentos');
         
+        // Renderiza os Itens e Progresso do Orçamento no Dashboard
+        const containerItens = document.getElementById('fundo-detalhes-itens-lista');
+        if(containerItens && fundo.itens && fundo.itens.length > 0) {
+            containerItens.innerHTML = fundo.itens.map(item => {
+                const arrecadadoItem = lancamentosDoFundo
+                    .filter(l => l.itemId === item._id && l.tipo === 'entrada')
+                    .reduce((acc, l) => acc + l.valor, 0);
+
+                const pagoItem = lancamentosDoFundo
+                    .filter(l => l.itemId === item._id && l.tipo === 'saida') 
+                    .reduce((acc, l) => acc + l.valor, 0);
+                
+                const pctArrecadado = Math.min((arrecadadoItem / item.valor) * 100, 100);
+                const statusItem = pagoItem >= item.valor ? 'Pago' : 'Pendente';
+                const classBadge = statusItem === 'Pago' ? 'badge-concluido' : 'badge-andamento';
+                
+                return `
+                    <div class="item-progresso-card">
+                        <div class="item-progresso-header" style="margin-bottom:4px;">
+                            <strong>${item.nome}</strong>
+                            <span class="badge-status ${classBadge}" style="font-size:0.65rem;">${statusItem}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                            <span style="color:#555;">Custo: <b>${formatarDinheiro(item.valor)}</b></span>
+                            <span style="color:#28a745;">Arrec.: <b>${formatarDinheiro(arrecadadoItem)}</b></span>
+                        </div>
+                        <div class="progresso-container" style="height: 6px; margin:0 0 10px 0;">
+                            <div class="progresso-barra" style="width: ${pctArrecadado}%; background-color: #007bff;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else if (containerItens) {
+            containerItens.innerHTML = '<p style="color:#888; font-size: 0.9rem; text-align:center; padding: 20px;">Orçamento sem itens detalhados.</p>';
+        }
+
+        const tabela = document.getElementById('tabela-fundo-lancamentos');
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
                 tabela.innerHTML = lancamentosDoFundo.map(l => {
@@ -478,7 +511,7 @@ const iniciarDashboard = () => {
         }
     });
 
-    // Ações das Setas do Carrossel (Pula exatamente a largura do container)
+    // Ações das Setas do Carrossel
     const btnPrev = document.getElementById('btn-prev-fundos');
     const btnNext = document.getElementById('btn-next-fundos');
     if(btnPrev && btnNext) {
