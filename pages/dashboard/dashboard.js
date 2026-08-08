@@ -1,22 +1,43 @@
 const iniciarDashboard = () => {
     
-    // --- FUNÇÕES AUXILIARES ---
     const formatarDataSimples = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' });
     const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    // --- ESTADO LOCAL ---
     let chartFinanceiro = null;
     let chartFundoDetalhe = null;
     let dadosLancamentos = [];
     let todosMembros = [];
     let financeiroOculto = true;
     
-    // Estado Eventos
     let todosEventosFuturos = [];
     let viewModeEventos = 'list'; 
     let eventoCarouselInterval = null;
 
-    // --- RENDERIZAÇÃO DOS WIDGETS ---
+    // --- MODAL CUSTOMIZADO (SIM / NÃO) ---
+    window.showConfirmCustom = (msg) => {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-confirmacao');
+            const msgEl = document.getElementById('msg-confirmacao');
+            const btnSim = document.getElementById('btn-confirm-sim');
+            const btnNao = document.getElementById('btn-confirm-nao');
+
+            if(!modal || !msgEl || !btnSim || !btnNao) {
+                resolve(confirm(msg));
+                return;
+            }
+
+            msgEl.innerText = msg;
+            modal.style.display = 'flex';
+
+            const newBtnSim = btnSim.cloneNode(true);
+            const newBtnNao = btnNao.cloneNode(true);
+            btnSim.parentNode.replaceChild(newBtnSim, btnSim);
+            btnNao.parentNode.replaceChild(newBtnNao, btnNao);
+
+            newBtnSim.onclick = () => { modal.style.display = 'none'; resolve(true); };
+            newBtnNao.onclick = () => { modal.style.display = 'none'; resolve(false); };
+        });
+    };
 
     function renderizarBoasVindas() {
         const hoje = new Date();
@@ -35,17 +56,13 @@ const iniciarDashboard = () => {
         const mesAtual = hoje.getMonth();
         const anoAtual = hoje.getFullYear();
         
-        // Verifica se há cartazes neste mês para definir o padrão
         const eventosComCartazMes = todosEventosFuturos.filter(e => {
             const d = new Date(e.dataInicio);
             return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
         });
 
-        if (eventosComCartazMes.length > 0) {
-            viewModeEventos = 'carousel';
-        } else {
-            viewModeEventos = 'list';
-        }
+        if (eventosComCartazMes.length > 0) viewModeEventos = 'carousel';
+        else viewModeEventos = 'list';
 
         atualizarViewEventos();
     }
@@ -76,7 +93,6 @@ const iniciarDashboard = () => {
                 `).join('');
             }
         } else {
-            // MODO CARROSSEL DE CARTAZES
             container.classList.add('carousel-mode');
             container.classList.remove('scrollable-content');
             
@@ -116,36 +132,16 @@ const iniciarDashboard = () => {
             const slidesCount = eventosComCartaz.length;
             let currentSlide = 0;
 
-            const updateSlide = () => {
-                track.style.transform = `translateX(-${currentSlide * 100}%)`;
-            };
+            const updateSlide = () => track.style.transform = `translateX(-${currentSlide * 100}%)`;
 
-            document.getElementById('btn-ec-next').addEventListener('click', () => {
-                currentSlide = (currentSlide + 1) % slidesCount;
-                updateSlide();
-            });
+            document.getElementById('btn-ec-next').addEventListener('click', () => { currentSlide = (currentSlide + 1) % slidesCount; updateSlide(); });
+            document.getElementById('btn-ec-prev').addEventListener('click', () => { currentSlide = (currentSlide - 1 + slidesCount) % slidesCount; updateSlide(); });
 
-            document.getElementById('btn-ec-prev').addEventListener('click', () => {
-                currentSlide = (currentSlide - 1 + slidesCount) % slidesCount;
-                updateSlide();
-            });
-
-            // Slide Automático
             if(slidesCount > 1) {
-                eventoCarouselInterval = setInterval(() => {
-                    currentSlide = (currentSlide + 1) % slidesCount;
-                    updateSlide();
-                }, 4000);
-
-                // Pausa no Hover
+                eventoCarouselInterval = setInterval(() => { currentSlide = (currentSlide + 1) % slidesCount; updateSlide(); }, 4000);
                 const wrapper = document.getElementById('eventos-carousel-wrapper');
                 wrapper.addEventListener('mouseenter', () => clearInterval(eventoCarouselInterval));
-                wrapper.addEventListener('mouseleave', () => {
-                    eventoCarouselInterval = setInterval(() => {
-                        currentSlide = (currentSlide + 1) % slidesCount;
-                        updateSlide();
-                    }, 4000);
-                });
+                wrapper.addEventListener('mouseleave', () => { eventoCarouselInterval = setInterval(() => { currentSlide = (currentSlide + 1) % slidesCount; updateSlide(); }, 4000); });
             } else {
                 document.getElementById('btn-ec-next').style.display = 'none';
                 document.getElementById('btn-ec-prev').style.display = 'none';
@@ -153,14 +149,8 @@ const iniciarDashboard = () => {
         }
     }
 
-    document.getElementById('btn-view-list').addEventListener('click', () => {
-        viewModeEventos = 'list';
-        atualizarViewEventos();
-    });
-    document.getElementById('btn-view-carousel').addEventListener('click', () => {
-        viewModeEventos = 'carousel';
-        atualizarViewEventos();
-    });
+    document.getElementById('btn-view-list').addEventListener('click', () => { viewModeEventos = 'list'; atualizarViewEventos(); });
+    document.getElementById('btn-view-carousel').addEventListener('click', () => { viewModeEventos = 'carousel'; atualizarViewEventos(); });
 
     function renderizarAniversariantes(membros) {
         todosMembros = membros; 
@@ -215,9 +205,7 @@ const iniciarDashboard = () => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        const atrasados = emprestimos
-            .filter(e => e.status === 'Emprestado' && new Date(e.dataDevolucaoPrevista) < hoje)
-            .slice(0, 3);
+        const atrasados = emprestimos.filter(e => e.status === 'Emprestado' && new Date(e.dataDevolucaoPrevista) < hoje).slice(0, 3);
 
         if (atrasados.length === 0) {
             container.innerHTML = '<p class="sem-itens">Nenhum item com devolução atrasada. Ótimo trabalho!</p>';
@@ -247,7 +235,6 @@ const iniciarDashboard = () => {
         const anoAtual = hoje.getFullYear();
 
         const lancamentosCaixa = dadosLancamentos.filter(l => !l.fundoId);
-
         const lancamentosDoMes = lancamentosCaixa.filter(l => {
             const dataLancamento = new Date(l.data);
             return dataLancamento.getMonth() === mesAtual && dataLancamento.getFullYear() === anoAtual;
@@ -278,36 +265,12 @@ const iniciarDashboard = () => {
                 ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed.y !== null) {
-                                    label += formatarValor(context.parsed.y);
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: { 
-                    y: { 
-                        beginAtZero: true, 
-                        ticks: { callback: (value) => formatarValor(value) } 
-                    } 
-                }
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.parsed.y !== null) { label += formatarValor(context.parsed.y); } return label; } } } },
+                scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatarValor(value) } } }
             }
         });
     }
-
-    // ============================================================
-    // CARROSSEL DE FUNDOS E METAS
-    // ============================================================
 
     const calcularRitmoFundo = (fundo) => {
         if (!fundo.prazo) return 'Prazo não definido';
@@ -333,7 +296,7 @@ const iniciarDashboard = () => {
         const dotsContainer = document.getElementById('carrossel-pontinhos-fundos');
         
         if (!fundos || fundos.length === 0) {
-            track.innerHTML = '<p class="sem-itens" style="padding: 20px;">Nenhuma meta ou fundo ativo.</p>';
+            track.innerHTML = '<p class="sem-itens" style="padding: 20px;">Nenhum projeto ou meta ativa.</p>';
             if(dotsContainer) dotsContainer.innerHTML = '';
             document.getElementById('btn-prev-fundos').style.display = 'none';
             document.getElementById('btn-next-fundos').style.display = 'none';
@@ -354,10 +317,9 @@ const iniciarDashboard = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            // AS CLASSES CORRIGIDAS ESTÃO AQUI: card-ativo e card-concluido
-            const cardStatusClass = porcentagemNum >= 100 ? 'card-concluido' : 'card-ativo';
+            const cardStatusClass = porcentagemNum >= 100 ? 'status-concluido' : 'status-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
-            const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
+            const statusText = porcentagemNum >= 100 ? 'CONCLUÍDO' : 'EM ANDAMENTO';
             const ritmoTexto = calcularRitmoFundo(fundo);
 
             const wrapper = document.createElement('div');
@@ -405,20 +367,27 @@ const iniciarDashboard = () => {
         }
     }
 
-    // Modal de Detalhes do Fundo (Idêntico ao do Módulo Financeiro)
+    // Modal de Detalhes do Fundo (LAYOUT ERP INVERTIDO)
     const abrirDetalhesFundo = (fundo) => {
         const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
         if(!modalDetalhesFundo) return;
 
-        document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
+        const porcentagemNum = Math.min(((fundo.arrecadado / (fundo.meta || 1)) * 100), 100);
+        const statusText = porcentagemNum >= 100 ? 'CONCLUÍDO' : 'EM ANDAMENTO';
+        const badgeClass = porcentagemNum >= 100 ? 'badge-item-pago' : 'badge-item-tag';
+        
+        // Atualiza título e injeta a Badge ao lado
+        document.getElementById('fundo-titulo-detalhe').innerHTML = `${fundo.nome} <span class="${badgeClass}" style="margin-left:15px; font-size: 0.75rem;">${statusText} (${porcentagemNum.toFixed(1)}%)</span>`;
+        
+        // Atualiza Cards de Resumo
+        const faltante = Math.max((fundo.meta || 0) - (fundo.arrecadado || 0), 0);
         document.getElementById('fundo-valor-arrecadado').textContent = formatarDinheiro(fundo.arrecadado);
         document.getElementById('fundo-valor-meta').textContent = formatarDinheiro(fundo.meta);
-        const porcentagemNum = Math.min(((fundo.arrecadado / (fundo.meta || 1)) * 100), 100);
-        document.getElementById('fundo-porcentagem').textContent = `${porcentagemNum.toFixed(1)}%`;
+        document.getElementById('fundo-valor-faltante').textContent = formatarDinheiro(faltante);
 
         const lancamentosDoFundo = dadosLancamentos.filter(l => l.fundoId === fundo._id);
         
-        // Renderiza os Itens e Progresso do Orçamento no Dashboard
+        // Renderiza os Itens e Progresso do Orçamento
         const containerItens = document.getElementById('fundo-detalhes-itens-lista');
         if(containerItens && fundo.itens && fundo.itens.length > 0) {
             containerItens.innerHTML = fundo.itens.map(item => {
@@ -431,29 +400,30 @@ const iniciarDashboard = () => {
                     .reduce((acc, l) => acc + l.valor, 0);
                 
                 const pctArrecadado = Math.min((arrecadadoItem / item.valor) * 100, 100);
-                const statusItem = pagoItem >= item.valor ? 'Pago' : 'Pendente';
-                const classBadge = statusItem === 'Pago' ? 'badge-concluido' : 'badge-andamento';
+                const statusItem = pagoItem >= item.valor ? 'PAGO' : 'PENDENTE';
+                const classBadgeItem = statusItem === 'PAGO' ? 'badge-item-pago' : 'badge-item-tag';
                 
                 return `
                     <div class="item-progresso-card">
-                        <div class="item-progresso-header" style="margin-bottom:4px;">
-                            <strong>${item.nome}</strong>
-                            <span class="badge-status ${classBadge}" style="font-size:0.65rem;">${statusItem}</span>
+                        <div class="item-progresso-header" style="margin-bottom:8px;">
+                            <strong style="color:#333;">${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Anexo"><i class='bx bx-link-external' style="color:#2563eb;"></i></a>` : ''}</strong>
+                            <span class="${classBadgeItem}">${statusItem}</span>
                         </div>
-                        <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-bottom: 5px;">
-                            <span style="color:#555;">Custo: <b>${formatarDinheiro(item.valor)}</b></span>
-                            <span style="color:#28a745;">Arrec.: <b>${formatarDinheiro(arrecadadoItem)}</b></span>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-bottom: 8px;">
+                            <span style="color:#64748b;">Custo: <b>${formatarDinheiro(item.valor)}</b></span>
+                            <span style="color:#16a34a;">Arrecadado: <b>${formatarDinheiro(arrecadadoItem)}</b></span>
                         </div>
-                        <div class="progresso-container" style="height: 6px; margin:0 0 10px 0;">
-                            <div class="progresso-barra" style="width: ${pctArrecadado}%; background-color: #007bff;"></div>
+                        <div class="progresso-container" style="height: 6px; margin:0; background:#e2e8f0;">
+                            <div class="progresso-barra" style="width: ${pctArrecadado}%; background-color: #2563eb;"></div>
                         </div>
                     </div>
                 `;
             }).join('');
         } else if (containerItens) {
-            containerItens.innerHTML = '<p style="color:#888; font-size: 0.9rem; text-align:center; padding: 20px;">Orçamento sem itens detalhados.</p>';
+            containerItens.innerHTML = '<p style="color:#64748b; font-size: 0.9rem; padding: 10px;">Orçamento sem itens detalhados.</p>';
         }
 
+        // Tabela de Histórico
         const tabela = document.getElementById('tabela-fundo-lancamentos');
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
@@ -462,16 +432,16 @@ const iniciarDashboard = () => {
                     const nomeItem = (l.itemId && fundo.itens) ? (fundo.itens.find(i => i._id === l.itemId)?.nome || 'Livre') : 'Livre';
 
                     return `<tr>
-                            <td style="padding: 10px;">${formatarDataSimples(l.data)}</td>
-                            <td style="padding: 10px;">${membroNome}</td>
-                            <td style="padding: 10px;"><span class="badge-item-tag" style="background:#e9ecef; padding:3px 6px; border-radius:4px; font-size:0.75rem;">${nomeItem}</span></td>
-                            <td style="padding: 10px; color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                            <td style="padding: 12px 15px; color:#475569; font-size:0.9rem;">${formatarDataSimples(l.data)}</td>
+                            <td style="padding: 12px 15px; color:#333; font-size:0.9rem; font-weight:500;">${membroNome}</td>
+                            <td style="padding: 12px 15px;"><span class="badge-item-tag" style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-size:0.75rem; color:#475569;">${nomeItem}</span></td>
+                            <td style="padding: 12px 15px; text-align:right; color: ${l.tipo === 'entrada' ? '#16a34a' : '#dc2626'}; font-weight: 700; font-size:0.9rem;">
                                 ${l.tipo === 'entrada' ? '+' : '-'} ${formatarDinheiro(l.valor)}
                             </td>
                         </tr>`;
                 }).join('');
             } else {
-                tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento vinculado ainda.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">Nenhum lançamento vinculado ainda.</td></tr>';
             }
         }
         
@@ -497,13 +467,31 @@ const iniciarDashboard = () => {
             type: 'line',
             data: {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                datasets: [{ label: 'Arrecadação Mensal', data: dadosPorMes, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.2)', fill: true, tension: 0.3 }]
+                datasets: [{ 
+                    label: 'Arrecadação Mensal', 
+                    data: dadosPorMes, 
+                    borderColor: '#10b981', 
+                    backgroundColor: 'rgba(16, 185, 129, 0.15)', 
+                    fill: true, 
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#10b981',
+                    pointRadius: 4
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: {size: 11} } },
+                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b', font: {size: 11} }, beginAtZero: true }
+                }
+            }
         });
     };
 
-    // Controle de Fechamento do Modal Fundo
     document.addEventListener('click', (e) => {
         if (e.target.matches('.modal-overlay') || e.target.closest('[data-close-modal="fundo"]')) {
             const modalFundo = document.getElementById('modal-detalhes-fundo');
@@ -511,7 +499,6 @@ const iniciarDashboard = () => {
         }
     });
 
-    // Ações das Setas do Carrossel
     const btnPrev = document.getElementById('btn-prev-fundos');
     const btnNext = document.getElementById('btn-next-fundos');
     if(btnPrev && btnNext) {
@@ -525,13 +512,11 @@ const iniciarDashboard = () => {
         });
     }
 
-    // --- EVENT LISTENERS GERAIS ---
     document.getElementById('btn-toggle-financeiro').addEventListener('click', () => {
         financeiroOculto = !financeiroOculto;
         renderizarResumoFinanceiro();
     });
 
-    // --- INICIALIZAÇÃO E CARREGAMENTO DE DADOS ---
     async function carregarDashboard() {
         renderizarBoasVindas();
         try {
@@ -550,12 +535,10 @@ const iniciarDashboard = () => {
             renderizarResumoFinanceiro(lancamentos);
 
         } catch (error) {
-            console.error(error);
             document.querySelector('.dashboard-grid').innerHTML = '<p style="color: red; text-align: center;">Não foi possível carregar os dados do painel. Verifique a conexão com o servidor.</p>';
         }
     }
     
-    // --- EVENT LISTENERS PARA AÇÕES RÁPIDAS ---
     document.getElementById('btn-add-membro').addEventListener('click', () => window.location.href = '../cadastro.page/cadastro.html');
     document.getElementById('btn-add-lancamento').addEventListener('click', () => window.location.href = '../financeiro.page/financeiro.html');
     document.getElementById('btn-add-evento').addEventListener('click', () => window.location.href = '../agenda/agenda.html');
