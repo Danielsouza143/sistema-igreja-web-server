@@ -1,17 +1,16 @@
 const iniciarDashboard = () => {
     
     // --- FUNÇÕES AUXILIARES ---
-    const formatarDataSimples = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' });
+    // CORREÇÃO: Removida a conversão forçada para UTC que mudava eventos noturnos de dia
+    const formatarDataSimples = (dataStr) => new Date(dataStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     const formatarDinheiro = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    // --- ESTADO LOCAL ---
     let chartFinanceiro = null;
     let chartFundoDetalhe = null;
     let dadosLancamentos = [];
     let todosMembros = [];
     let financeiroOculto = true;
     
-    // Estado Eventos
     let todosEventosFuturos = [];
     let viewModeEventos = 'list'; 
     let eventoCarouselInterval = null;
@@ -48,32 +47,41 @@ const iniciarDashboard = () => {
         document.getElementById('data-atual').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
     }
     
-    // --- CORREÇÃO DO FILTRO DE EVENTOS (IGNORANDO TIMEZONE) ---
+    // --- CORREÇÃO DO FILTRO DE EVENTOS ---
     function processarEventos(eventos) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar só o dia
+        const agora = new Date();
+        // Pega exatamente o início do dia de hoje no fuso horário do usuário (Meia-noite)
+        const hojeLocal = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
 
         todosEventosFuturos = eventos
             .filter(e => {
-                // Pega exatamente a string "YYYY-MM-DD" que vem do banco para não dar problema de fuso
-                const dataRefStr = (e.dataFim || e.dataInicio).split('T')[0]; 
-                const [ano, mes, dia] = dataRefStr.split('-').map(Number);
-                const dataEvento = new Date(ano, mes - 1, dia);
-                dataEvento.setHours(0, 0, 0, 0);
+                if (!e.dataInicio) return false;
+
+                const dataInicio = new Date(e.dataInicio);
+                const inicioLocal = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate());
                 
-                // Só passa se o evento for de hoje em diante
-                return dataEvento >= hoje;
+                const dataFim = e.dataFim ? new Date(e.dataFim) : dataInicio;
+                const fimLocal = new Date(dataFim.getFullYear(), dataFim.getMonth(), dataFim.getDate());
+
+                // Se o usuário preencheu o campo "Data Fim" do evento com a data de limite de repetição 
+                // por engano (duração maior que 7 dias), validamos rigorosamente apenas pela data de Início.
+                const duracaoEmDias = (fimLocal - inicioLocal) / (1000 * 60 * 60 * 24);
+                
+                if (duracaoEmDias > 7) {
+                    return inicioLocal >= hojeLocal;
+                }
+
+                // Para eventos com a duração correta, exibimos na tela se a data final ainda não tiver passado.
+                return fimLocal >= hojeLocal;
             })
             .sort((a, b) => new Date(a.dataInicio) - new Date(b.dataInicio));
 
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
         
-        // Verifica se há cartazes neste mês 
         const eventosComCartazMes = todosEventosFuturos.filter(e => {
-            const dataRefStr = e.dataInicio.split('T')[0];
-            const [eAno, eMes] = dataRefStr.split('-').map(Number);
-            return (eMes - 1) === mesAtual && eAno === anoAtual && e.cartazUrl;
+            const d = new Date(e.dataInicio);
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
         });
 
         if (eventosComCartazMes.length > 0) viewModeEventos = 'carousel';
@@ -116,9 +124,8 @@ const iniciarDashboard = () => {
             const anoAtual = hoje.getFullYear();
 
             const eventosComCartaz = todosEventosFuturos.filter(e => {
-                const dataRefStr = e.dataInicio.split('T')[0];
-                const [eAno, eMes] = dataRefStr.split('-').map(Number);
-                return (eMes - 1) === mesAtual && eAno === anoAtual && e.cartazUrl;
+                const d = new Date(e.dataInicio);
+                return d.getMonth() === mesAtual && d.getFullYear() === anoAtual && e.cartazUrl;
             });
 
             if(eventosComCartaz.length === 0) {
@@ -561,7 +568,7 @@ const iniciarDashboard = () => {
             renderizarResumoFinanceiro(lancamentos);
 
         } catch (error) {
-            document.querySelector('.dashboard-grid').innerHTML = '<p style="color: red; text-align: center;">Não foi possível carregar os dados do painel.</p>';
+            document.querySelector('.dashboard-grid').innerHTML = '<p style="color: red; text-align: center;">Não foi possível carregar os dados do painel. Verifique a conexão com o servidor.</p>';
         }
     }
     
