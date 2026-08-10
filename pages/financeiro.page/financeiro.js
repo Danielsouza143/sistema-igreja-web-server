@@ -34,7 +34,7 @@ var iniciarFinanceiro = () => {
             const btnNao = document.getElementById('btn-confirm-nao');
 
             if(!modal || !msgEl || !btnSim || !btnNao) {
-                resolve(confirm(msg));
+                resolve(confirm(msg)); 
                 return;
             }
 
@@ -46,8 +46,14 @@ var iniciarFinanceiro = () => {
             btnSim.parentNode.replaceChild(newBtnSim, btnSim);
             btnNao.parentNode.replaceChild(newBtnNao, btnNao);
 
-            newBtnSim.onclick = () => { modal.style.display = 'none'; resolve(true); };
-            newBtnNao.onclick = () => { modal.style.display = 'none'; resolve(false); };
+            newBtnSim.onclick = () => { 
+                modal.style.display = 'none'; 
+                resolve(true); 
+            };
+            newBtnNao.onclick = () => { 
+                modal.style.display = 'none'; 
+                resolve(false); 
+            };
         });
     };
 
@@ -62,16 +68,22 @@ var iniciarFinanceiro = () => {
         }
         if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
             const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
-            if (tabelaLancamentos) tabelaLancamentos.classList.remove('modo-selecao');
+            if (tabelaLancamentos) {
+                tabelaLancamentos.classList.remove('modo-selecao');
+            }
             const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
-            if(checkboxSelecionarTodos) checkboxSelecionarTodos.checked = false;
+            if(checkboxSelecionarTodos) {
+                checkboxSelecionarTodos.checked = false;
+            }
             const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
             if(tabelaCorpo) {
                 tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
                 tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
             }
             const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
-            if(btnExcluirSelecionados) btnExcluirSelecionados.classList.add('hidden');
+            if(btnExcluirSelecionados) {
+                btnExcluirSelecionados.classList.add('hidden');
+            }
         }
     };
 
@@ -120,12 +132,16 @@ var iniciarFinanceiro = () => {
     const formatarMoeda = (valor) => `R$ ${(valor || 0).toFixed(2).replace('.', ',')}`;
     const aplicarMascaraMoeda = (e) => {
         let valor = e.target.value.replace(/\D/g, "");
-        if (valor === "") { e.target.value = ""; return; }
+        if (valor === "") { 
+            e.target.value = ""; 
+            return; 
+        }
         valor = (parseInt(valor) / 100).toFixed(2) + "";
         valor = valor.replace(".", ",");
         valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
         e.target.value = "R$ " + valor;
     };
+    
     const parseMoedaToFloat = (str) => {
         if (!str) return 0;
         if (typeof str === 'number') return str;
@@ -149,23 +165,37 @@ var iniciarFinanceiro = () => {
     prevenirEnter('form-fundo');
     prevenirEnter('form-lancamento');
 
-    window.toggleMultiSelect = () => { if(categoriasCheckboxes) categoriasCheckboxes.classList.toggle('active'); };
+    window.toggleMultiSelect = () => { 
+        if(categoriasCheckboxes) {
+            categoriasCheckboxes.classList.toggle('active'); 
+        }
+    };
 
     const atualizarTextoCategorias = () => {
         const checkboxes = document.querySelectorAll('.categoria-checkbox:checked');
         const textSpan = document.getElementById('selected-categories-text');
         if (!textSpan) return;
-        if (checkboxes.length === 0) textSpan.textContent = 'Todas as Categorias';
-        else if (checkboxes.length === 1) textSpan.textContent = checkboxes[0].value;
-        else textSpan.textContent = `${checkboxes.length} selecionadas`;
+        if (checkboxes.length === 0) {
+            textSpan.textContent = 'Todas as Categorias';
+        } else if (checkboxes.length === 1) {
+            textSpan.textContent = checkboxes[0].value;
+        } else {
+            textSpan.textContent = `${checkboxes.length} selecionadas`;
+        }
     };
 
     document.onclick = (e) => {
-        if (categoriasCheckboxes && !e.target.closest('#multi-select-categoria')) categoriasCheckboxes.classList.remove('active');
-        if (contextMenu && contextMenu.style.display === 'block') contextMenu.style.display = 'none';
+        if (categoriasCheckboxes && !e.target.closest('#multi-select-categoria')) {
+            categoriasCheckboxes.classList.remove('active');
+        }
+        if (contextMenu && contextMenu.style.display === 'block') {
+            contextMenu.style.display = 'none';
+        }
         if (e.target.matches('[data-close]') || e.target.closest('[data-close]')) {
             const modalOverlay = e.target.closest('.modal-overlay') || e.target.closest('.modal');
-            if (modalOverlay && modalOverlay.id !== 'modal-confirmacao') modalOverlay.style.display = 'none';
+            if (modalOverlay && modalOverlay.id !== 'modal-confirmacao') {
+                modalOverlay.style.display = 'none';
+            }
         }
     };
 
@@ -174,14 +204,21 @@ var iniciarFinanceiro = () => {
         const abaSalva = localStorage.getItem('abaFinanceiroAtiva') || 'lancamentos';
         document.querySelectorAll('.abas-financeiro .aba-link').forEach(a => a.classList.remove('active'));
         document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('active'));
+        
         const abaParaAtivar = document.querySelector(`.abas-financeiro .aba-link[data-aba="${abaSalva}"]`);
         const conteudoParaAtivar = document.getElementById(abaSalva);
-        if(abaParaAtivar && conteudoParaAtivar) { abaParaAtivar.classList.add('active'); conteudoParaAtivar.classList.add('active'); }
+        
+        if(abaParaAtivar && conteudoParaAtivar) { 
+            abaParaAtivar.classList.add('active'); 
+            conteudoParaAtivar.classList.add('active'); 
+        }
+        
         abasLink.forEach(aba => {
             aba.onclick = () => {
                 document.querySelector('.abas-financeiro .aba-link.active')?.classList.remove('active');
                 document.querySelector('.aba-conteudo.active')?.classList.remove('active');
                 aba.classList.add('active');
+                
                 const idAba = aba.dataset.aba;
                 document.getElementById(idAba)?.classList.add('active');
                 localStorage.setItem('abaFinanceiroAtiva', idAba);
@@ -201,8 +238,11 @@ var iniciarFinanceiro = () => {
             const tr = document.createElement('tr');
             tr.dataset.id = l._id;
             if (lancamentosSelecionados.has(l._id)) tr.classList.add('selecionada');
+            
             tr.innerHTML = `
-                <td class="coluna-checkbox" style="border-left: 4px solid ${l.cor || '#007bff'};"><input type="checkbox" class="checkbox-lancamento" data-id="${l._id}" ${lancamentosSelecionados.has(l._id) ? 'checked' : ''}></td>
+                <td class="coluna-checkbox" style="border-left: 4px solid ${l.cor || '#007bff'};">
+                    <input type="checkbox" class="checkbox-lancamento" data-id="${l._id}" ${lancamentosSelecionados.has(l._id) ? 'checked' : ''}>
+                </td>
                 <td data-label="Data">${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td data-label="Descrição" class="celula-editavel" contenteditable="true" data-id="${l._id}" data-field="descricao">
                     ${l.descricao}
@@ -228,8 +268,10 @@ var iniciarFinanceiro = () => {
         const receitas = lancamentos.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
         const despesas = lancamentos.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
         const balanco = receitas - despesas;
+        
         if(document.getElementById('total-receitas')) document.getElementById('total-receitas').textContent = formatarMoeda(receitas);
         if(document.getElementById('total-despesas')) document.getElementById('total-despesas').textContent = formatarMoeda(despesas);
+        
         const balancoEl = document.getElementById('balanco-mensal');
         if (balancoEl) {
             balancoEl.textContent = formatarMoeda(balanco);
@@ -239,7 +281,10 @@ var iniciarFinanceiro = () => {
 
     const renderizarGraficoAnual = (lancamentos, anoReferencia) => {
         const tituloEl = document.getElementById('grafico-ano-titulo');
-        if (tituloEl) tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
+        if (tituloEl) {
+            tituloEl.textContent = (anoReferencia === 'todos' || !anoReferencia) ? 'Geral' : anoReferencia;
+        }
+        
         const canvas = document.getElementById('grafico-mensal');
         if (!canvas) return;
 
@@ -257,8 +302,18 @@ var iniciarFinanceiro = () => {
         const labels = (['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']);
         new Chart(canvas.getContext('2d'), {
             type: 'bar',
-            data: { labels: labels, datasets: [{ label: 'Receitas', data: dadosPorMes.map(d => d.entradas), backgroundColor: '#28a745' }, { label: 'Despesas', data: dadosPorMes.map(d => d.saidas), backgroundColor: '#dc3545' }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            data: { 
+                labels: labels, 
+                datasets: [
+                    { label: 'Receitas', data: dadosPorMes.map(d => d.entradas), backgroundColor: '#28a745' }, 
+                    { label: 'Despesas', data: dadosPorMes.map(d => d.saidas), backgroundColor: '#dc3545' }
+                ] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { y: { beginAtZero: true } } 
+            }
         });
     };
     
@@ -281,13 +336,23 @@ var iniciarFinanceiro = () => {
         }
         
         canvas.style.display = 'block';
-        const despesasPorCategoria = despesas.reduce((acc, l) => { acc[l.categoria] = (acc[l.categoria] || 0) + l.valor; return acc; }, {});
+        const despesasPorCategoria = despesas.reduce((acc, l) => { 
+            acc[l.categoria] = (acc[l.categoria] || 0) + l.valor; 
+            return acc; 
+        }, {});
 
         const cores = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#17a2b8', '#6f42c1'];
         new Chart(canvas.getContext('2d'), {
             type: 'pie',
-            data: { labels: Object.keys(despesasPorCategoria), datasets: [{ data: Object.values(despesasPorCategoria), backgroundColor: cores, borderColor: '#fff', borderWidth: 2 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            data: { 
+                labels: Object.keys(despesasPorCategoria), 
+                datasets: [{ data: Object.values(despesasPorCategoria), backgroundColor: cores, borderColor: '#fff', borderWidth: 2 }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { position: 'bottom' } } 
+            }
         });
     };
 
@@ -297,7 +362,10 @@ var iniciarFinanceiro = () => {
             fundosAtivos = Array.isArray(response) ? response : [];
             renderizarFundos(fundosAtivos);
             popularSelectFundos(); 
-        } catch (error) { fundosAtivos = []; renderizarFundos(fundosAtivos); }
+        } catch (error) { 
+            fundosAtivos = []; 
+            renderizarFundos(fundosAtivos); 
+        }
     }
 
     const popularSelectFundos = () => {
@@ -309,6 +377,25 @@ var iniciarFinanceiro = () => {
             option.textContent = fundo.nome;
             selectFundo.appendChild(option);
         });
+    };
+
+    const calcularRitmoFundo = (fundo) => {
+        if (!fundo.prazo) return 'Prazo não definido';
+        const prazoStr = typeof fundo.prazo === 'string' ? fundo.prazo.split('T')[0] : fundo.prazo;
+        const prazo = new Date(prazoStr + 'T23:59:59'); 
+        const hoje = new Date();
+        const diasRestantes = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
+        const faltante = (fundo.meta || 0) - Math.max(fundo.arrecadado || 0, 0);
+        
+        if (faltante <= 0) return 'Meta atingida! Parabéns!';
+        if (diasRestantes <= 0) return `Prazo encerrado. Faltou ${formatarMoeda(faltante)}.`;
+        
+        let mesesRestantes = (prazo.getFullYear() - hoje.getFullYear()) * 12 + (prazo.getMonth() - hoje.getMonth());
+        if (hoje.getDate() > prazo.getDate()) mesesRestantes--; 
+        mesesRestantes = Math.max(mesesRestantes, 0); 
+
+        if (mesesRestantes < 1) return `Faltam ${diasRestantes} dias. Necessário ${formatarMoeda(faltante)} na reta final.`;
+        return `Faltam ${diasRestantes} dias. Aprox. ${formatarMoeda(faltante / mesesRestantes)} / mês.`;
     };
 
     const renderizarFundos = (fundos) => {
@@ -329,6 +416,7 @@ var iniciarFinanceiro = () => {
             const cardStatusClass = porcentagemNum >= 100 ? 'card-concluido' : 'card-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
+            const ritmoTexto = calcularRitmoFundo(fundo);
 
             const card = document.createElement('div');
             card.className = `card-fundo ${cardStatusClass}`;
@@ -337,6 +425,8 @@ var iniciarFinanceiro = () => {
                     <h3>${fundo.nome}</h3>
                     <div class="badge-status"><span class="badge-status ${badgeClass}">${statusText}</span></div>
                 </div>
+                <p class="fundo-desc">${fundo.descricao}</p>
+                <p class="fundo-ritmo"><i class='bx bx-time-five'></i> ${ritmoTexto}</p>
                 <div class="progresso-container"><div class="progresso-barra" style="width: ${porcentagem}%"></div></div>
                 <div class="progresso-texto"><span><strong>Arrecadado:</strong> ${formatarMoeda(fundo.arrecadado)}</span><span><strong>Meta:</strong> ${formatarMoeda(fundo.meta)}</span></div>
                 <div class="progresso-porcentagem">${porcentagem}%</div>
@@ -345,17 +435,29 @@ var iniciarFinanceiro = () => {
                     <i class='bx bxs-trash btn-excluir-fundo' style="font-size: 1.2rem; color: #dc3545; cursor: pointer;" title="Excluir"></i>
                 </div>
             `;
-            card.onclick = (e) => { if(!e.target.classList.contains('btn-editar-fundo') && !e.target.classList.contains('btn-excluir-fundo')) abrirDetalhesFundo(fundo); };
-            card.querySelector('.btn-editar-fundo').onclick = (e) => { e.stopPropagation(); abrirModalFundo(fundo); };
+            
+            card.onclick = (e) => { 
+                if(!e.target.classList.contains('btn-editar-fundo') && !e.target.classList.contains('btn-excluir-fundo')) {
+                    abrirDetalhesFundo(fundo); 
+                }
+            };
+            card.querySelector('.btn-editar-fundo').onclick = (e) => { 
+                e.stopPropagation(); 
+                abrirModalFundo(fundo); 
+            };
             card.querySelector('.btn-excluir-fundo').onclick = async (e) => {
                 e.stopPropagation();
                 const conf = await window.showConfirmCustom('Deseja realmente excluir este fundo? Os lançamentos vinculados a ele continuarão existindo no caixa geral.');
-                if(conf) { await window.api.delete(`/api/financeiro/fundos/${fundo._id}`); carregarFundos(); }
+                if(conf) { 
+                    await window.api.delete(`/api/financeiro/fundos/${fundo._id}`); 
+                    carregarFundos(); 
+                }
             };
             grid.appendChild(card);
         });
     };
 
+    // --- LÓGICA DE ITENS DO ORÇAMENTO ---
     const renderizarItensOrcamento = () => {
         const lista = document.getElementById('lista-itens-orcamento');
         if(!lista) return;
@@ -416,7 +518,7 @@ var iniciarFinanceiro = () => {
                 } catch (err) {
                     alert('Erro ao enviar o anexo do item.');
                 }
-                btnAddItem.textContent = "Add";
+                btnAddItem.textContent = "Adicionar";
                 btnAddItem.disabled = false;
             }
 
@@ -450,6 +552,7 @@ var iniciarFinanceiro = () => {
         if(formFundo) formFundo.reset();
         fundoEmEdicaoId = fundoObj ? fundoObj._id : null;
         itensOrcamentoTemp = []; 
+        
         const nomeAnexo = document.getElementById('novo-item-anexo-nome');
         if(nomeAnexo) nomeAnexo.textContent = '';
 
@@ -489,8 +592,11 @@ var iniciarFinanceiro = () => {
             };
             
             try {
-                if(fundoEmEdicaoId) await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
-                else await window.api.post('/api/financeiro/fundos', dados);
+                if(fundoEmEdicaoId) {
+                    await window.api.put(`/api/financeiro/fundos/${fundoEmEdicaoId}`, dados);
+                } else {
+                    await window.api.post('/api/financeiro/fundos', dados);
+                }
                 if(modalFundo) modalFundo.style.display = 'none';
                 await carregarFundos();
                 alert('Fundo salvo com sucesso!');
@@ -596,7 +702,7 @@ var iniciarFinanceiro = () => {
             data: {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
                 datasets: [{ 
-                    label: 'Arrecadação Mensal', 
+                    label: 'Arrecadação Mensal Líquida', 
                     data: dadosPorMes, 
                     borderColor: '#10b981', 
                     backgroundColor: 'rgba(16, 185, 129, 0.15)', 
@@ -641,6 +747,7 @@ var iniciarFinanceiro = () => {
             if(!fundoEmVisualizacao) return;
             const valorStr = prompt(`Quanto do saldo em caixa deseja transferir para "${fundoEmVisualizacao.nome}"?\n\nDigite apenas números (Ex: 150,50):`);
             if(!valorStr) return;
+            
             const valorTransferencia = parseFloat(valorStr.replace(',', '.'));
             if(isNaN(valorTransferencia) || valorTransferencia <= 0) return alert("Valor inválido.");
 
@@ -674,7 +781,10 @@ var iniciarFinanceiro = () => {
 
             let lancamentosCaixaPrincipal = lancamentos.filter(l => !l.fundoId);
             let lancamentosFiltrados = tipo === 'todos' ? lancamentosCaixaPrincipal : lancamentosCaixaPrincipal.filter(l => l.tipo === tipo);
-            if (itemParaExcluir) lancamentosFiltrados = lancamentosFiltrados.filter(l => l._id !== itemParaExcluir.lancamento._id);
+            
+            if (itemParaExcluir) {
+                lancamentosFiltrados = lancamentosFiltrados.filter(l => l._id !== itemParaExcluir.lancamento._id);
+            }
             if (retornarArray) return lancamentosFiltrados;
 
             renderizarTabela(lancamentosFiltrados);
@@ -685,7 +795,9 @@ var iniciarFinanceiro = () => {
                 const resAno = await window.api.get(`/api/financeiro/lancamentos?ano=${ano}&_t=${Date.now()}`);
                 const resAnoCaixaPrincipal = (resAno || []).filter(l => !l.fundoId);
                 renderizarGraficoAnual(resAnoCaixaPrincipal, ano);
-            } else { renderizarGraficoAnual(lancamentosCaixaPrincipal, 'Geral'); }
+            } else { 
+                renderizarGraficoAnual(lancamentosCaixaPrincipal, 'Geral'); 
+            }
             return lancamentosFiltrados;
         } catch (error) { return []; }
     };
@@ -739,14 +851,18 @@ var iniciarFinanceiro = () => {
             if (elNomeIgreja) elNomeIgreja.textContent = tenantInfo.name || 'Nossa Igreja';
             
             if (elCnpjIgreja) {
-                if (tenantInfo.cnpj) { elCnpjIgreja.textContent = `CNPJ / CPF: ${tenantInfo.cnpj}`; elCnpjIgreja.style.display = 'block'; } 
-                else { elCnpjIgreja.style.display = 'none'; }
+                if (tenantInfo.cnpj) { 
+                    elCnpjIgreja.textContent = `CNPJ / CPF: ${tenantInfo.cnpj}`; 
+                    elCnpjIgreja.style.display = 'block'; 
+                } else { 
+                    elCnpjIgreja.style.display = 'none'; 
+                }
             }
             
             if (tenantInfo.config && tenantInfo.config.logoUrl) {
                 if(logoImg) { 
-                    logoImg.crossOrigin = "anonymous";
-                    logoImg.src = await getBase64FromUrl(tenantInfo.config.logoUrl); 
+                    const base64Logo = await getBase64FromUrl(tenantInfo.config.logoUrl);
+                    logoImg.src = base64Logo !== tenantInfo.config.logoUrl ? base64Logo : tenantInfo.config.logoUrl;
                     logoImg.style.display = 'block'; 
                 }
                 if(logoIcon) logoIcon.style.display = 'none';
@@ -774,6 +890,37 @@ var iniciarFinanceiro = () => {
             
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`Recibo_${lancamento.categoria}_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.pdf`);
+        }, 800);
+    };
+
+    const compartilharRecibo = async (lancamento) => {
+        const membro = todosMembros.find(m => m._id === lancamento.membroId);
+        await preencherRecibo(lancamento, membro);
+        const reciboElement = document.getElementById('recibo-template');
+
+        setTimeout(async () => {
+            try {
+                const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true, allowTaint: true });
+                canvas.toBlob(async (blob) => {
+                    const fileName = `Recibo_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.png`;
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    const shareData = {
+                        files: [file],
+                        title: 'Recibo de Contribuição',
+                        text: `Olá ${membro ? membro.nome : ''}, segue o seu recibo.`,
+                    };
+
+                    if (navigator.canShare && navigator.canShare(shareData)) {
+                        await navigator.share(shareData);
+                    } else {
+                        alert('O compartilhamento não é suportado neste navegador. O recibo será baixado.');
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = fileName;
+                        link.click();
+                    }
+                }, 'image/png');
+            } catch (error) { console.error('Erro ao compartilhar:', error); }
         }, 800);
     };
 
@@ -808,8 +955,14 @@ var iniciarFinanceiro = () => {
         const btnCompartilhar = document.getElementById('detalhes-btn-compartilhar');
         
         if (lancamento.tipo === 'entrada') {
-            if(btnImprimir) { btnImprimir.classList.remove('hidden'); btnImprimir.onclick = () => gerarReciboPDF(lancamento); }
-            if(btnCompartilhar) { btnCompartilhar.classList.remove('hidden'); btnCompartilhar.onclick = () => compartilharRecibo(lancamento); }
+            if(btnImprimir) { 
+                btnImprimir.classList.remove('hidden'); 
+                btnImprimir.onclick = () => gerarReciboPDF(lancamento); 
+            }
+            if(btnCompartilhar) { 
+                btnCompartilhar.classList.remove('hidden'); 
+                btnCompartilhar.onclick = () => compartilharRecibo(lancamento); 
+            }
         } else {
             if(btnImprimir) btnImprimir.classList.add('hidden');
             if(btnCompartilhar) btnCompartilhar.classList.add('hidden');
@@ -827,7 +980,6 @@ var iniciarFinanceiro = () => {
         if(clearMembroBtn) clearMembroBtn.classList.add('hidden');
         if(grupoMembro) grupoMembro.classList.add('hidden');
         
-        // --- LIMPEZA DE COR ---
         if(inputCorLancamento) inputCorLancamento.value = '#007bff';
 
         const comprovanteAtualContainer = document.getElementById('comprovante-atual-container');
@@ -843,7 +995,6 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
-            // --- CARREGA A COR SALVA ---
             if(inputCorLancamento && lancamento.cor) {
                 inputCorLancamento.value = lancamento.cor;
             }
@@ -912,8 +1063,10 @@ var iniciarFinanceiro = () => {
             atualizarCategoriasModal('entrada');
             if(grupoFundoItem) grupoFundoItem.classList.add('hidden');
             
-            // Dispara a troca de cor automática baseada no tipo
-            setTimeout(() => { if(selectCategoria) selectCategoria.dispatchEvent(new Event('change')) }, 50);
+            // Dispara para aplicar a cor automática
+            setTimeout(() => { 
+                if(selectCategoria) selectCategoria.dispatchEvent(new Event('change')) 
+            }, 50);
         }
         toggleMembroSearch();
         if(modalLancamento) modalLancamento.style.display = 'flex';
@@ -1006,11 +1159,14 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 10. CARREGAMENTO INICIAL E CONFIGS
+    // 10. CARREGAMENTO INICIAL
     // ==========================================
     const carregarDados = async () => {
         try {
-            try { tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); } catch (err) {}
+            try { 
+                tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); 
+            } catch (err) {}
+            
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
@@ -1079,7 +1235,9 @@ var iniciarFinanceiro = () => {
                 configCores[cat] = cor;
                 try {
                     await window.api.patch('/api/configs', { coresCategorias: configCores });
-                } catch(error) { alert('Erro ao salvar cor.'); }
+                } catch(error) { 
+                    alert('Erro ao salvar cor.'); 
+                }
             });
         });
     };
@@ -1149,12 +1307,17 @@ var iniciarFinanceiro = () => {
             };
 
             try {
-                if (lancamentoEmEdicaoId) await window.api.put(`/api/financeiro/lancamentos/${lancamentoEmEdicaoId}`, dados);
-                else await window.api.post('/api/financeiro/lancamentos', dados);
+                if (lancamentoEmEdicaoId) {
+                    await window.api.put(`/api/financeiro/lancamentos/${lancamentoEmEdicaoId}`, dados);
+                } else {
+                    await window.api.post('/api/financeiro/lancamentos', dados);
+                }
                 
                 if(modalLancamento) modalLancamento.style.display = 'none';
                 await carregarDados(); 
-            } catch (error) { alert('Não foi possível salvar o lançamento.'); }
+            } catch (error) { 
+                alert('Não foi possível salvar o lançamento.'); 
+            }
         };
     }
 
@@ -1230,7 +1393,13 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    if(btnEditarCtx) { btnEditarCtx.onclick = () => { if (!rightClickedRowId) return; const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId); if(lancamento) abrirModal(lancamento); }; }
+    if(btnEditarCtx) { 
+        btnEditarCtx.onclick = () => { 
+            if (!rightClickedRowId) return; 
+            const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId); 
+            if(lancamento) abrirModal(lancamento); 
+        }; 
+    }
     
     if(btnExcluirCtx) {
         btnExcluirCtx.onclick = () => {
@@ -1255,8 +1424,11 @@ var iniciarFinanceiro = () => {
             if (!rightClickedRowId) return;
             const lancamento = todosLancamentos.find(l => l._id === rightClickedRowId);
             if (lancamento) {
-                if(lancamento.tipo === 'entrada') gerarReciboPDF(lancamento);
-                else alert("A emissão de recibos está disponível apenas para entradas/receitas.");
+                if(lancamento.tipo === 'entrada') {
+                    gerarReciboPDF(lancamento);
+                } else {
+                    alert("A emissão de recibos está disponível apenas para entradas/receitas.");
+                }
             }
         };
     }
@@ -1269,8 +1441,13 @@ var iniciarFinanceiro = () => {
                 const id = checkbox.dataset.id;
                 const tr = checkbox.closest('tr');
                 checkbox.checked = isChecked;
-                if (isChecked) { lancamentosSelecionados.add(id); tr.classList.add('selecionada'); } 
-                else { lancamentosSelecionados.delete(id); tr.classList.remove('selecionada'); }
+                if (isChecked) { 
+                    lancamentosSelecionados.add(id); 
+                    tr.classList.add('selecionada'); 
+                } else { 
+                    lancamentosSelecionados.delete(id); 
+                    tr.classList.remove('selecionada'); 
+                }
             });
             atualizarEstadoExclusaoLote();
         };
@@ -1285,7 +1462,9 @@ var iniciarFinanceiro = () => {
                     lancamentosSelecionados.clear();
                     atualizarEstadoExclusaoLote();
                     await carregarDados();
-                } catch (error) { alert('Não foi possível excluir.'); }
+                } catch (error) { 
+                    alert('Não foi possível excluir.'); 
+                }
             }
         };
     }
@@ -1334,7 +1513,12 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    if(btnAplicarFiltros) { btnAplicarFiltros.onclick = (e) => { e.preventDefault(); aplicarFiltros(); }; }
+    if(btnAplicarFiltros) { 
+        btnAplicarFiltros.onclick = (e) => { 
+            e.preventDefault(); 
+            aplicarFiltros(); 
+        }; 
+    }
 
     if(buscaMembroModalInput) {
         buscaMembroModalInput.oninput = () => {
@@ -1373,7 +1557,11 @@ var iniciarFinanceiro = () => {
 
     if(clearMembroBtn) {
         clearMembroBtn.onclick = () => {
-            if(buscaMembroModalInput) { buscaMembroModalInput.value = ''; buscaMembroModalInput.disabled = false; buscaMembroModalInput.focus(); }
+            if(buscaMembroModalInput) { 
+                buscaMembroModalInput.value = ''; 
+                buscaMembroModalInput.disabled = false; 
+                buscaMembroModalInput.focus(); 
+            }
             if(membroIdHiddenInput) membroIdHiddenInput.value = '';
             clearMembroBtn.classList.add('hidden');
         };
@@ -1470,4 +1658,6 @@ var iniciarFinanceiro = () => {
 
 document.addEventListener('DOMContentLoaded', iniciarFinanceiro);
 document.body.addEventListener('htmx:afterSwap', iniciarFinanceiro);
-if (document.readyState !== 'loading') iniciarFinanceiro();
+if (document.readyState !== 'loading') {
+    iniciarFinanceiro();
+}
