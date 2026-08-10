@@ -28,6 +28,7 @@
         <button class="aba-link active" data-aba="lancamentos">Lançamentos</button>
         <button class="aba-link" data-aba="dizimos">Dízimos e Ofertas</button>
         <button class="aba-link" data-aba="aba-fundos">Fundos e Metas</button>
+        <button class="aba-link" data-aba="aba-configuracoes"><i class='bx bx-cog'></i> Configurações</button>
     </div>
 
     <!-- Aba 1: Lançamentos -->
@@ -40,17 +41,11 @@
         
         <div class="analises-container">
             <section class="grafico-container">
-                <div class="grafico-header">
-                    <h3>Resumo Anual (<span id="grafico-ano-titulo"></span>)</h3>
-                </div>
-                <div id="grafico-body" class="grafico-body">
-                    <canvas id="grafico-mensal"></canvas>
-                </div>
+                <div class="grafico-header"><h3>Resumo Anual (<span id="grafico-ano-titulo"></span>)</h3></div>
+                <div id="grafico-body" class="grafico-body"><canvas id="grafico-mensal"></canvas></div>
             </section>
             <section class="grafico-container">
-                <div class="grafico-header">
-                    <h3>Despesas por Categoria (Período)</h3>
-                </div>
+                <div class="grafico-header"><h3>Despesas por Categoria (Período)</h3></div>
                 <div class="grafico-body" id="grafico-pizza-container"><canvas id="grafico-despesas-pizza"></canvas></div>
             </section>
         </div>
@@ -66,64 +61,28 @@
             </div>
             
             <div class="filtros-container">
-                <div class="filtro-item">
-                    <label for="filtro-ano">Ano:</label>
-                    <select id="filtro-ano"></select>
-                </div>
-
+                <div class="filtro-item"><label for="filtro-ano">Ano:</label><select id="filtro-ano"></select></div>
                 <div class="filtro-item">
                     <label for="filtro-mes">Mês:</label>
                     <select id="filtro-mes">
-                        <option value="todos">Todos os Meses</option>
-                        <option value="1">Janeiro</option>
-                        <option value="2">Fevereiro</option>
-                        <option value="3">Março</option>
-                        <option value="4">Abril</option>
-                        <option value="5">Maio</option>
-                        <option value="6">Junho</option>
-                        <option value="7">Julho</option>
-                        <option value="8">Agosto</option>
-                        <option value="9">Setembro</option>
-                        <option value="10">Outubro</option>
-                        <option value="11">Novembro</option>
-                        <option value="12">Dezembro</option>
+                        <option value="todos">Todos os Meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
                 </div>
-                
                 <div class="filtro-item">
                     <label>Categorias:</label>
                     <div class="multi-select" id="multi-select-categoria">
                         <div class="select-box" onclick="window.toggleMultiSelect()">
-                            <span id="selected-categories-text">Todas as Categorias</span>
-                            <i class='bx bx-chevron-down'></i>
+                            <span id="selected-categories-text">Todas as Categorias</span><i class='bx bx-chevron-down'></i>
                         </div>
                         <div class="checkboxes" id="categorias-checkboxes"></div>
                     </div>
                 </div>
-
-                <div class="filtro-item">
-                    <label for="filtro-tipo">Tipo:</label>
-                    <select id="filtro-tipo">
-                        <option value="todos">Todos</option>
-                        <option value="entrada">Entradas</option>
-                        <option value="saida">Saídas</option>
-                    </select>
-                </div>
-
-                <button id="btn-aplicar-filtros" class="btn-principal">
-                    <i class='bx bx-filter-alt'></i> Aplicar Filtros
-                </button>
+                <div class="filtro-item"><label for="filtro-tipo">Tipo:</label><select id="filtro-tipo"><option value="todos">Todos</option><option value="entrada">Entradas</option><option value="saida">Saídas</option></select></div>
+                <button id="btn-aplicar-filtros" class="btn-principal"><i class='bx bx-filter-alt'></i> Aplicar Filtros</button>
             </div>
 
             <table class="tabela-lancamentos">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="selecionar-todos-lancamentos" title="Selecionar Todos"></th>
-                        <th>Data</th><th>Descrição</th>
-                        <th>Categoria</th>
-                        <th>Valor</th>
-                        <th>Ações</th>
-                    </tr></thead>
+                <thead><tr><th><input type="checkbox" id="selecionar-todos-lancamentos" title="Selecionar Todos"></th><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Ações</th></tr></thead>
                 <tbody id="tabela-lancamentos-corpo"></tbody>
             </table>
         </section>
@@ -134,50 +93,31 @@
         <section class="dizimos-busca-container">
             <h2>Controle de Contribuições por Membro</h2>
             <p>Busque um membro pelo nome para visualizar ou registrar dízimos e ofertas.</p>
-            <div class="form-group">
-                <input type="text" id="busca-membro-input" placeholder="Digite o nome do membro..." autocomplete="off">
-                <div id="busca-membro-resultados"></div>
-            </div>
+            <div class="form-group"><input type="text" id="busca-membro-input" placeholder="Digite o nome do membro..." autocomplete="off"><div id="busca-membro-resultados"></div></div>
         </section>
 
         <section id="historico-membro-container" class="hidden">
             <div class="historico-header">
-                <div>
-                    <p class="historico-subtitulo">Histórico de Contribuições de:</p>
-                    <h3 id="historico-membro-nome"></h3>
-                </div>
+                <div><p class="historico-subtitulo">Histórico de Contribuições de:</p><h3 id="historico-membro-nome"></h3></div>
                 <div class="header-actions">
                     <button id="btn-imprimir-relatorio-membro" class="btn-secundario"><i class='bx bxs-printer'></i> Imprimir Relatório</button>
                     <button id="btn-novo-dizimo-membro" class="btn-principal">+ Nova Contribuição</button>
                 </div>
             </div>
-
-            <div class="dashboard-financeiro-membro">
-                <div class="card-dashboard" id="card-total-anual">
-                    <p>Total Contribuído (<span id="ano-corrente-historico"></span>)</p>
-                    <h2 id="total-anual-membro">R$ 0,00</h2>
-                </div>
-            </div>
-
+            <div class="dashboard-financeiro-membro"><div class="card-dashboard" id="card-total-anual"><p>Total Contribuído (<span id="ano-corrente-historico"></span>)</p><h2 id="total-anual-membro">R$ 0,00</h2></div></div>
             <table class="tabela-lancamentos">
                 <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead>
                 <tbody id="tabela-historico-corpo"></tbody>
                 <tfoot><tr><td colspan="3">Total Geral do Histórico</td><td id="total-geral-historico">R$ 0,00</td></tr></tfoot>
             </table>
-
             <section class="grafico-container-membro">
-                <div class="grafico-header">
-                    <h3>Contribuições Mensais (<span id="grafico-ano-membro"></span>)</h3>
-                </div>
+                <div class="grafico-header"><h3>Contribuições Mensais (<span id="grafico-ano-membro"></span>)</h3></div>
                 <div id="grafico-contribuicoes-container" class="grafico-body"></div>
             </section>
             <div id="aviso-sem-historico" class="aviso-historico hidden"><p>Nenhuma contribuição encontrada para este membro.</p></div>
         </section>
         
-        <section id="aviso-inicial-dizimos" class="aviso-historico">
-            <i class='bx bx-search-alt' style="font-size: 4rem; color: #ccc;"></i>
-            <p>Utilize a busca acima para encontrar um membro.</p>
-        </section>
+        <section id="aviso-inicial-dizimos" class="aviso-historico"><i class='bx bx-search-alt' style="font-size: 4rem; color: #ccc;"></i><p>Utilize a busca acima para encontrar um membro.</p></section>
     </div>
 
     <!-- Aba 3: Fundos e Metas -->
@@ -189,18 +129,48 @@
         <div id="grid-fundos" class="grid-fundos"></div>
     </div>
 
+    <!-- Aba 4: Configurações Financeiras -->
+    <div id="aba-configuracoes" class="aba-conteudo">
+        <div class="header-acoes">
+            <h2>Configurações do Financeiro</h2>
+        </div>
+        
+        <div class="configuracoes-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+            <!-- Contribuição Sede -->
+            <div class="config-card">
+                <h3><i class='bx bx-building-house'></i> Contribuição para Sede</h3>
+                <p style="font-size: 0.85rem; color:#666; margin-bottom: 15px;">Defina o percentual repassado à Sede. Ele será deduzido e exibido automaticamente no Relatório PDF.</p>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="config-porc-sede" style="padding: 10px; border-radius:6px; border:1px solid #ccc; width: 100px; font-size: 1rem;" min="0" max="100" step="0.1" value="0"> 
+                    <span style="font-weight: 600; font-size:1.1rem;">%</span>
+                    <button id="btn-salvar-sede" class="btn-principal" style="margin-left: 10px;">Salvar Percentual</button>
+                </div>
+            </div>
+
+            <!-- Cores das Categorias -->
+            <div class="config-card" style="grid-column: 1 / -1;">
+                <h3><i class='bx bx-palette'></i> Cores Padrão das Categorias</h3>
+                <p style="font-size: 0.85rem; color:#666; margin-bottom: 20px;">Ao criar um lançamento com uma destas categorias, a cor escolhida aqui será aplicada automaticamente.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                    <div>
+                        <h4 style="color:#28a745; border-bottom: 1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><i class='bx bx-trending-up'></i> Entradas</h4>
+                        <ul id="lista-cores-entradas" style="list-style: none; padding:0; margin:0;"></ul>
+                    </div>
+                    <div>
+                        <h4 style="color:#dc3545; border-bottom: 1px solid #eee; padding-bottom:10px; margin-bottom:10px;"><i class='bx bx-trending-down'></i> Saídas</h4>
+                        <ul id="lista-cores-saidas" style="list-style: none; padding:0; margin:0;"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </main>
 
-
-<!-- MÓDULOS E OVERLAYS FORA DO MAIN -->
-
-<!-- Modal de Detalhes do Lançamento -->
+<!-- Modais -->
 <div id="modal-detalhes-lancamento" class="modal-overlay" style="display: none;">
     <div class="modal-content modal-lg">
-        <div class="modal-header">
-            <h2 id="detalhes-titulo">Detalhes do Lançamento</h2>
-            <button type="button" class="btn-close" data-close>&times;</button>
-        </div>
+        <div class="modal-header"><h2 id="detalhes-titulo">Detalhes do Lançamento</h2><button type="button" class="btn-close" data-close>&times;</button></div>
         <div class="modal-body">
             <div class="detalhes-grid">
                 <div class="detalhes-info">
@@ -211,21 +181,13 @@
                     <p><strong>Descrição:</strong> <span id="detalhes-descricao"></span></p>
                     <p id="detalhes-membro-container" class="hidden"><strong>Membro:</strong> <span id="detalhes-membro"></span></p>
                 </div>
-                <div class="detalhes-comprovante">
-                    <h4>Comprovante</h4>
-                    <div id="detalhes-comprovante-preview"></div>
-                </div>
+                <div class="detalhes-comprovante"><h4>Comprovante</h4><div id="detalhes-comprovante-preview"></div></div>
             </div>
         </div>
-        <div class="modal-actions">
-            <button type="button" class="btn-secundario" id="detalhes-btn-imprimir"><i class='bx bxs-printer'></i> Imprimir Recibo</button>
-            <button type="button" class="btn-principal" id="detalhes-btn-compartilhar"><i class='bx bxs-share-alt'></i> Compartilhar</button>
-            <button type="button" class="btn-secundario" data-close>Fechar</button>
-        </div>
+        <div class="modal-actions"><button type="button" class="btn-secundario" id="detalhes-btn-imprimir"><i class='bx bxs-printer'></i> Imprimir Recibo</button><button type="button" class="btn-principal" id="detalhes-btn-compartilhar"><i class='bx bxs-share-alt'></i> Compartilhar</button><button type="button" class="btn-secundario" data-close>Fechar</button></div>
     </div>
 </div>
 
-<!-- Modal de Lançamento -->
 <div id="modal-lancamento" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <form id="form-lancamento">
@@ -233,166 +195,107 @@
             <div class="form-group"><label for="tipo">Tipo de Lançamento</label><select id="tipo" required><option value="entrada">Entrada (Receita)</option><option value="saida">Saída (Despesa)</option></select></div>
             <div class="form-group"><label for="data">Data</label><input type="date" id="data" required></div>
             <div class="form-group"><label for="valor">Valor (R$)</label><input type="text" id="valor" placeholder="R$ 0,00" required></div>
-            <div class="form-group"><label for="categoria">Categoria</label><select id="categoria" required></select></div>
             
-            <div class="form-group">
-                <label for="fundoId">Vincular a um Fundo/Projeto (Opcional)</label>
-                <select id="fundoId">
-                    <option value="">Não vincular a nenhum fundo</option>
-                </select>
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 2;">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" required></select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="lancamento-cor">Cor</label>
+                    <input type="color" id="lancamento-cor" style="width: 100%; height: 42px; padding: 2px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer;">
+                </div>
             </div>
-
-            <!-- NOVO CAMPO: Aparece apenas se o fundo selecionado tiver itens -->
+            
+            <div class="form-group"><label for="fundoId">Vincular a um Fundo/Projeto (Opcional)</label><select id="fundoId"><option value="">Não vincular a nenhum fundo</option></select></div>
             <div class="form-group hidden" id="grupo-fundo-item" style="background:#eef2ff; padding:15px; border-radius:6px; border:1px solid #c7d2fe;">
                 <label for="fundo-itemId" style="color:#0033a0; font-weight:600; margin-bottom:8px; display:block;"><i class='bx bx-list-ul'></i> Vincular a um Item do Orçamento</label>
-                <select id="fundo-itemId" style="border-color: #a5b4fc; background-color:#fff;">
-                    <option value="">Lançamento Livre (Geral do Fundo)</option>
-                </select>
-                <p style="font-size:0.75rem; color:#555; margin-top:8px; line-height:1.3;">Ao selecionar uma <b>Saída</b> e vincular a um item, você registra o pagamento deste item. Entradas aumentam o valor arrecadado do item específico.</p>
+                <select id="fundo-itemId" style="border-color: #a5b4fc; background-color:#fff;"><option value="">Lançamento Livre (Geral do Fundo)</option></select>
             </div>
-
-            <div class="form-group hidden" id="grupo-membro">
-                <label for="busca-membro-modal">Membro</label>
-                <div class="input-wrapper">
-                    <input type="text" id="busca-membro-modal" placeholder="Busque por nome ou CPF..." autocomplete="off">
-                    <button type="button" id="clear-membro-btn" class="btn-clear hidden" title="Limpar seleção">&times;</button>
-                </div>
-                <input type="hidden" id="membroId-hidden">
-                <div id="busca-membro-resultados-modal" class="busca-resultados-modal"></div>
-                <p class="form-text-helper">Deixe em branco para registrar como contribuição anônima.</p>
-            </div>
+            <div class="form-group hidden" id="grupo-membro"><label>Membro</label><div class="input-wrapper"><input type="text" id="busca-membro-modal" placeholder="Nome ou CPF..." autocomplete="off"><button type="button" id="clear-membro-btn" class="btn-clear hidden">&times;</button></div><input type="hidden" id="membroId-hidden"><div id="busca-membro-resultados-modal" class="busca-resultados-modal"></div></div>
             <div class="form-group"><label for="descricao">Descrição</label><input type="text" id="descricao" placeholder="Ex: Dízimo do membro, Conta de Luz" required></div>
             <div class="form-group"><label for="comprovante">Anexar Comprovante (Opcional)</label><input type="file" id="comprovante" accept="image/*,application/pdf"></div>
-            <div id="comprovante-atual-container" class="form-group hidden"><p>Comprovante Atual: <a id="comprovante-atual-link" href="#" target="_blank"></a></p></div>
+            <div id="comprovante-atual-container" class="form-group hidden"><p>Atual: <a id="comprovante-atual-link" href="#" target="_blank"></a></p></div>
             <div class="modal-actions"><button type="button" class="btn-secundario" data-close>Cancelar</button><button type="submit" class="btn-principal">Salvar</button></div>
         </form>
     </div>
 </div>
 
-<!-- Modal de Criar/Editar Fundo com Itens -->
 <div id="modal-fundo" class="modal-overlay" style="display: none;">
     <div class="modal-content modal-lg">
-        <div class="modal-header">
-            <h2 id="modal-fundo-titulo">Novo Fundo / Projeto</h2>
-            <button type="button" class="btn-close" data-close>&times;</button>
-        </div>
+        <div class="modal-header"><h2 id="modal-fundo-titulo">Novo Fundo / Projeto</h2><button class="btn-close" data-close>&times;</button></div>
         <div class="modal-body">
             <form id="form-fundo">
-                <div class="form-group">
-                    <label for="fundo-nome">Nome do Projeto/Campanha</label>
-                    <input type="text" id="fundo-nome" required>
-                </div>
-                <div class="form-group">
-                    <label for="fundo-descricao">Descrição do Projeto</label>
-                    <textarea id="fundo-descricao" rows="2" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;" required></textarea>
-                </div>
-                
+                <div class="form-group"><label for="fundo-nome">Nome do Projeto/Campanha</label><input type="text" id="fundo-nome" required></div>
+                <div class="form-group"><label for="fundo-descricao">Descrição do Projeto</label><textarea id="fundo-descricao" rows="2" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;" required></textarea></div>
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                
                 <h4>Itens do Orçamento</h4>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Adicione os itens que compõem este projeto. Ao adicionar, você será questionado se deseja somar o valor à Meta Total do fundo.</p>
-                
-                <!-- Container de Adição Bem Organizado -->
                 <div class="orcamento-add-container">
-                    <div style="flex: 2; display: flex; flex-direction: column; gap: 5px;">
-                        <label style="font-size: 0.85rem; font-weight: 600; color: #444;">Nome do Item</label>
-                        <input type="text" id="novo-item-nome" placeholder="Ex: Cimento" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 120px;">
-                        <label style="font-size: 0.85rem; font-weight: 600; color: #444;">Custo (R$)</label>
-                        <input type="text" id="novo-item-valor" placeholder="R$ 0,00" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px; height: 40px;">
-                        <label for="novo-item-anexo" class="btn-anexo-icon" title="Anexar Orçamento">
-                            <i class='bx bx-paperclip'></i>
-                        </label>
-                        <input type="file" id="novo-item-anexo" style="display: none;" accept="image/*,.pdf">
-                        <button type="button" id="btn-add-item-orcamento" class="btn-principal" style="padding: 0 20px; height: 40px; margin: 0; font-size: 0.95rem; border-radius: 4px;">Adicionar</button>
-                    </div>
+                    <div class="campo-item-nome"><label style="font-size: 0.8rem;">Nome do Item</label><input type="text" id="novo-item-nome" placeholder="Ex: Cimento"></div>
+                    <div class="campo-item-valor"><label style="font-size: 0.8rem;">Custo (R$)</label><input type="text" id="novo-item-valor" placeholder="R$ 0,00"></div>
+                    <div class="campo-item-acoes"><label for="novo-item-anexo" class="btn-anexo-icon" title="Anexar Orçamento"><i class='bx bx-paperclip'></i></label><input type="file" id="novo-item-anexo" style="display: none;" accept="image/*,.pdf"><span id="novo-item-anexo-nome" class="anexo-nome-curto"></span><button type="button" id="btn-add-item-orcamento" class="btn-principal" style="padding: 10px 15px;">Add</button></div>
                 </div>
-                <div id="novo-item-anexo-nome" style="font-size: 0.8rem; color: #666; margin-top: -10px; margin-bottom: 15px; padding-left: 5px;"></div>
-
-                <ul id="lista-itens-orcamento" class="itens-orcamento-lista">
-                    <!-- Itens renderizados via JS -->
-                </ul>
-
+                <ul id="lista-itens-orcamento" class="itens-orcamento-lista"></ul>
                 <div class="form-row" style="display: flex; gap: 15px; margin-top: 20px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="fundo-meta">Meta Total (R$)</label>
-                        <input type="text" id="fundo-meta" placeholder="R$ 0,00" required>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="fundo-prazo">Prazo Limite</label>
-                        <input type="date" id="fundo-prazo" required>
-                    </div>
+                    <div class="form-group" style="flex: 1;"><label for="fundo-meta">Meta Total (R$)</label><input type="text" id="fundo-meta" placeholder="R$ 0,00" required></div>
+                    <div class="form-group" style="flex: 1;"><label for="fundo-prazo">Prazo Limite</label><input type="date" id="fundo-prazo" required></div>
                 </div>
-                <div class="modal-actions" style="margin-top: 25px;">
-                    <button type="button" class="btn-secundario" data-close>Cancelar</button>
-                    <button type="submit" class="btn-principal">Salvar Fundo Completo</button>
-                </div>
+                <div class="modal-actions" style="margin-top: 25px;"><button type="button" class="btn-secundario" data-close>Cancelar</button><button type="submit" class="btn-principal">Salvar Fundo Completo</button></div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal Detalhes do Fundo (Horizontal) -->
+<!-- Modal Detalhes do Fundo (Layout Revertido Profissional ERP) -->
 <div id="modal-detalhes-fundo" class="modal-overlay" style="display: none;">
     <div class="modal-content modal-xl">
         <div class="modal-header">
-            <h2 id="fundo-titulo-detalhe">Nome do Projeto</h2>
+            <h2 id="fundo-titulo-detalhe" style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin: 0; color: #001f5d;">Nome do Projeto</h2>
             <button type="button" class="btn-close" data-close>&times;</button>
         </div>
         <div class="modal-body layout-horizontal">
-            
-            <div class="coluna-esquerda">
+            <div class="coluna-esquerda" style="flex: 1.3; display: flex; flex-direction: column; gap: 25px;">
                 <div class="resumo-fundo-cards">
-                    <div class="card-mini">
-                        <span>Arrecadado</span>
-                        <h3 id="fundo-valor-arrecadado" style="color: #28a745;">R$ 0,00</h3>
-                    </div>
-                    <div class="card-mini">
-                        <span>Meta</span>
-                        <h3 id="fundo-valor-meta">R$ 0,00</h3>
-                    </div>
-                    <div class="card-mini">
-                        <span>Progresso</span>
-                        <h3 id="fundo-porcentagem" style="color: #007bff;">0%</h3>
-                    </div>
+                    <div class="card-mini"><span>Total Arrecadado</span><h3 id="fundo-valor-arrecadado" style="color: #28a745;">R$ 0,00</h3></div>
+                    <div class="card-mini"><span>Meta Total</span><h3 id="fundo-valor-meta" style="color: #333;">R$ 0,00</h3></div>
+                    <div class="card-mini"><span>Saldo Faltante</span><h3 id="fundo-valor-faltante" style="color: #dc3545;">R$ 0,00</h3></div>
                 </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button id="btn-nova-arrecadacao-fundo" class="btn-principal" style="flex:1;"><i class='bx bx-plus'></i> Lançar Entrada</button>
-                    <button id="btn-transferir-caixa" class="btn-secundario" style="flex:1;"><i class='bx bx-transfer'></i> Aporte do Caixa</button>
+                <div style="display: flex; flex-direction: column; flex-grow: 1;">
+                    <h3 style="margin-top:0; margin-bottom: 12px; font-size: 1.15rem; color: #444;">Itens do Orçamento</h3>
+                    <div id="fundo-detalhes-itens-lista" class="itens-orcamento-progresso" style="flex-grow: 1; max-height: 250px;"></div>
                 </div>
-
-                <div class="grafico-container" style="margin-top: 20px; box-shadow: none; border: 1px solid #eee;">
-                    <h4 style="margin-top:0;">Fluxo Mensal Líquido</h4>
-                    <canvas id="grafico-fundo-historico" style="max-height: 200px;"></canvas>
+                <div>
+                    <h3 style="margin-top:0; margin-bottom: 12px; font-size: 1.15rem; color: #444;">Histórico de Lançamentos</h3>
+                    <div class="table-responsive" style="max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <table class="tabela-lancamentos" style="margin:0; width: 100%;">
+                            <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                                <tr>
+                                    <th style="text-align: left; padding: 12px 15px; color: #64748b; font-size: 0.85rem; text-transform: uppercase;">Data</th>
+                                    <th style="text-align: left; padding: 12px 15px; color: #64748b; font-size: 0.85rem; text-transform: uppercase;">Origem</th>
+                                    <th style="text-align: left; padding: 12px 15px; color: #64748b; font-size: 0.85rem; text-transform: uppercase;">Item</th>
+                                    <th style="text-align: right; padding: 12px 15px; color: #64748b; font-size: 0.85rem; text-transform: uppercase;">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-fundo-lancamentos"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
-            <div class="coluna-direita">
-                <h3 style="margin-top:0; margin-bottom: 10px;">Itens do Orçamento</h3>
-                <div id="fundo-detalhes-itens-lista" class="itens-orcamento-progresso">
-                    <!-- Progresso dos itens gerado via JS -->
-                </div>
-
-                <h3 style="margin-top: 25px; margin-bottom: 10px;">Histórico de Lançamentos</h3>
-                <div class="table-responsive" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
-                    <table class="tabela-lancamentos" style="margin:0;">
-                        <thead style="position: sticky; top: 0; background: #fff; z-index: 10;">
-                            <tr><th>Data</th><th>Membro/Origem</th><th>Item</th><th>Valor</th></tr>
-                        </thead>
-                        <tbody id="tabela-fundo-lancamentos"></tbody>
-                    </table>
+            <div class="coluna-direita" style="flex: 1.1; display: flex; flex-direction: column;">
+                <div class="grafico-container" style="flex-grow: 1; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; padding: 25px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+                    <h3 style="margin-top:0; margin-bottom: 20px; font-size: 1.15rem; color: #333; text-align: center;">Evolução Mensal das Doações</h3>
+                    <div style="flex-grow: 1; position: relative; min-height: 400px;"><canvas id="grafico-fundo-historico"></canvas></div>
                 </div>
             </div>
-
+        </div>
+        <div class="modal-actions" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+            <button type="button" id="btn-nova-arrecadacao-fundo" class="btn-principal"><i class='bx bx-plus'></i> Lançar</button>
+            <button type="button" id="btn-transferir-caixa" class="btn-secundario"><i class='bx bx-transfer'></i> Aporte do Caixa</button>
+            <button type="button" class="btn-secundario" data-close>Fechar</button>
         </div>
     </div>
 </div>
 
-<!-- Modal Customizado Sim/Não -->
 <div id="modal-confirmacao" class="modal-overlay" style="display: none; z-index: 9999;">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <h3 style="margin-top: 0; color: #001f5d;">Atenção</h3>
@@ -403,14 +306,9 @@
         </div>
     </div>
 </div>
+<div id="toast-desfazer" class="toast"><span id="toast-mensagem"></span><button id="btn-desfazer" class="btn-toast">Desfazer</button></div>
 
-<!-- Toast/Snackbar para Desfazer Exclusão -->
-<div id="toast-desfazer" class="toast">
-    <span id="toast-mensagem"></span>
-    <button id="btn-desfazer" class="btn-toast">Desfazer</button>
-</div>
-
-<!-- Modelo do Recibo para Geração de Imagem/PDF -->
+<!-- Modelo do Recibo -->
 <div id="recibo-container" style="position: absolute; left: -9999px; width: 800px; padding: 20px; background-color: white;">
     <div id="recibo-template" style="border: 1px solid #ccc; padding: 0; font-family: 'Helvetica', sans-serif; color: #333;">
         <div style="background-color: #001f5d; color: white; padding: 15px 25px; display: flex; align-items: center; justify-content: flex-start;">
@@ -430,37 +328,17 @@
                 <p><strong>Data da Contribuição:</strong> <span id="recibo-data"></span></p>
                 <p><strong>Categoria:</strong> <span id="recibo-categoria"></span></p>
             </div>
-            <div style="margin-top: 40px; text-align: center; font-style: italic; color: #555;">
-                <p>"Agradecemos sua contribuição."</p>
-                <p style="font-size: 14px;">"Há quem dê generosamente, e vê aumentar suas riquezas; outros retêm o que deveriam dar, e caem na pobreza." (Provérbios 11:24)</p>
-            </div>
-            <div style="margin-top: 60px; text-align: center;">
-                <div style="display: inline-block; border-top: 1px solid #888; padding-top: 5px; width: 250px;">
-                    <p style="margin: 0; font-size: 14px;">Assinatura da Tesouraria</p>
-                </div>
-            </div>
+            <div style="margin-top: 40px; text-align: center; font-style: italic; color: #555;"><p>"Agradecemos sua contribuição."</p></div>
         </div>
     </div>
 </div>
 
-<!-- Bibliotecas para Geração de PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <script src="/js/global-loader.js" defer></script>
 <script src="/js/api.js"></script>
 <script src="/pages/financeiro.page/financeiro.js"></script>
-
-<!-- Menu de Contexto para a Tabela de Lançamentos -->
-<div id="context-menu" class="context-menu">
-    <ul>
-        <li id="context-selecionar"><i class='bx bx-check-square'></i> Selecionar</li>
-        <li id="context-editar"><i class='bx bxs-edit'></i> Editar</li>
-        <li id="context-excluir"><i class='bx bxs-trash'></i> Excluir</li>
-        <li id="context-copiar"><i class='bx bxs-copy'></i> Copiar Dados</li>
-        <li id="context-imprimir"><i class='bx bxs-printer'></i> Imprimir Comprovante</li>
-    </ul>
-</div>
+<div id="context-menu" class="context-menu"><ul><li id="context-selecionar"><i class='bx bx-check-square'></i> Selecionar</li><li id="context-editar"><i class='bx bxs-edit'></i> Editar</li><li id="context-excluir"><i class='bx bxs-trash'></i> Excluir</li><li id="context-copiar"><i class='bx bxs-copy'></i> Copiar Dados</li><li id="context-imprimir"><i class='bx bxs-printer'></i> Imprimir Comprovante</li></ul></div>
 </body>
 </html>
