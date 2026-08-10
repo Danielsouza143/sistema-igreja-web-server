@@ -129,7 +129,6 @@ var iniciarFinanceiro = () => {
     const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
     const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
     
-    // --- VARIÁVEIS RESTAURADAS PARA EVITAR ERRO DE REFERÊNCIA ---
     const btnSelecionar = document.getElementById('context-selecionar');
     const btnEditarCtx = document.getElementById('context-editar');
     const btnExcluirCtx = document.getElementById('context-excluir');
@@ -285,6 +284,20 @@ var iniciarFinanceiro = () => {
         if (balancoEl) {
             balancoEl.textContent = formatarMoeda(balanco);
             balancoEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
+        }
+    };
+
+    // AQUI ESTÁ A FUNÇÃO CORRIGIDA QUE ESTAVA FALTANDO!
+    const calcularBalancoGeral = (todos) => {
+        if(!Array.isArray(todos)) return;
+        const caixaPrincipal = todos.filter(l => !l.fundoId);
+        const receitas = caixaPrincipal.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
+        const despesas = caixaPrincipal.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
+        const balanco = receitas - despesas;
+        const geralEl = document.getElementById('balanco-geral');
+        if (geralEl) {
+            geralEl.textContent = formatarMoeda(balanco);
+            geralEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
         }
     };
 
@@ -1289,9 +1302,11 @@ var iniciarFinanceiro = () => {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
                 
+                // CARREGA CONFIGURAÇÕES DA SEDE E CORES
                 configPorc = resConfig?.porcentagemSede || 0;
                 configCores = resConfig?.coresCategorias || {};
 
+                // Popula a Aba de Configurações
                 const inputSede = document.getElementById('config-porc-sede');
                 if(inputSede) inputSede.value = configPorc;
 
