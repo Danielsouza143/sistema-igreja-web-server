@@ -26,6 +26,60 @@ var iniciarFinanceiro = () => {
     const grupoFundoItem = document.getElementById('grupo-fundo-item');
     const inputCorLancamento = document.getElementById('lancamento-cor');
 
+    // --- VARIÁVEIS RESTAURADAS PARA EVITAR ERRO DE REFERÊNCIA ---
+    const btnSelecionar = document.getElementById('context-selecionar');
+    const btnEditarCtx = document.getElementById('context-editar');
+    const btnExcluirCtx = document.getElementById('context-excluir');
+    const btnCopiarCtx = document.getElementById('context-copiar');
+    const btnImprimirCtx = document.getElementById('context-imprimir');
+    
+    // Elementos da UI
+    const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
+    const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
+    const filtroAno = document.getElementById('filtro-ano');
+    const filtroMes = document.getElementById('filtro-mes');
+    const filtroTipo = document.getElementById('filtro-tipo');
+    const btnAplicarFiltros = document.getElementById('btn-aplicar-filtros');
+    const categoriasCheckboxes = document.getElementById('categorias-checkboxes');
+    
+    const modalLancamento = document.getElementById('modal-lancamento');
+    const formLancamento = document.getElementById('form-lancamento');
+    const modalFundo = document.getElementById('modal-fundo');
+    const formFundo = document.getElementById('form-fundo');
+    const modalDetalhes = document.getElementById('modal-detalhes-lancamento');
+    const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
+    
+    const inputValorLancamento = document.getElementById('valor');
+    const selectTipo = document.getElementById('tipo');
+    const selectCategoria = document.getElementById('categoria');
+    const selectFundo = document.getElementById('fundoId');
+    const grupoMembro = document.getElementById('grupo-membro');
+    const comprovanteInput = document.getElementById('comprovante');
+    const inputMetaFundo = document.getElementById('fundo-meta');
+    
+    const buscaMembroModalInput = document.getElementById('busca-membro-modal');
+    const buscaMembroResultadosModal = document.getElementById('busca-membro-resultados-modal');
+    const membroIdHiddenInput = document.getElementById('membroId-hidden');
+    const clearMembroBtn = document.getElementById('clear-membro-btn');
+    const buscaMembroInput = document.getElementById('busca-membro-input');
+    const buscaResultados = document.getElementById('busca-membro-resultados');
+    const historicoContainer = document.getElementById('historico-membro-container');
+    const avisoInicial = document.getElementById('aviso-inicial-dizimos');
+    
+    const contextMenu = document.getElementById('context-menu');
+    const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
+    const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
+    const toast = document.getElementById('toast-desfazer');
+    const btnDesfazer = document.getElementById('btn-desfazer');
+    
+    const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
+    const btnNovaMeta = document.getElementById('btn-nova-meta');
+    const btnExportarPdf = document.getElementById('btn-exportar-pdf');
+    const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
+    const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
+    const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
+    const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
+
     window.showConfirmCustom = (msg) => {
         return new Promise((resolve) => {
             const modal = document.getElementById('modal-confirmacao');
@@ -62,25 +116,20 @@ var iniciarFinanceiro = () => {
         if (cbContainer && !e.target.closest('#multi-select-categoria')) {
             cbContainer.classList.remove('active');
         }
-        const contextMenu = document.getElementById('context-menu');
         if (contextMenu && contextMenu.style.display === 'block') {
             contextMenu.style.display = 'none';
         }
         if (!e.target.closest('.tabela-lancamentos, .context-menu')) {
-            const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
             if (tabelaLancamentos) {
                 tabelaLancamentos.classList.remove('modo-selecao');
             }
-            const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
             if(checkboxSelecionarTodos) {
                 checkboxSelecionarTodos.checked = false;
             }
-            const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
             if(tabelaCorpo) {
                 tabelaCorpo.querySelectorAll('.checkbox-lancamento').forEach(cb => cb.checked = false);
                 tabelaCorpo.querySelectorAll('.selecionada').forEach(row => row.classList.remove('selecionada'));
             }
-            const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
             if(btnExcluirSelecionados) {
                 btnExcluirSelecionados.classList.add('hidden');
             }
@@ -90,54 +139,8 @@ var iniciarFinanceiro = () => {
     window.removeEventListener('click', fecharMenusGlobais);
     window.addEventListener('click', fecharMenusGlobais);
 
-    const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
-    const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
-    const filtroAno = document.getElementById('filtro-ano');
-    const filtroMes = document.getElementById('filtro-mes');
-    const filtroTipo = document.getElementById('filtro-tipo');
-    const btnAplicarFiltros = document.getElementById('btn-aplicar-filtros');
-    const categoriasCheckboxes = document.getElementById('categorias-checkboxes');
-    const modalLancamento = document.getElementById('modal-lancamento');
-    const formLancamento = document.getElementById('form-lancamento');
-    const modalFundo = document.getElementById('modal-fundo');
-    const formFundo = document.getElementById('form-fundo');
-    const modalDetalhes = document.getElementById('modal-detalhes-lancamento');
-    const modalDetalhesFundo = document.getElementById('modal-detalhes-fundo');
-    const inputValorLancamento = document.getElementById('valor');
-    const selectTipo = document.getElementById('tipo');
-    const selectCategoria = document.getElementById('categoria');
-    const selectFundo = document.getElementById('fundoId');
-    const grupoMembro = document.getElementById('grupo-membro');
-    const comprovanteInput = document.getElementById('comprovante');
-    const inputMetaFundo = document.getElementById('fundo-meta');
-    const buscaMembroModalInput = document.getElementById('busca-membro-modal');
-    const buscaMembroResultadosModal = document.getElementById('busca-membro-resultados-modal');
-    const membroIdHiddenInput = document.getElementById('membroId-hidden');
-    const clearMembroBtn = document.getElementById('clear-membro-btn');
-    const buscaMembroInput = document.getElementById('busca-membro-input');
-    const buscaResultados = document.getElementById('busca-membro-resultados');
-    const historicoContainer = document.getElementById('historico-membro-container');
-    const avisoInicial = document.getElementById('aviso-inicial-dizimos');
-    const contextMenu = document.getElementById('context-menu');
-    const btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
-    const checkboxSelecionarTodos = document.getElementById('selecionar-todos-lancamentos');
-    const toast = document.getElementById('toast-desfazer');
-    const btnDesfazer = document.getElementById('btn-desfazer');
-    const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
-    const btnNovaMeta = document.getElementById('btn-nova-meta');
-    const btnExportarPdf = document.getElementById('btn-exportar-pdf');
-    const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
-    const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
-    
-    const btnSelecionar = document.getElementById('context-selecionar');
-    const btnEditarCtx = document.getElementById('context-editar');
-    const btnExcluirCtx = document.getElementById('context-excluir');
-    const btnCopiarCtx = document.getElementById('context-copiar');
-    const btnImprimirCtx = document.getElementById('context-imprimir');
-    const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
-    const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
-
     const formatarMoeda = (valor) => `R$ ${(valor || 0).toFixed(2).replace('.', ',')}`;
+    
     const aplicarMascaraMoeda = (e) => {
         let valor = e.target.value.replace(/\D/g, "");
         if (valor === "") { 
@@ -161,9 +164,9 @@ var iniciarFinanceiro = () => {
     if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
 
     const prevenirEnter = (formId) => {
-        const form = document.getElementById(formId);
-        if(form) {
-            form.addEventListener('keydown', function(e) {
+        const formEl = document.getElementById(formId);
+        if(formEl) {
+            formEl.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
                     e.preventDefault();
                 }
@@ -234,6 +237,23 @@ var iniciarFinanceiro = () => {
         });
     };
     configurarAbas();
+
+    const getBase64FromUrl = async (url) => {
+        try {
+            const data = await fetch(url + '?nocache=' + new Date().getTime(), { 
+                mode: 'cors',
+                cache: 'no-cache'
+            });
+            const blob = await data.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => { resolve(reader.result); };
+            });
+        } catch (e) {
+            return url; 
+        }
+    };
 
     const renderizarTabela = (lancamentos) => {
         if(!tabelaCorpo) return;
@@ -1302,11 +1322,9 @@ var iniciarFinanceiro = () => {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
                 
-                // CARREGA CONFIGURAÇÕES DA SEDE E CORES
                 configPorc = resConfig?.porcentagemSede || 0;
                 configCores = resConfig?.coresCategorias || {};
 
-                // Popula a Aba de Configurações
                 const inputSede = document.getElementById('config-porc-sede');
                 if(inputSede) inputSede.value = configPorc;
 
@@ -1613,8 +1631,19 @@ var iniciarFinanceiro = () => {
     }
 
     if(btnNovoLancamento) btnNovoLancamento.onclick = () => abrirModal();
-    if(selectTipo) selectTipo.onchange = (e) => { atualizarCategoriasModal(e.target.value); toggleMembroSearch(); };
-    if(selectCategoria) selectCategoria.onchange = toggleMembroSearch;
+    
+    if(selectTipo) {
+        selectTipo.addEventListener('change', (e) => {
+            atualizarCategoriasModal(e.target.value);
+            toggleMembroSearch();
+        });
+    }
+
+    if(selectCategoria) {
+        selectCategoria.addEventListener('change', (e) => {
+            toggleMembroSearch();
+        });
+    }
     
     if(selectFundo) {
         selectFundo.addEventListener('change', () => {
