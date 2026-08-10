@@ -7,9 +7,9 @@ const lancamentoSchema = new mongoose.Schema({
     descricao: { type: String, required: true },
     data: { type: Date, default: Date.now },
     categoria: { type: String },
+    cor: { type: String, default: '#007bff' }, // NOVO: Cor de destaque do lançamento
     membroId: { type: mongoose.Schema.Types.ObjectId, ref: 'Membro', default: null },
     fundoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Fundo', default: null },
-    // AQUI ESTÁ O SEGREDO: O BANCO AGORA ACEITA VINCULAR O LANÇAMENTO AO ITEM!
     itemId: { type: mongoose.Schema.Types.ObjectId, default: null },
     comprovanteUrl: { type: String, default: null }
 }, { collection: 'lancamentos', timestamps: true });
