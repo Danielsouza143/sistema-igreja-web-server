@@ -1065,7 +1065,7 @@ body.fade-in {
 
 .input-with-symbol input {
     padding: 12px 15px;
-    padding-right: 35px; /* Espaço para o símbolo */
+    padding-right: 35px; /* Espaço para o símbolo % */
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     width: 130px;
@@ -1086,6 +1086,12 @@ body.fade-in {
     font-weight: 700;
     font-size: 1.1rem;
     color: #94a3b8;
+}
+
+/* NOVO: Ajuste para o R$ ficar do lado esquerdo no card de Dízimo Pastoral */
+.input-with-symbol .symbol.left {
+    right: auto;
+    left: 15px;
 }
 
 .btn-principal-modern {
