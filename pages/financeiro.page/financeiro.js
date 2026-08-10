@@ -34,7 +34,7 @@ var iniciarFinanceiro = () => {
             const btnNao = document.getElementById('btn-confirm-nao');
 
             if(!modal || !msgEl || !btnSim || !btnNao) {
-                resolve(confirm(msg)); 
+                resolve(confirm(msg));
                 return;
             }
 
@@ -128,6 +128,15 @@ var iniciarFinanceiro = () => {
     const btnExportarPdf = document.getElementById('btn-exportar-pdf');
     const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
     const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
+    
+    // --- VARIÁVEIS RESTAURADAS PARA EVITAR ERRO DE REFERÊNCIA ---
+    const btnSelecionar = document.getElementById('context-selecionar');
+    const btnEditarCtx = document.getElementById('context-editar');
+    const btnExcluirCtx = document.getElementById('context-excluir');
+    const btnCopiarCtx = document.getElementById('context-copiar');
+    const btnImprimirCtx = document.getElementById('context-imprimir');
+    const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
+    const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
 
     const formatarMoeda = (valor) => `R$ ${(valor || 0).toFixed(2).replace('.', ',')}`;
     const aplicarMascaraMoeda = (e) => {
@@ -457,7 +466,6 @@ var iniciarFinanceiro = () => {
         });
     };
 
-    // --- LÓGICA DE ITENS DO ORÇAMENTO ---
     const renderizarItensOrcamento = () => {
         const lista = document.getElementById('lista-itens-orcamento');
         if(!lista) return;
@@ -1063,7 +1071,6 @@ var iniciarFinanceiro = () => {
             atualizarCategoriasModal('entrada');
             if(grupoFundoItem) grupoFundoItem.classList.add('hidden');
             
-            // Dispara para aplicar a cor automática
             setTimeout(() => { 
                 if(selectCategoria) selectCategoria.dispatchEvent(new Event('change')) 
             }, 50);
@@ -1158,6 +1165,117 @@ var iniciarFinanceiro = () => {
         }
     };
 
+    const imprimirRelatorioAnualMembro = async (membro, contribuicoes) => {
+        if (!tenantInfo) {
+            try { tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); } catch (e) {}
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const anoCorrente = new Date().getFullYear();
+
+        const contribuicoesAno = contribuicoes.filter(c => new Date(c.data).getUTCFullYear() === anoCorrente);
+        const totalContribuido = contribuicoesAno.reduce((acc, c) => acc + c.valor, 0);
+
+        doc.setFontSize(18);
+        doc.text('Declaração Anual de Contribuições', 105, 22, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text(`Ano de Referência: ${anoCorrente}`, 105, 30, { align: 'center' });
+        doc.setFontSize(11);
+        doc.text(`Declaramos para os devidos fins que o(a) irmão(ã) ${membro.nome},\n`, 14, 50);
+        doc.text(`membro desta igreja, contribuiu durante o ano de ${anoCorrente} com o valor total de:`, 14, 57);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(formatarMoeda(totalContribuido), 105, 70, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+
+        const tableRows = contribuicoesAno.map(c => [
+            new Date(c.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+            c.categoria,
+            c.descricao,
+            formatarMoeda(c.valor)
+        ]);
+
+        doc.autoTable({
+            head: [['Data', 'Categoria', 'Descrição', 'Valor']],
+            body: tableRows,
+            startY: 80,
+            headStyles: { fillColor: [0, 31, 93] },
+            foot: [['', '', 'Total Contribuído', formatarMoeda(totalContribuido)]],
+            footStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: [0,0,0] },
+            columnStyles: { 3: { halign: 'right' } }
+        });
+
+        const finalY = doc.lastAutoTable.finalY + 25;
+        doc.text('___________________________________', 105, finalY + 10, { align: 'center' });
+        doc.text('Tesouraria - ' + (tenantInfo ? tenantInfo.name : 'Nossa Igreja'), 105, finalY + 17, { align: 'center' });
+        doc.save(`Relatorio_Contribuicoes_${membro.nome.split(' ')[0]}_${anoCorrente}.pdf`);
+    };
+
+    const exibirHistoricoMembro = (membro) => {
+        membroEmVisualizacaoId = membro._id;
+        if(avisoInicial) avisoInicial.classList.add('hidden');
+        if(historicoContainer) historicoContainer.classList.remove('hidden');
+        
+        const elNome = document.getElementById('historico-membro-nome');
+        if(elNome) elNome.textContent = membro.nome;
+
+        const contribuicoes = todosLancamentos.filter(l => l.membroId === membro._id && (l.categoria.includes('Dízimo') || l.categoria.includes('Oferta')));
+        const corpoHistorico = document.getElementById('tabela-historico-corpo');
+        
+        if (corpoHistorico && contribuicoes.length > 0) {
+            corpoHistorico.innerHTML = contribuicoes.map(c => `
+                <tr>
+                    <td>${new Date(c.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                    <td>${c.categoria}</td>
+                    <td>${c.descricao}</td>
+                    <td>${formatarMoeda(c.valor)}</td>
+                </tr>
+            `).join('');
+            const avisoSemHist = document.getElementById('aviso-sem-historico');
+            if(avisoSemHist) avisoSemHist.classList.add('hidden');
+        } else if(corpoHistorico) {
+            corpoHistorico.innerHTML = '';
+            const avisoSemHist = document.getElementById('aviso-sem-historico');
+            if(avisoSemHist) avisoSemHist.classList.remove('hidden');
+        }
+
+        const totalGeral = contribuicoes.reduce((acc, c) => acc + c.valor, 0);
+        const elTotalHist = document.getElementById('total-geral-historico');
+        if(elTotalHist) elTotalHist.textContent = formatarMoeda(totalGeral);
+
+        const anoCorrente = new Date().getFullYear();
+        const elAnoCorr = document.getElementById('ano-corrente-historico');
+        if(elAnoCorr) elAnoCorr.textContent = anoCorrente;
+        
+        const totalAnual = contribuicoes
+            .filter(c => new Date(c.data).getUTCFullYear() === anoCorrente)
+            .reduce((acc, c) => acc + c.valor, 0);
+        const elTotalAnual = document.getElementById('total-anual-membro');
+        if(elTotalAnual) elTotalAnual.textContent = formatarMoeda(totalAnual);
+        
+        renderizarGraficoContribuicoes(contribuicoes);
+
+        if(btnNovoDizimoMembro) {
+            btnNovoDizimoMembro.onclick = () => {
+                abrirModal();
+                setTimeout(() => {
+                    if(selectTipo) selectTipo.value = 'entrada';
+                    atualizarCategoriasModal('entrada', 'Dízimo');
+                    if(buscaMembroModalInput) {
+                        buscaMembroModalInput.value = membro.nome;
+                        buscaMembroModalInput.disabled = true;
+                    }
+                    if(membroIdHiddenInput) membroIdHiddenInput.value = membro._id;
+                    if(clearMembroBtn) clearMembroBtn.classList.remove('hidden');
+                }, 100);
+            };
+        }
+
+        if(btnImprimirRelatorioMembro) {
+            btnImprimirRelatorioMembro.onclick = () => imprimirRelatorioAnualMembro(membro, contribuicoes);
+        }
+    };
+
     // ==========================================
     // 10. CARREGAMENTO INICIAL
     // ==========================================
@@ -1171,11 +1289,9 @@ var iniciarFinanceiro = () => {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
                 
-                // CARREGA CONFIGURAÇÕES DA SEDE E CORES
                 configPorc = resConfig?.porcentagemSede || 0;
                 configCores = resConfig?.coresCategorias || {};
 
-                // Popula a Aba de Configurações
                 const inputSede = document.getElementById('config-porc-sede');
                 if(inputSede) inputSede.value = configPorc;
 
