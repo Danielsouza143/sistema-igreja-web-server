@@ -267,8 +267,11 @@ var iniciarFinanceiro = () => {
             tr.dataset.id = l._id;
             if (lancamentosSelecionados.has(l._id)) tr.classList.add('selecionada');
             
+            // PRIORIDADE DE CORES: Configuração Global -> Cor salva no Lançamento -> Cor padrão
+            const corLinha = configCores[l.categoria] || l.cor || (l.tipo === 'entrada' ? '#28a745' : '#dc3545');
+
             tr.innerHTML = `
-                <td class="coluna-checkbox" style="border-left: 4px solid ${l.cor || '#007bff'};">
+                <td class="coluna-checkbox" style="border-left: 4px solid ${corLinha};">
                     <input type="checkbox" class="checkbox-lancamento" data-id="${l._id}" ${lancamentosSelecionados.has(l._id) ? 'checked' : ''}>
                 </td>
                 <td data-label="Data">${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
@@ -278,7 +281,7 @@ var iniciarFinanceiro = () => {
                     ${l.comprovanteUrl ? `<a href="${l.comprovanteUrl}" target="_blank" title="Ver Comprovante"><i class='bx bx-paperclip anexo-icon'></i></a>` : ''}
                 </td>
                 <td data-label="Categoria">
-                    <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:${l.cor || '#007bff'}; margin-right:8px; vertical-align: middle;"></span>${l.categoria}
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:${corLinha}; margin-right:8px; vertical-align: middle;"></span>${l.categoria}
                 </td>
                 <td data-label="Valor" class="celula-editavel ${l.tipo === 'entrada' ? 'valor-entrada' : 'valor-saida'}" contenteditable="true" data-id="${l._id}" data-field="valor">${formatarMoeda(l.valor)}</td>
                 <td class="acoes-item">
@@ -307,7 +310,6 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    // AQUI ESTÁ A FUNÇÃO CORRIGIDA QUE ESTAVA FALTANDO!
     const calcularBalancoGeral = (todos) => {
         if(!Array.isArray(todos)) return;
         const caixaPrincipal = todos.filter(l => !l.fundoId);
@@ -359,6 +361,7 @@ var iniciarFinanceiro = () => {
         });
     };
     
+    // --- LÓGICA DO GRÁFICO DE PIZZA (CORES SINCRONIZADAS) ---
     const renderizarGraficoDespesasPizza = (lancamentos) => {
         const despesas = (lancamentos || []).filter(l => l.tipo === 'saida');
         const canvas = document.getElementById('grafico-despesas-pizza');
@@ -383,12 +386,20 @@ var iniciarFinanceiro = () => {
             return acc; 
         }, {});
 
-        const cores = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40', '#17a2b8', '#6f42c1'];
+        const labelsPizza = Object.keys(despesasPorCategoria);
+        // O Gráfico puxa as cores da configuração dinamicamente para cada label
+        const coresPizza = labelsPizza.map(cat => configCores[cat] || '#dc3545');
+
         new Chart(canvas.getContext('2d'), {
             type: 'pie',
             data: { 
-                labels: Object.keys(despesasPorCategoria), 
-                datasets: [{ data: Object.values(despesasPorCategoria), backgroundColor: cores, borderColor: '#fff', borderWidth: 2 }] 
+                labels: labelsPizza, 
+                datasets: [{ 
+                    data: Object.values(despesasPorCategoria), 
+                    backgroundColor: coresPizza, 
+                    borderColor: '#fff', 
+                    borderWidth: 2 
+                }] 
             },
             options: { 
                 responsive: true, 
@@ -445,7 +456,7 @@ var iniciarFinanceiro = () => {
         if(!grid) return;
         grid.innerHTML = '';
         if(fundos.length === 0) {
-            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666; padding: 40px;">Nenhuma meta ou fundo cadastrado no momento.</p>';
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666; padding: 40px;">Nenhuma meta ou projeto cadastrado no momento.</p>';
             return;
         }
 
@@ -1036,8 +1047,9 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
-            if(inputCorLancamento && lancamento.cor) {
-                inputCorLancamento.value = lancamento.cor;
+            // PRIORIDADE: Tenta puxar a cor específica do lançamento, se não tiver, puxa a da configuração global daquela categoria
+            if(inputCorLancamento) {
+                inputCorLancamento.value = lancamento.cor || configCores[lancamento.categoria] || '#007bff';
             }
 
             if(lancamento.fundoId && selectFundo) {
@@ -1073,8 +1085,8 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
-            if(inputCorLancamento && lancamento.cor) {
-                inputCorLancamento.value = lancamento.cor;
+            if(inputCorLancamento) {
+                inputCorLancamento.value = lancamento.cor || configCores[lancamento.categoria] || '#007bff';
             }
 
             if(lancamento.fundoId && selectFundo) {
@@ -1310,7 +1322,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 10. CARREGAMENTO INICIAL
+    // 10. CARREGAMENTO INICIAL E SINCRONIZAÇÃO
     // ==========================================
     const carregarDados = async () => {
         try {
@@ -1324,6 +1336,9 @@ var iniciarFinanceiro = () => {
                 
                 configPorc = resConfig?.porcentagemSede || 0;
                 configCores = resConfig?.coresCategorias || {};
+
+                // MÁGICA: Sincroniza e cria cores automáticas para categorias que ainda não têm cor
+                await sincronizarCores();
 
                 const inputSede = document.getElementById('config-porc-sede');
                 if(inputSede) inputSede.value = configPorc;
@@ -1355,6 +1370,38 @@ var iniciarFinanceiro = () => {
         }
     };
 
+    // FUNÇÃO PARA CRIAR CORES AUTOMATICAMENTE SE NÃO EXISTIREM
+    const sincronizarCores = async () => {
+        let alterado = false;
+        const paletaSaidas = ['#dc3545', '#fd7e14', '#ffc107', '#17a2b8', '#6f42c1', '#e83e8c', '#6610f2', '#20c997', '#0dcaf0', '#d63384'];
+        let indexSaida = 0;
+
+        (categoriasConfig.entradas || []).forEach(cat => {
+            if (!configCores[cat]) {
+                configCores[cat] = '#28a745'; 
+                alterado = true;
+            }
+        });
+
+        (categoriasConfig.saidas || []).forEach(cat => {
+            if (!configCores[cat]) {
+                configCores[cat] = paletaSaidas[indexSaida % paletaSaidas.length];
+                indexSaida++;
+                alterado = true;
+            } else {
+                indexSaida++; 
+            }
+        });
+
+        if (alterado) {
+            try {
+                await window.api.patch('/api/configs', { coresCategorias: configCores });
+            } catch (e) {
+                console.error("Erro ao auto-sincronizar cores", e);
+            }
+        }
+    };
+
     const renderizarCoresCategorias = () => {
         const ulEntradas = document.getElementById('lista-cores-entradas');
         const ulSaidas = document.getElementById('lista-cores-saidas');
@@ -1376,19 +1423,6 @@ var iniciarFinanceiro = () => {
                 </li>
             `).join('');
         }
-
-        document.querySelectorAll('.cor-categoria-input').forEach(inp => {
-            inp.addEventListener('change', async (e) => {
-                const cat = e.target.dataset.cat;
-                const cor = e.target.value;
-                configCores[cat] = cor;
-                try {
-                    await window.api.patch('/api/configs', { coresCategorias: configCores });
-                } catch(error) { 
-                    alert('Erro ao salvar cor.'); 
-                }
-            });
-        });
     };
 
     // ==========================================
@@ -1406,6 +1440,25 @@ var iniciarFinanceiro = () => {
                 alert('Percentual da Sede salvo com sucesso!');
             } catch(e) {
                 alert('Erro ao salvar percentual.');
+            }
+        });
+    }
+
+    // AQUI ESTÁ O BOTÃO SOLICITADO QUE ATUALIZA A ABA DE CONFIGURAÇÕES INSTANTANEAMENTE
+    const btnSalvarCores = document.getElementById('btn-salvar-cores');
+    if(btnSalvarCores) {
+        btnSalvarCores.addEventListener('click', async () => {
+            const inputs = document.querySelectorAll('.cor-categoria-input');
+            inputs.forEach(inp => {
+                configCores[inp.dataset.cat] = inp.value;
+            });
+            try {
+                await window.api.patch('/api/configs', { coresCategorias: configCores });
+                alert('Cores salvas e sincronizadas com sucesso!');
+                // Atualiza o gráfico pizza e a tabela de lançamentos instantaneamente com as novas cores
+                aplicarFiltros(); 
+            } catch(error) { 
+                alert('Erro ao salvar as cores.'); 
             }
         });
     }
@@ -1636,6 +1689,11 @@ var iniciarFinanceiro = () => {
         selectTipo.addEventListener('change', (e) => {
             atualizarCategoriasModal(e.target.value);
             toggleMembroSearch();
+            
+            // Dispara para atualizar a cor ao mudar o tipo
+            setTimeout(() => { 
+                if(selectCategoria) selectCategoria.dispatchEvent(new Event('change')) 
+            }, 50);
         });
     }
 
