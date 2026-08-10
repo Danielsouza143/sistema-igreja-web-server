@@ -361,7 +361,6 @@ body.fade-in {
 
 #form-lancamento { display: flex; flex-direction: column; gap: 15px; }
 
-
 /* --- ESTILOS PARA A ABA DÍZIMOS E OFERTAS --- */
 .dizimos-busca-container {
     background-color: #fff;
@@ -985,7 +984,6 @@ body.fade-in {
 
 #modal-confirmacao .modal-content { background-color: #fff; border-radius: 12px; padding: 30px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
 
-
 /* ==========================================================================
    NOVA ABA: CONFIGURAÇÕES PROFISSIONAIS DE ERP
    ========================================================================== */
@@ -1165,17 +1163,17 @@ body.fade-in {
 }
 
 .cor-categoria-input {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: none;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 0;
     background: none;
 }
 
 .cor-categoria-input::-webkit-color-swatch-wrapper { padding: 0; }
-.cor-categoria-input::-webkit-color-swatch { border: 2px solid #cbd5e1; border-radius: 8px; }
+.cor-categoria-input::-webkit-color-swatch { border: 2px solid #cbd5e1; border-radius: 6px; }
 
 
 /* RESPONSIVIDADE GERAL */
