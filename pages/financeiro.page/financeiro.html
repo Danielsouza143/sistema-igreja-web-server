@@ -255,6 +255,25 @@
                     </div>
                 </div>
 
+                <!-- NOVO: Dízimo Pastoral -->
+                <div class="config-card">
+                    <div class="config-card-header">
+                        <div class="icon-wrapper" style="background-color: #f0fdf4;"><i class='bx bx-user-pin' style="color: #16a34a;"></i></div>
+                        <h3>Dízimo Pastoral</h3>
+                    </div>
+                    <div class="config-card-body">
+                        <p>Registre o valor referente ao dízimo pessoal (renda externa). Você pode exibi-lo como informação extra no rodapé do Relatório Financeiro PDF.</p>
+                        <div class="input-group-modern" style="align-items: center; justify-content: space-between; gap: 10px;">
+                            <input type="text" id="config-valor-pastoral" style="padding: 12px 15px; border-radius: 8px; border: 1px solid #cbd5e1; width: 140px; font-size: 1.1rem; font-weight: 600; color: #334155; outline: none;" placeholder="R$ 0,00">
+                            <button id="btn-salvar-pastoral" class="btn-principal-modern" style="background-color: #16a34a;">Salvar Valor</button>
+                        </div>
+                        <div style="margin-top: 18px; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="config-exibir-pastoral" style="width: 18px; height: 18px; cursor: pointer;">
+                            <label for="config-exibir-pastoral" style="font-size: 0.95rem; font-weight: 500; color: #475569; cursor: pointer;">Exibir valor no Relatório Geral (PDF)</label>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Cores das Categorias -->
                 <div class="config-card full-width">
                     <div class="config-card-header">
@@ -262,7 +281,7 @@
                         <h3>Cores Padrão das Categorias</h3>
                     </div>
                     <div class="config-card-body">
-                        <p>Defina as cores para cada categoria. Ao criar um lançamento, a cor escolhida aqui será aplicada automaticamente na tabela, nos formulários e nos gráficos do painel.</p>
+                        <p>Defina as cores para cada categoria. Ao criar um lançamento, a cor escolhida aqui será aplicada automaticamente na tabela e nos formulários.</p>
                         
                         <div class="lista-cores-container">
                             <div class="lista-cores-coluna">
@@ -372,6 +391,7 @@
                     </select>
                 </div>
 
+                <!-- Campo de Item do Orçamento -->
                 <div class="form-group hidden" id="grupo-fundo-item" style="background:#eef2ff; padding:15px; border-radius:6px; border:1px solid #c7d2fe;">
                     <label for="fundo-itemId" style="color:#0033a0; font-weight:600; margin-bottom:8px; display:block;">
                         <i class='bx bx-list-ul'></i> Vincular a um Item do Orçamento
@@ -459,7 +479,9 @@
                     </div>
                     <div id="novo-item-anexo-nome" style="font-size: 0.8rem; color: #666; margin-top: -10px; margin-bottom: 15px; padding-left: 5px;"></div>
 
-                    <ul id="lista-itens-orcamento" class="itens-orcamento-lista"></ul>
+                    <ul id="lista-itens-orcamento" class="itens-orcamento-lista">
+                        <!-- Itens renderizados via JS -->
+                    </ul>
 
                     <div class="form-row" style="display: flex; gap: 15px; margin-top: 20px;">
                         <div class="form-group" style="flex: 1;">
