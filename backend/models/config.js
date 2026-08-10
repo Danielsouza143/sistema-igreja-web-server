@@ -21,9 +21,15 @@ const configSchema = new mongoose.Schema({
         corSecundaria: { type: String, default: '#0033a0' }
     },
     
-    // --- NOVAS CONFIGURAÇÕES FINANCEIRAS AUTOMÁTICAS ---
-    porcentagemSede: { type: Number, default: 10 },
-    coresCategorias: { type: Object, default: {} }, 
+    // --- NOVAS CONFIGURAÇÕES FINANCEIRAS ---
+    porcentagemSede: { 
+        type: Number, 
+        default: 10 
+    },
+    coresCategorias: { 
+        type: Object, 
+        default: {} 
+    }, 
 
     utensilios_categorias: {
         type: [String],
