@@ -1,56 +1,37 @@
 import mongoose from 'mongoose';
 
-// Este Schema vai armazenar todas as configurações globais do sistema.
-// A ideia é ter apenas UM documento desta coleção no banco de dados.
 const configSchema = new mongoose.Schema({
-    // Usamos um identificador fixo para garantir que haja apenas um documento de configuração.
-    // Isso facilita encontrar e atualizar as configurações.
     singleton: {
         type: String,
         default: 'main',
         unique: true,
         required: true,
     },
-    // ADICIONADO: Seção para armazenar a identidade da igreja
-    // Procure a parte de identidade e substitua para ficar assim:
-identidade: {
-    nomeIgreja: { type: String, default: '' },
-    logoIgrejaUrl: { type: String, default: '' },
-    cnpj: { type: String, default: '' },
-    telefone: { type: String, default: '' },
-    endereco: { type: String, default: '' },
-    email: { type: String, default: '' }
-},
-    // ADICIONADO: Seção para armazenar as configurações de aparência
-    aparencia: {
-        theme: {
-            type: String,
-            default: 'light'
-        },
-        corPrimaria: {
-            type: String,
-            default: '#001f5d'
-        }
+    identidade: {
+        nomeIgreja: { type: String, default: '' },
+        logoIgrejaUrl: { type: String, default: '' },
+        cnpj: { type: String, default: '' },
+        telefone: { type: String, default: '' },
+        endereco: { type: String, default: '' },
+        email: { type: String, default: '' }
     },
+    aparencia: {
+        theme: { type: String, default: 'light' },
+        corPrimaria: { type: String, default: '#001f5d' },
+        corSecundaria: { type: String, default: '#0033a0' }
+    },
+    
+    // --- NOVAS CONFIGURAÇÕES FINANCEIRAS AUTOMÁTICAS ---
+    porcentagemSede: { type: Number, default: 10 },
+    coresCategorias: { type: Object, default: {} }, 
+
     utensilios_categorias: {
         type: [String],
-        default: [
-            'Eletrônicos',
-            'Mobiliário',
-            'Decoração',
-            'Cozinha',
-            'Limpeza'
-        ]
+        default: ['Eletrônicos', 'Mobiliário', 'Decoração', 'Cozinha', 'Limpeza']
     },
     eventos_categorias: {
         type: [String],
-        default: [
-            'Culto Especial',
-            'Conferência',
-            'Seminário',
-            'Ação Social',
-            'Reunião de Liderança'
-        ]
+        default: ['Culto Especial', 'Conferência', 'Seminário', 'Ação Social', 'Reunião de Liderança']
     },
     financeiro_categorias: {
         entradas: {
