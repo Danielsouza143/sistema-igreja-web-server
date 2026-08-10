@@ -235,7 +235,7 @@
                 <h2 style="font-size: 1.8rem; color: #1e293b;">Configurações do Financeiro</h2>
             </div>
             
-            <div class="configuracoes-grid">
+            <div class="configuracoes-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
                 
                 <!-- Contribuição Sede -->
                 <div class="config-card">
@@ -262,7 +262,7 @@
                         <h3>Cores Padrão das Categorias</h3>
                     </div>
                     <div class="config-card-body">
-                        <p>Defina as cores para cada categoria. Ao criar um lançamento, a cor escolhida aqui será aplicada automaticamente na tabela e no formulário.</p>
+                        <p>Defina as cores para cada categoria. Ao criar um lançamento, a cor escolhida aqui será aplicada automaticamente na tabela, nos formulários e nos gráficos do painel.</p>
                         
                         <div class="lista-cores-container">
                             <div class="lista-cores-coluna">
@@ -280,6 +280,10 @@
                                 </div>
                                 <ul id="lista-cores-saidas" class="lista-cores-ul"></ul>
                             </div>
+                        </div>
+
+                        <div style="margin-top: 25px; text-align: right; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                            <button id="btn-salvar-cores" class="btn-principal-modern"><i class='bx bx-save'></i> Salvar Cores das Categorias</button>
                         </div>
                     </div>
                 </div>
@@ -368,7 +372,6 @@
                     </select>
                 </div>
 
-                <!-- Campo de Item do Orçamento -->
                 <div class="form-group hidden" id="grupo-fundo-item" style="background:#eef2ff; padding:15px; border-radius:6px; border:1px solid #c7d2fe;">
                     <label for="fundo-itemId" style="color:#0033a0; font-weight:600; margin-bottom:8px; display:block;">
                         <i class='bx bx-list-ul'></i> Vincular a um Item do Orçamento
@@ -456,9 +459,7 @@
                     </div>
                     <div id="novo-item-anexo-nome" style="font-size: 0.8rem; color: #666; margin-top: -10px; margin-bottom: 15px; padding-left: 5px;"></div>
 
-                    <ul id="lista-itens-orcamento" class="itens-orcamento-lista">
-                        <!-- Itens renderizados via JS -->
-                    </ul>
+                    <ul id="lista-itens-orcamento" class="itens-orcamento-lista"></ul>
 
                     <div class="form-row" style="display: flex; gap: 15px; margin-top: 20px;">
                         <div class="form-group" style="flex: 1;">
@@ -562,7 +563,7 @@
         </div>
     </div>
 
-    <!-- Toast/Snackbar para Desfazer Exclusão -->
+    <!-- Toast/Snackbar -->
     <div id="toast-desfazer" class="toast">
         <span id="toast-mensagem"></span>
         <button id="btn-desfazer" class="btn-toast">Desfazer</button>
