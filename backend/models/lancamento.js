@@ -1,21 +1,20 @@
-// Arquivo: backend/models/lancamento.js
-
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const lancamentoSchema = new mongoose.Schema({
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
     tipo: { type: String, required: true, enum: ['entrada', 'saida'] },
-    data: { type: Date, required: true },
     valor: { type: Number, required: true },
-    categoria: { type: String, required: true },
     descricao: { type: String, required: true },
-    membroId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Membro', // Referencia o modelo 'Membro' que já temos
-        default: null 
-    },
-    dataCriacao: { type: Date, default: Date.now }
+    data: { type: Date, default: Date.now },
+    categoria: { type: String },
+    cor: { type: String, default: '#007bff' }, // NOVO: Cor do lançamento
+    membroId: { type: mongoose.Schema.Types.ObjectId, ref: 'Membro', default: null },
+    fundoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Fundo', default: null },
+    itemId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    comprovanteUrl: { type: String, default: null }
+}, { 
+    collection: 'lancamentos', 
+    timestamps: true 
 });
 
-const Lancamento = mongoose.model('Lancamento', lancamentoSchema);
-
-module.exports = Lancamento;
+export default mongoose.model('Lancamento', lancamentoSchema);
