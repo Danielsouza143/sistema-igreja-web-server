@@ -5,6 +5,8 @@ var iniciarFinanceiro = () => {
     let fundosAtivos = [];
     let categoriasConfig = { entradas: [], saidas: [] };
     let tenantInfo = null; 
+    let configPorc = 0;
+    let configCores = {};
 
     let lancamentoEmEdicaoId = null;
     let fundoEmEdicaoId = null;
@@ -16,16 +18,14 @@ var iniciarFinanceiro = () => {
 
     let graficoAnual = null;
     let graficoDespesasPizza = null;
-    let graficoContribuicoesMembro = null;
-    let graficoFundoAtual = null;
+    let chartFundoDetalhe = null;
 
-    // --- VARIÁVEIS PARA ORÇAMENTO ---
     let itensOrcamentoTemp = []; 
     const inputNovoItemValor = document.getElementById('novo-item-valor');
     const selectFundoItem = document.getElementById('fundo-itemId');
     const grupoFundoItem = document.getElementById('grupo-fundo-item');
+    const inputCorLancamento = document.getElementById('lancamento-cor');
 
-    // --- MODAL CUSTOMIZADO (SIM / NÃO) ---
     window.showConfirmCustom = (msg) => {
         return new Promise((resolve) => {
             const modal = document.getElementById('modal-confirmacao');
@@ -34,7 +34,7 @@ var iniciarFinanceiro = () => {
             const btnNao = document.getElementById('btn-confirm-nao');
 
             if(!modal || !msgEl || !btnSim || !btnNao) {
-                resolve(confirm(msg)); // Fallback
+                resolve(confirm(msg));
                 return;
             }
 
@@ -46,14 +46,8 @@ var iniciarFinanceiro = () => {
             btnSim.parentNode.replaceChild(newBtnSim, btnSim);
             btnNao.parentNode.replaceChild(newBtnNao, btnNao);
 
-            newBtnSim.onclick = () => {
-                modal.style.display = 'none';
-                resolve(true);
-            };
-            newBtnNao.onclick = () => {
-                modal.style.display = 'none';
-                resolve(false);
-            };
+            newBtnSim.onclick = () => { modal.style.display = 'none'; resolve(true); };
+            newBtnNao.onclick = () => { modal.style.display = 'none'; resolve(false); };
         });
     };
 
@@ -119,16 +113,9 @@ var iniciarFinanceiro = () => {
     const btnDesfazer = document.getElementById('btn-desfazer');
     const btnNovoLancamento = document.getElementById('btn-novo-lancamento');
     const btnNovaMeta = document.getElementById('btn-nova-meta');
-    const btnSelecionar = document.getElementById('context-selecionar');
-    const btnEditarCtx = document.getElementById('context-editar');
-    const btnExcluirCtx = document.getElementById('context-excluir');
-    const btnCopiarCtx = document.getElementById('context-copiar');
-    const btnImprimirCtx = document.getElementById('context-imprimir');
     const btnExportarPdf = document.getElementById('btn-exportar-pdf');
     const btnNovaArrec = document.getElementById('btn-nova-arrecadacao-fundo');
     const btnTransferirCaixa = document.getElementById('btn-transferir-caixa');
-    const btnNovoDizimoMembro = document.getElementById('btn-novo-dizimo-membro');
-    const btnImprimirRelatorioMembro = document.getElementById('btn-imprimir-relatorio-membro');
 
     const formatarMoeda = (valor) => `R$ ${(valor || 0).toFixed(2).replace('.', ',')}`;
     const aplicarMascaraMoeda = (e) => {
@@ -145,39 +132,9 @@ var iniciarFinanceiro = () => {
         return parseFloat(str.toString().replace(/\D/g, '')) / 100;
     };
 
-    const getBase64FromUrl = async (url) => {
-        try {
-            const data = await fetch(url + '?nocache=' + new Date().getTime(), { 
-                mode: 'cors',
-                cache: 'no-cache'
-            });
-            const blob = await data.blob();
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = () => { resolve(reader.result); };
-            });
-        } catch (e) {
-            return url; 
-        }
-    };
-
     if(inputValorLancamento) inputValorLancamento.oninput = aplicarMascaraMoeda;
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
     if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
-
-    // --- PREVENIR ENVIO DO FORMULÁRIO COM ENTER ---
-    const inputNovoItemNome = document.getElementById('novo-item-nome');
-    if(inputNovoItemNome) {
-        inputNovoItemNome.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-item-orcamento').click(); }
-        });
-    }
-    if(inputNovoItemValor) {
-        inputNovoItemValor.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-item-orcamento').click(); }
-        });
-    }
 
     const prevenirEnter = (formId) => {
         const form = document.getElementById(formId);
@@ -245,14 +202,16 @@ var iniciarFinanceiro = () => {
             tr.dataset.id = l._id;
             if (lancamentosSelecionados.has(l._id)) tr.classList.add('selecionada');
             tr.innerHTML = `
-                <td class="coluna-checkbox"><input type="checkbox" class="checkbox-lancamento" data-id="${l._id}" ${lancamentosSelecionados.has(l._id) ? 'checked' : ''}></td>
+                <td class="coluna-checkbox" style="border-left: 4px solid ${l.cor || '#007bff'};"><input type="checkbox" class="checkbox-lancamento" data-id="${l._id}" ${lancamentosSelecionados.has(l._id) ? 'checked' : ''}></td>
                 <td data-label="Data">${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                 <td data-label="Descrição" class="celula-editavel" contenteditable="true" data-id="${l._id}" data-field="descricao">
                     ${l.descricao}
                     ${l.fundoId ? '<i class="bx bx-target-lock" title="Vinculado a um Fundo" style="color:#007bff; margin-left: 5px;"></i>' : ''}
                     ${l.comprovanteUrl ? `<a href="${l.comprovanteUrl}" target="_blank" title="Ver Comprovante"><i class='bx bx-paperclip anexo-icon'></i></a>` : ''}
                 </td>
-                <td data-label="Categoria">${l.categoria}</td>
+                <td data-label="Categoria">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:${l.cor || '#007bff'}; margin-right:8px; vertical-align: middle;"></span>${l.categoria}
+                </td>
                 <td data-label="Valor" class="celula-editavel ${l.tipo === 'entrada' ? 'valor-entrada' : 'valor-saida'}" contenteditable="true" data-id="${l._id}" data-field="valor">${formatarMoeda(l.valor)}</td>
                 <td class="acoes-item">
                     <i class='bx bxs-edit' data-id="${l._id}" title="Editar"></i>
@@ -275,19 +234,6 @@ var iniciarFinanceiro = () => {
         if (balancoEl) {
             balancoEl.textContent = formatarMoeda(balanco);
             balancoEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
-        }
-    };
-
-    const calcularBalancoGeral = (todos) => {
-        if(!Array.isArray(todos)) return;
-        const caixaPrincipal = todos.filter(l => !l.fundoId);
-        const receitas = caixaPrincipal.filter(l => l.tipo === 'entrada').reduce((acc, l) => acc + l.valor, 0);
-        const despesas = caixaPrincipal.filter(l => l.tipo === 'saida').reduce((acc, l) => acc + l.valor, 0);
-        const balanco = receitas - despesas;
-        const geralEl = document.getElementById('balanco-geral');
-        if (geralEl) {
-            geralEl.textContent = formatarMoeda(balanco);
-            geralEl.style.color = balanco >= 0 ? '#28a745' : '#dc3545';
         }
     };
 
@@ -345,38 +291,6 @@ var iniciarFinanceiro = () => {
         });
     };
 
-    const renderizarGraficoContribuicoes = (contribuicoes) => {
-        const canvas = document.getElementById('grafico-contribuicoes-membro');
-        if(!canvas) return;
-
-        let chartExistente = Chart.getChart('grafico-contribuicoes-membro');
-        if (chartExistente) chartExistente.destroy();
-        
-        const anoCorrente = new Date().getFullYear();
-        if(document.getElementById('grafico-ano-membro')) document.getElementById('grafico-ano-membro').textContent = anoCorrente;
-
-        const contribuicoesAno = contribuicoes.filter(c => new Date(c.data).getUTCFullYear() === anoCorrente);
-        const container = canvas.parentElement;
-        const oldMsg = container.querySelector('.aviso-vazio');
-        if(oldMsg) oldMsg.remove();
-
-        if (contribuicoesAno.length === 0) {
-            canvas.style.display = 'none';
-            container.insertAdjacentHTML('beforeend', '<p class="aviso-vazio" style="text-align:center; padding: 40px 20px; color: #888;">Nenhuma contribuição registrada neste ano.</p>');
-            return;
-        }
-        canvas.style.display = 'block';
-
-        const dadosPorMes = Array(12).fill(0);
-        contribuicoesAno.forEach(c => { const mes = new Date(c.data).getUTCMonth(); dadosPorMes[mes] += c.valor; });
-        
-        new Chart(canvas.getContext('2d'), {
-            type: 'bar',
-            data: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'], datasets: [{ label: `Contribuições em ${anoCorrente}`, data: dadosPorMes, backgroundColor: 'rgba(40, 167, 69, 0.7)', borderColor: 'rgba(40, 167, 69, 1)', borderWidth: 1 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-        });
-    };
-
     const carregarFundos = async () => {
         try {
             const response = await window.api.get(`/api/financeiro/fundos?_t=${Date.now()}`);
@@ -397,25 +311,6 @@ var iniciarFinanceiro = () => {
         });
     };
 
-    const calcularRitmoFundo = (fundo) => {
-        if (!fundo.prazo) return 'Prazo não definido';
-        const prazoStr = typeof fundo.prazo === 'string' ? fundo.prazo.split('T')[0] : fundo.prazo;
-        const prazo = new Date(prazoStr + 'T23:59:59'); 
-        const hoje = new Date();
-        const diasRestantes = Math.ceil((prazo - hoje) / (1000 * 60 * 60 * 24));
-        const faltante = (fundo.meta || 0) - Math.max(fundo.arrecadado || 0, 0);
-        
-        if (faltante <= 0) return 'Meta atingida! Parabéns!';
-        if (diasRestantes <= 0) return `Prazo encerrado. Faltou ${formatarMoeda(faltante)}.`;
-        
-        let mesesRestantes = (prazo.getFullYear() - hoje.getFullYear()) * 12 + (prazo.getMonth() - hoje.getMonth());
-        if (hoje.getDate() > prazo.getDate()) mesesRestantes--; 
-        mesesRestantes = Math.max(mesesRestantes, 0); 
-
-        if (mesesRestantes < 1) return `Faltam ${diasRestantes} dias. Necessário ${formatarMoeda(faltante)} na reta final.`;
-        return `Faltam ${diasRestantes} dias. Aprox. ${formatarMoeda(faltante / mesesRestantes)} / mês.`;
-    };
-
     const renderizarFundos = (fundos) => {
         const grid = document.getElementById('grid-fundos');
         if(!grid) return;
@@ -431,11 +326,9 @@ var iniciarFinanceiro = () => {
             const porcentagemNum = Math.min((arrecadado / meta) * 100, 100);
             const porcentagem = porcentagemNum.toFixed(1);
             
-            // Substitua "status-concluido" por "card-concluido" e "status-ativo" por "card-ativo"
             const cardStatusClass = porcentagemNum >= 100 ? 'card-concluido' : 'card-ativo';
             const badgeClass = porcentagemNum >= 100 ? 'badge-concluido' : 'badge-andamento';
             const statusText = porcentagemNum >= 100 ? 'Concluído' : 'Em Andamento';
-            const ritmoTexto = calcularRitmoFundo(fundo);
 
             const card = document.createElement('div');
             card.className = `card-fundo ${cardStatusClass}`;
@@ -444,8 +337,6 @@ var iniciarFinanceiro = () => {
                     <h3>${fundo.nome}</h3>
                     <div class="badge-status"><span class="badge-status ${badgeClass}">${statusText}</span></div>
                 </div>
-                <p class="fundo-desc">${fundo.descricao}</p>
-                <p class="fundo-ritmo"><i class='bx bx-time-five'></i> ${ritmoTexto}</p>
                 <div class="progresso-container"><div class="progresso-barra" style="width: ${porcentagem}%"></div></div>
                 <div class="progresso-texto"><span><strong>Arrecadado:</strong> ${formatarMoeda(fundo.arrecadado)}</span><span><strong>Meta:</strong> ${formatarMoeda(fundo.meta)}</span></div>
                 <div class="progresso-porcentagem">${porcentagem}%</div>
@@ -465,7 +356,6 @@ var iniciarFinanceiro = () => {
         });
     };
 
-    // --- LÓGICA DE ITENS DO ORÇAMENTO ---
     const renderizarItensOrcamento = () => {
         const lista = document.getElementById('lista-itens-orcamento');
         if(!lista) return;
@@ -503,7 +393,7 @@ var iniciarFinanceiro = () => {
 
     if(btnAddItem) {
         btnAddItem.onclick = async (e) => {
-            e.preventDefault(); // Impede qualquer submissão de form acidental
+            e.preventDefault(); 
             e.stopPropagation();
 
             const nomeInput = document.getElementById('novo-item-nome');
@@ -526,7 +416,7 @@ var iniciarFinanceiro = () => {
                 } catch (err) {
                     alert('Erro ao enviar o anexo do item.');
                 }
-                btnAddItem.textContent = "Adicionar";
+                btnAddItem.textContent = "Add";
                 btnAddItem.disabled = false;
             }
 
@@ -539,7 +429,6 @@ var iniciarFinanceiro = () => {
                 anexoUrl: anexoUrl
             });
 
-            // Pergunta na hora se quer somar a meta
             const metaAtual = parseMoedaToFloat(inputMetaFundo.value);
             const querSomar = await window.showConfirmCustom(`Deseja adicionar o valor deste item (${formatarMoeda(valorOriginal)}) à Meta Total do Fundo?`);
             if (querSomar) {
@@ -609,40 +498,23 @@ var iniciarFinanceiro = () => {
         };
     }
 
-    window.abrirModalLancamentoItem = (tipo, fundoId, itemId) => {
-        if (modalDetalhesFundo) modalDetalhesFundo.style.display = 'none'; 
-        abrirModal(); 
-        setTimeout(() => {
-            if(selectTipo) {
-                selectTipo.value = tipo;
-                atualizarCategoriasModal(tipo);
-            }
-            if(selectFundo) { 
-                selectFundo.value = fundoId; 
-                toggleMembroSearch(); 
-                selectFundo.dispatchEvent(new Event('change'));
-            }
-            setTimeout(() => {
-                const selectFundoItem = document.getElementById('fundo-itemId');
-                if(selectFundoItem) {
-                    selectFundoItem.value = itemId;
-                }
-            }, 100);
-        }, 100);
-    };
-
     const abrirDetalhesFundo = (fundo) => {
         if(!modalDetalhesFundo) return;
         fundoEmVisualizacao = fundo; 
-        document.getElementById('fundo-titulo-detalhe').textContent = fundo.nome;
+        
+        const porcentagemNum = Math.min(((fundo.arrecadado / (fundo.meta || 1)) * 100), 100);
+        const statusText = porcentagemNum >= 100 ? 'CONCLUÍDO' : 'EM ANDAMENTO';
+        const badgeClass = porcentagemNum >= 100 ? 'badge-item-pago' : 'badge-item-tag';
+        
+        document.getElementById('fundo-titulo-detalhe').innerHTML = `${fundo.nome} <span class="${badgeClass}" style="margin-left:15px; font-size: 0.75rem;">${statusText} (${porcentagemNum.toFixed(1)}%)</span>`;
+        
+        const faltante = Math.max((fundo.meta || 0) - (fundo.arrecadado || 0), 0);
         document.getElementById('fundo-valor-arrecadado').textContent = formatarMoeda(fundo.arrecadado);
         document.getElementById('fundo-valor-meta').textContent = formatarMoeda(fundo.meta);
-        const porcentagemNum = Math.min(((fundo.arrecadado / (fundo.meta || 1)) * 100), 100);
-        document.getElementById('fundo-porcentagem').textContent = `${porcentagemNum.toFixed(1)}%`;
+        document.getElementById('fundo-valor-faltante').textContent = formatarMoeda(faltante);
 
         const lancamentosDoFundo = todosLancamentos.filter(l => l.fundoId === fundo._id);
         
-        // --- 1. RENDERIZAR ITENS DO ORÇAMENTO E PROGRESSO INDIVIDUAL ---
         const containerItens = document.getElementById('fundo-detalhes-itens-lista');
         if(containerItens && fundo.itens && fundo.itens.length > 0) {
             containerItens.innerHTML = fundo.itens.map(item => {
@@ -655,55 +527,52 @@ var iniciarFinanceiro = () => {
                     .reduce((acc, l) => acc + l.valor, 0);
                 
                 const pctArrecadado = Math.min((arrecadadoItem / item.valor) * 100, 100);
-                const statusItem = pagoItem >= item.valor ? 'Pago' : 'Pendente';
-                const classBadge = statusItem === 'Pago' ? 'badge-concluido' : 'badge-andamento';
+                const statusItem = pagoItem >= item.valor ? 'PAGO' : 'PENDENTE';
+                const classBadgeItem = statusItem === 'PAGO' ? 'badge-item-pago' : 'badge-item-tag';
                 
                 return `
                     <div class="item-progresso-card">
-                        <div class="item-progresso-header" style="margin-bottom:4px;">
-                            <strong>${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Anexo"><i class='bx bx-link-external'></i></a>` : ''}</strong>
-                            <span class="badge-status ${classBadge}" style="font-size:0.65rem;">${statusItem}</span>
+                        <div class="item-progresso-header" style="margin-bottom:8px;">
+                            <strong style="color:#333;">${item.nome} ${item.anexoUrl ? `<a href="${item.anexoUrl}" target="_blank" title="Anexo"><i class='bx bx-link-external' style="color:#2563eb;"></i></a>` : ''}</strong>
+                            <span class="${classBadgeItem}">${statusItem}</span>
                         </div>
-                        <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-bottom: 5px;">
-                            <span style="color:#555;">Custo: <b>${formatarMoeda(item.valor)}</b></span>
-                            <span style="color:#28a745;">Arrecadado: <b>${formatarMoeda(arrecadadoItem)}</b></span>
-                            <span style="color:#dc3545;">Pago: <b>${formatarMoeda(pagoItem)}</b></span>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-bottom: 8px;">
+                            <span style="color:#64748b;">Custo: <b>${formatarMoeda(item.valor)}</b></span>
+                            <span style="color:#16a34a;">Arrecadado: <b>${formatarMoeda(arrecadadoItem)}</b></span>
                         </div>
-                        <div class="progresso-container" style="height: 6px; margin:0 0 10px 0;">
-                            <div class="progresso-barra" style="width: ${pctArrecadado}%; background-color: #007bff;"></div>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn-sucesso btn-sm" onclick="window.abrirModalLancamentoItem('entrada', '${fundo._id}', '${item._id}')"><i class='bx bx-plus'></i> Arrecadar</button>
-                            <button class="btn-perigo btn-sm" onclick="window.abrirModalLancamentoItem('saida', '${fundo._id}', '${item._id}')"><i class='bx bx-minus'></i> Pagar</button>
+                        <div class="progresso-container" style="height: 6px; margin:0; background:#e2e8f0;">
+                            <div class="progresso-barra" style="width: ${pctArrecadado}%; background-color: #2563eb;"></div>
                         </div>
                     </div>
                 `;
             }).join('');
         } else if (containerItens) {
-            containerItens.innerHTML = '<p style="color:#888; font-size: 0.9rem; text-align:center; padding: 20px;">Orçamento sem itens detalhados.</p>';
+            containerItens.innerHTML = '<p style="color:#64748b; font-size: 0.9rem; padding: 10px;">Orçamento sem itens detalhados.</p>';
         }
 
-        // --- 2. RENDERIZAR TABELA DE HISTÓRICO ---
         const tabela = document.getElementById('tabela-fundo-lancamentos');
         if(tabela) {
             if(lancamentosDoFundo.length > 0) {
                 tabela.innerHTML = lancamentosDoFundo.map(l => {
-                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Geral';
+                    const membroNome = l.membroId ? (todosMembros.find(m => m._id === l.membroId)?.nome || 'Anônimo') : 'Caixa Geral';
                     const nomeItem = (l.itemId && fundo.itens) ? (fundo.itens.find(i => i._id === l.itemId)?.nome || 'Livre') : 'Livre';
                     
                     return `
                         <tr>
-                            <td>${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
-                            <td>${membroNome}</td>
-                            <td><span class="badge-item-tag">${nomeItem}</span></td>
-                            <td style="color: ${l.tipo === 'entrada' ? '#28a745' : '#dc3545'}; font-weight: bold;">${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}</td>
+                            <td style="padding: 12px 15px; color:#475569; font-size:0.9rem;">${new Date(l.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
+                            <td style="padding: 12px 15px; color:#333; font-size:0.9rem; font-weight:500;">${membroNome}</td>
+                            <td style="padding: 12px 15px;"><span class="badge-item-tag" style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-size:0.75rem; color:#475569;">${nomeItem}</span></td>
+                            <td style="padding: 12px 15px; text-align:right; color: ${l.tipo === 'entrada' ? '#16a34a' : '#dc2626'}; font-weight: 700; font-size:0.9rem;">
+                                ${l.tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(l.valor)}
+                            </td>
                         </tr>
                     `;
                 }).join('');
             } else {
-                tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666; padding: 15px;">Nenhum lançamento.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">Nenhum lançamento vinculado ainda.</td></tr>';
             }
         }
+        
         renderizarGraficoFundoEspecifico(lancamentosDoFundo);
         modalDetalhesFundo.style.display = 'flex';
     };
@@ -711,12 +580,44 @@ var iniciarFinanceiro = () => {
     const renderizarGraficoFundoEspecifico = (lancamentos) => {
         const canvas = document.getElementById('grafico-fundo-historico');
         if(!canvas) return;
-        let chartExistente = Chart.getChart('grafico-fundo-historico');
-        if (chartExistente) chartExistente.destroy();
+        if (chartFundoDetalhe) chartFundoDetalhe.destroy();
+
         const ctx = canvas.getContext('2d');
         const dadosPorMes = Array(12).fill(0);
-        lancamentos.forEach(l => { const mes = new Date(l.data).getUTCMonth(); if(l.tipo === 'entrada') dadosPorMes[mes] += l.valor; else dadosPorMes[mes] -= l.valor; });
-        new Chart(ctx, { type: 'line', data: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'], datasets: [{ label: 'Arrecadação Mensal Líquida', data: dadosPorMes, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        
+        lancamentos.forEach(l => {
+            const mes = new Date(l.data).getUTCMonth();
+            if(l.tipo === 'entrada') dadosPorMes[mes] += l.valor;
+            else dadosPorMes[mes] -= l.valor; 
+        });
+
+        chartFundoDetalhe = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{ 
+                    label: 'Arrecadação Mensal', 
+                    data: dadosPorMes, 
+                    borderColor: '#10b981', 
+                    backgroundColor: 'rgba(16, 185, 129, 0.15)', 
+                    fill: true, 
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#10b981',
+                    pointRadius: 4
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: {size: 11} } },
+                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b', font: {size: 11} }, beginAtZero: true }
+                }
+            }
+        });
     };
 
     if(btnNovaArrec) {
@@ -876,36 +777,6 @@ var iniciarFinanceiro = () => {
         }, 800);
     };
 
-    const compartilharRecibo = async (lancamento) => {
-        const membro = todosMembros.find(m => m._id === lancamento.membroId);
-        await preencherRecibo(lancamento, membro);
-        const reciboElement = document.getElementById('recibo-template');
-
-        setTimeout(async () => {
-            try {
-                const canvas = await html2canvas(reciboElement, { scale: 2, useCORS: true, allowTaint: true });
-                canvas.toBlob(async (blob) => {
-                    const fileName = `Recibo_${membro ? membro.nome.split(' ')[0] : 'Avulso'}.png`;
-                    const file = new File([blob], fileName, { type: 'image/png' });
-                    const shareData = {
-                        files: [file],
-                        title: 'Recibo de Contribuição',
-                        text: `Olá ${membro ? membro.nome : ''}, segue o seu recibo.`,
-                    };
-
-                    if (navigator.canShare && navigator.canShare(shareData)) await navigator.share(shareData);
-                    else {
-                        alert('O compartilhamento não é suportado neste navegador. O recibo será baixado.');
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = fileName;
-                        link.click();
-                    }
-                }, 'image/png');
-            } catch (error) { console.error('Erro ao compartilhar:', error); }
-        }, 800);
-    };
-
     const abrirModalDetalhes = (lancamento) => {
         if(!modalDetalhes) return;
         document.getElementById('detalhes-data').textContent = new Date(lancamento.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
@@ -955,6 +826,10 @@ var iniciarFinanceiro = () => {
         if(buscaMembroModalInput) { buscaMembroModalInput.value = ''; buscaMembroModalInput.disabled = false; }
         if(clearMembroBtn) clearMembroBtn.classList.add('hidden');
         if(grupoMembro) grupoMembro.classList.add('hidden');
+        
+        // --- LIMPEZA DE COR ---
+        if(inputCorLancamento) inputCorLancamento.value = '#007bff';
+
         const comprovanteAtualContainer = document.getElementById('comprovante-atual-container');
         const comprovanteAtualLink = document.getElementById('comprovante-atual-link');
         if(comprovanteAtualContainer) comprovanteAtualContainer.classList.add('hidden');
@@ -968,6 +843,11 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
+            // --- CARREGA A COR SALVA ---
+            if(inputCorLancamento && lancamento.cor) {
+                inputCorLancamento.value = lancamento.cor;
+            }
+
             if(lancamento.fundoId && selectFundo) {
                 selectFundo.value = lancamento.fundoId;
                 const fundoObj = fundosAtivos.find(f => f._id === lancamento.fundoId);
@@ -1001,6 +881,10 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
+            if(inputCorLancamento && lancamento.cor) {
+                inputCorLancamento.value = lancamento.cor;
+            }
+
             if(lancamento.fundoId && selectFundo) {
                 selectFundo.value = lancamento.fundoId;
                 const fundoObj = fundosAtivos.find(f => f._id === lancamento.fundoId);
@@ -1027,6 +911,9 @@ var iniciarFinanceiro = () => {
             document.getElementById('data').value = new Date().toISOString().split('T')[0];
             atualizarCategoriasModal('entrada');
             if(grupoFundoItem) grupoFundoItem.classList.add('hidden');
+            
+            // Dispara a troca de cor automática baseada no tipo
+            setTimeout(() => { if(selectCategoria) selectCategoria.dispatchEvent(new Event('change')) }, 50);
         }
         toggleMembroSearch();
         if(modalLancamento) modalLancamento.style.display = 'flex';
@@ -1118,119 +1005,8 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    const imprimirRelatorioAnualMembro = async (membro, contribuicoes) => {
-        if (!tenantInfo) {
-            try { tenantInfo = await window.api.get(`/api/tenants/current?_t=${Date.now()}`); } catch (e) {}
-        }
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const anoCorrente = new Date().getFullYear();
-
-        const contribuicoesAno = contribuicoes.filter(c => new Date(c.data).getUTCFullYear() === anoCorrente);
-        const totalContribuido = contribuicoesAno.reduce((acc, c) => acc + c.valor, 0);
-
-        doc.setFontSize(18);
-        doc.text('Declaração Anual de Contribuições', 105, 22, { align: 'center' });
-        doc.setFontSize(12);
-        doc.text(`Ano de Referência: ${anoCorrente}`, 105, 30, { align: 'center' });
-        doc.setFontSize(11);
-        doc.text(`Declaramos para os devidos fins que o(a) irmão(ã) ${membro.nome},\n`, 14, 50);
-        doc.text(`membro desta igreja, contribuiu durante o ano de ${anoCorrente} com o valor total de:`, 14, 57);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(formatarMoeda(totalContribuido), 105, 70, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-
-        const tableRows = contribuicoesAno.map(c => [
-            new Date(c.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
-            c.categoria,
-            c.descricao,
-            formatarMoeda(c.valor)
-        ]);
-
-        doc.autoTable({
-            head: [['Data', 'Categoria', 'Descrição', 'Valor']],
-            body: tableRows,
-            startY: 80,
-            headStyles: { fillColor: [0, 31, 93] },
-            foot: [['', '', 'Total Contribuído', formatarMoeda(totalContribuido)]],
-            footStyles: { fontStyle: 'bold', fillColor: [230, 230, 230], textColor: [0,0,0] },
-            columnStyles: { 3: { halign: 'right' } }
-        });
-
-        const finalY = doc.lastAutoTable.finalY + 25;
-        doc.text('___________________________________', 105, finalY + 10, { align: 'center' });
-        doc.text('Tesouraria - ' + (tenantInfo ? tenantInfo.name : 'Nossa Igreja'), 105, finalY + 17, { align: 'center' });
-        doc.save(`Relatorio_Contribuicoes_${membro.nome.split(' ')[0]}_${anoCorrente}.pdf`);
-    };
-
-    const exibirHistoricoMembro = (membro) => {
-        membroEmVisualizacaoId = membro._id;
-        if(avisoInicial) avisoInicial.classList.add('hidden');
-        if(historicoContainer) historicoContainer.classList.remove('hidden');
-        
-        const elNome = document.getElementById('historico-membro-nome');
-        if(elNome) elNome.textContent = membro.nome;
-
-        const contribuicoes = todosLancamentos.filter(l => l.membroId === membro._id && (l.categoria.includes('Dízimo') || l.categoria.includes('Oferta')));
-        const corpoHistorico = document.getElementById('tabela-historico-corpo');
-        
-        if (corpoHistorico && contribuicoes.length > 0) {
-            corpoHistorico.innerHTML = contribuicoes.map(c => `
-                <tr>
-                    <td>${new Date(c.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
-                    <td>${c.categoria}</td>
-                    <td>${c.descricao}</td>
-                    <td>${formatarMoeda(c.valor)}</td>
-                </tr>
-            `).join('');
-            const avisoSemHist = document.getElementById('aviso-sem-historico');
-            if(avisoSemHist) avisoSemHist.classList.add('hidden');
-        } else if(corpoHistorico) {
-            corpoHistorico.innerHTML = '';
-            const avisoSemHist = document.getElementById('aviso-sem-historico');
-            if(avisoSemHist) avisoSemHist.classList.remove('hidden');
-        }
-
-        const totalGeral = contribuicoes.reduce((acc, c) => acc + c.valor, 0);
-        const elTotalHist = document.getElementById('total-geral-historico');
-        if(elTotalHist) elTotalHist.textContent = formatarMoeda(totalGeral);
-
-        const anoCorrente = new Date().getFullYear();
-        const elAnoCorr = document.getElementById('ano-corrente-historico');
-        if(elAnoCorr) elAnoCorr.textContent = anoCorrente;
-        
-        const totalAnual = contribuicoes
-            .filter(c => new Date(c.data).getUTCFullYear() === anoCorrente)
-            .reduce((acc, c) => acc + c.valor, 0);
-        const elTotalAnual = document.getElementById('total-anual-membro');
-        if(elTotalAnual) elTotalAnual.textContent = formatarMoeda(totalAnual);
-        
-        renderizarGraficoContribuicoes(contribuicoes);
-
-        if(btnNovoDizimoMembro) {
-            btnNovoDizimoMembro.onclick = () => {
-                abrirModal();
-                setTimeout(() => {
-                    if(selectTipo) selectTipo.value = 'entrada';
-                    atualizarCategoriasModal('entrada', 'Dízimo');
-                    if(buscaMembroModalInput) {
-                        buscaMembroModalInput.value = membro.nome;
-                        buscaMembroModalInput.disabled = true;
-                    }
-                    if(membroIdHiddenInput) membroIdHiddenInput.value = membro._id;
-                    if(clearMembroBtn) clearMembroBtn.classList.remove('hidden');
-                }, 100);
-            };
-        }
-
-        if(btnImprimirRelatorioMembro) {
-            btnImprimirRelatorioMembro.onclick = () => imprimirRelatorioAnualMembro(membro, contribuicoes);
-        }
-    };
-
     // ==========================================
-    // 10. CARREGAMENTO INICIAL
+    // 10. CARREGAMENTO INICIAL E CONFIGS
     // ==========================================
     const carregarDados = async () => {
         try {
@@ -1238,7 +1014,21 @@ var iniciarFinanceiro = () => {
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
                 categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
-            } catch (err) { categoriasConfig = { entradas: [], saidas: [] }; }
+                
+                // CARREGA CONFIGURAÇÕES DA SEDE E CORES
+                configPorc = resConfig?.porcentagemSede || 0;
+                configCores = resConfig?.coresCategorias || {};
+
+                // Popula a Aba de Configurações
+                const inputSede = document.getElementById('config-porc-sede');
+                if(inputSede) inputSede.value = configPorc;
+
+                renderizarCoresCategorias();
+
+            } catch (err) { 
+                categoriasConfig = { entradas: [], saidas: [] }; 
+                configCores = {};
+            }
 
             try {
                 const resMembros = await window.api.get(`/api/membros?_t=${Date.now()}`);
@@ -1260,9 +1050,71 @@ var iniciarFinanceiro = () => {
         }
     };
 
+    const renderizarCoresCategorias = () => {
+        const ulEntradas = document.getElementById('lista-cores-entradas');
+        const ulSaidas = document.getElementById('lista-cores-saidas');
+        
+        if(ulEntradas) {
+            ulEntradas.innerHTML = categoriasConfig.entradas.map(c => `
+                <li>
+                    <span>${c}</span>
+                    <input type="color" value="${configCores[c] || '#28a745'}" data-cat="${c}" class="cor-categoria-input">
+                </li>
+            `).join('');
+        }
+
+        if(ulSaidas) {
+            ulSaidas.innerHTML = categoriasConfig.saidas.map(c => `
+                <li>
+                    <span>${c}</span>
+                    <input type="color" value="${configCores[c] || '#dc3545'}" data-cat="${c}" class="cor-categoria-input">
+                </li>
+            `).join('');
+        }
+
+        document.querySelectorAll('.cor-categoria-input').forEach(inp => {
+            inp.addEventListener('change', async (e) => {
+                const cat = e.target.dataset.cat;
+                const cor = e.target.value;
+                configCores[cat] = cor;
+                try {
+                    await window.api.patch('/api/configs', { coresCategorias: configCores });
+                } catch(error) { alert('Erro ao salvar cor.'); }
+            });
+        });
+    };
+
     // ==========================================
     // 11. EVENT LISTENERS GERAIS
     // ==========================================
+
+    const btnSalvarSede = document.getElementById('btn-salvar-sede');
+    if(btnSalvarSede) {
+        btnSalvarSede.addEventListener('click', async () => {
+            const inputSede = document.getElementById('config-porc-sede');
+            const novoValor = parseFloat(inputSede.value) || 0;
+            try {
+                await window.api.patch('/api/configs', { porcentagemSede: novoValor });
+                configPorc = novoValor;
+                alert('Percentual da Sede salvo com sucesso!');
+            } catch(e) {
+                alert('Erro ao salvar percentual.');
+            }
+        });
+    }
+
+    if(selectCategoria) {
+        selectCategoria.addEventListener('change', (e) => {
+            const cat = e.target.value;
+            if (configCores && configCores[cat]) {
+                if(inputCorLancamento) inputCorLancamento.value = configCores[cat];
+            } else {
+                const tipoVal = selectTipo ? selectTipo.value : 'entrada';
+                if(inputCorLancamento) inputCorLancamento.value = tipoVal === 'entrada' ? '#28a745' : '#dc3545';
+            }
+        });
+    }
+
     if(formLancamento) {
         formLancamento.onsubmit = async (e) => {
             e.preventDefault();
@@ -1288,6 +1140,7 @@ var iniciarFinanceiro = () => {
                 data: document.getElementById('data').value,
                 valor: parseMoedaToFloat(inputValorLancamento ? inputValorLancamento.value : '0'),
                 categoria: selectCategoria ? selectCategoria.value : '',
+                cor: inputCorLancamento ? inputCorLancamento.value : '#007bff',
                 descricao: document.getElementById('descricao').value,
                 membroId: membroIdHiddenInput && membroIdHiddenInput.value ? membroIdHiddenInput.value : null,
                 fundoId: selectFundo && selectFundo.value ? selectFundo.value : null,
@@ -1586,6 +1439,10 @@ var iniciarFinanceiro = () => {
             const receitas = lancamentosFiltrados.filter(l => l.tipo === 'entrada' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const balanco = receitas - despesas;
+            
+            // --- CÁLCULO DA SEDE AUTOMÁTICO ---
+            const valorSede = receitas * (configPorc / 100);
+
             const finalY = doc.lastAutoTable.finalY + 10;
 
             doc.setFontSize(12);
@@ -1596,7 +1453,9 @@ var iniciarFinanceiro = () => {
                 body: [
                     ['Total de Receitas', formatarMoeda(receitas)],
                     ['Total de Despesas', formatarMoeda(despesas)],
-                    ['Balanço', formatarMoeda(balanco)]
+                    ['Balanço Líquido (Caixa Atual)', formatarMoeda(balanco)],
+                    // LINHA DA SEDE ADICIONADA AO PDF
+                    [`Contribuição Sede (${configPorc}%)`, formatarMoeda(valorSede)]
                 ],
                 bodyStyles: { fontStyle: 'bold' },
                 columnStyles: { 1: { halign: 'right' } }
