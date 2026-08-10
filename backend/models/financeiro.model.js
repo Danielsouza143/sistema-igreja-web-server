@@ -7,7 +7,10 @@ const lancamentoSchema = new mongoose.Schema({
     descricao: { type: String, required: true },
     data: { type: Date, default: Date.now },
     categoria: { type: String },
-    cor: { type: String, default: '#007bff' }, // NOVO: Cor do lançamento
+    
+    // --- NOVO CAMPO: COR DO LANÇAMENTO ---
+    cor: { type: String, default: '#007bff' }, 
+    
     membroId: { type: mongoose.Schema.Types.ObjectId, ref: 'Membro', default: null },
     fundoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Fundo', default: null },
     itemId: { type: mongoose.Schema.Types.ObjectId, default: null },
