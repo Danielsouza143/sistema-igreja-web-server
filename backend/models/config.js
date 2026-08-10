@@ -21,7 +21,7 @@ const configSchema = new mongoose.Schema({
         corSecundaria: { type: String, default: '#0033a0' }
     },
     
-    // --- NOVAS CONFIGURAÇÕES FINANCEIRAS ---
+    // --- CONFIGURAÇÕES FINANCEIRAS ---
     porcentagemSede: { 
         type: Number, 
         default: 10 
@@ -30,6 +30,12 @@ const configSchema = new mongoose.Schema({
         type: Object, 
         default: {} 
     }, 
+    
+    // NOVO: Configurações do Dízimo Pastoral
+    dizimoPastoral: {
+        valor: { type: Number, default: 0 },
+        exibirNoRelatorio: { type: Boolean, default: true }
+    },
 
     utensilios_categorias: {
         type: [String],
@@ -42,7 +48,7 @@ const configSchema = new mongoose.Schema({
     financeiro_categorias: {
         entradas: {
             type: [String],
-            default: ["Dízimo", "Oferta Geral", "Oferta de Missões", "Vendas", "Doação Específica"]
+            default: ["Dízimo", "Oferta Geral", "Oferta de Missões", "Vendas", "Doação Específica", "Dízimo Pastoral"]
         },
         saidas: {
             type: [String],
