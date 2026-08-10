@@ -7,6 +7,9 @@ var iniciarFinanceiro = () => {
     let tenantInfo = null; 
     let configPorc = 0;
     let configCores = {};
+    
+    // --- NOVO ESTADO: Dízimo Pastoral ---
+    let configDizimoPastoral = { valor: 0, exibirNoRelatorio: true };
 
     let lancamentoEmEdicaoId = null;
     let fundoEmEdicaoId = null;
@@ -26,14 +29,12 @@ var iniciarFinanceiro = () => {
     const grupoFundoItem = document.getElementById('grupo-fundo-item');
     const inputCorLancamento = document.getElementById('lancamento-cor');
 
-    // --- VARIÁVEIS RESTAURADAS PARA EVITAR ERRO DE REFERÊNCIA ---
     const btnSelecionar = document.getElementById('context-selecionar');
     const btnEditarCtx = document.getElementById('context-editar');
     const btnExcluirCtx = document.getElementById('context-excluir');
     const btnCopiarCtx = document.getElementById('context-copiar');
     const btnImprimirCtx = document.getElementById('context-imprimir');
     
-    // Elementos da UI
     const tabelaCorpo = document.getElementById('tabela-lancamentos-corpo');
     const tabelaLancamentos = document.querySelector('.tabela-lancamentos');
     const filtroAno = document.getElementById('filtro-ano');
@@ -162,6 +163,10 @@ var iniciarFinanceiro = () => {
     if(inputValorLancamento) inputValorLancamento.oninput = aplicarMascaraMoeda;
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
     if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
+    
+    // Máscara para o input Pastoral
+    const inputPastoral = document.getElementById('config-valor-pastoral');
+    if(inputPastoral) inputPastoral.oninput = aplicarMascaraMoeda;
 
     const prevenirEnter = (formId) => {
         const formEl = document.getElementById(formId);
@@ -267,7 +272,6 @@ var iniciarFinanceiro = () => {
             tr.dataset.id = l._id;
             if (lancamentosSelecionados.has(l._id)) tr.classList.add('selecionada');
             
-            // PRIORIDADE DE CORES: Configuração Global -> Cor salva no Lançamento -> Cor padrão
             const corLinha = configCores[l.categoria] || l.cor || (l.tipo === 'entrada' ? '#28a745' : '#dc3545');
 
             tr.innerHTML = `
@@ -361,7 +365,6 @@ var iniciarFinanceiro = () => {
         });
     };
     
-    // --- LÓGICA DO GRÁFICO DE PIZZA (CORES SINCRONIZADAS) ---
     const renderizarGraficoDespesasPizza = (lancamentos) => {
         const despesas = (lancamentos || []).filter(l => l.tipo === 'saida');
         const canvas = document.getElementById('grafico-despesas-pizza');
@@ -387,7 +390,6 @@ var iniciarFinanceiro = () => {
         }, {});
 
         const labelsPizza = Object.keys(despesasPorCategoria);
-        // O Gráfico puxa as cores da configuração dinamicamente para cada label
         const coresPizza = labelsPizza.map(cat => configCores[cat] || '#dc3545');
 
         new Chart(canvas.getContext('2d'), {
@@ -1047,9 +1049,8 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
-            // PRIORIDADE: Tenta puxar a cor específica do lançamento, se não tiver, puxa a da configuração global daquela categoria
-            if(inputCorLancamento) {
-                inputCorLancamento.value = lancamento.cor || configCores[lancamento.categoria] || '#007bff';
+            if(inputCorLancamento && lancamento.cor) {
+                inputCorLancamento.value = lancamento.cor;
             }
 
             if(lancamento.fundoId && selectFundo) {
@@ -1085,8 +1086,8 @@ var iniciarFinanceiro = () => {
             if(inputValorLancamento) inputValorLancamento.value = "R$ " + (lancamento.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('descricao').value = lancamento.descricao;
             
-            if(inputCorLancamento) {
-                inputCorLancamento.value = lancamento.cor || configCores[lancamento.categoria] || '#007bff';
+            if(inputCorLancamento && lancamento.cor) {
+                inputCorLancamento.value = lancamento.cor;
             }
 
             if(lancamento.fundoId && selectFundo) {
@@ -1336,12 +1337,22 @@ var iniciarFinanceiro = () => {
                 
                 configPorc = resConfig?.porcentagemSede || 0;
                 configCores = resConfig?.coresCategorias || {};
+                
+                // NOVO: Carrega os dados do dízimo pastoral salvos no banco
+                if (resConfig?.dizimoPastoral) {
+                    configDizimoPastoral = resConfig.dizimoPastoral;
+                }
 
-                // MÁGICA: Sincroniza e cria cores automáticas para categorias que ainda não têm cor
                 await sincronizarCores();
 
                 const inputSede = document.getElementById('config-porc-sede');
                 if(inputSede) inputSede.value = configPorc;
+                
+                // Popula o campo do Dízimo Pastoral na UI
+                const inputPastoral = document.getElementById('config-valor-pastoral');
+                const checkboxPastoral = document.getElementById('config-exibir-pastoral');
+                if(inputPastoral) inputPastoral.value = formatarMoeda(configDizimoPastoral.valor);
+                if(checkboxPastoral) checkboxPastoral.checked = configDizimoPastoral.exibirNoRelatorio;
 
                 renderizarCoresCategorias();
 
@@ -1370,7 +1381,6 @@ var iniciarFinanceiro = () => {
         }
     };
 
-    // FUNÇÃO PARA CRIAR CORES AUTOMATICAMENTE SE NÃO EXISTIREM
     const sincronizarCores = async () => {
         let alterado = false;
         const paletaSaidas = ['#dc3545', '#fd7e14', '#ffc107', '#17a2b8', '#6f42c1', '#e83e8c', '#6610f2', '#20c997', '#0dcaf0', '#d63384'];
@@ -1443,8 +1453,27 @@ var iniciarFinanceiro = () => {
             }
         });
     }
+    
+    // --- NOVO EVENT LISTENER: SALVAR DÍZIMO PASTORAL MANUAL ---
+    const btnSalvarPastoral = document.getElementById('btn-salvar-pastoral');
+    if(btnSalvarPastoral) {
+        btnSalvarPastoral.addEventListener('click', async () => {
+            const inputVal = document.getElementById('config-valor-pastoral').value;
+            const checkboxExibir = document.getElementById('config-exibir-pastoral').checked;
+            const valorFloat = parseMoedaToFloat(inputVal);
+            
+            try {
+                await window.api.patch('/api/configs', { 
+                    dizimoPastoral: { valor: valorFloat, exibirNoRelatorio: checkboxExibir } 
+                });
+                configDizimoPastoral = { valor: valorFloat, exibirNoRelatorio: checkboxExibir };
+                alert('Informações do Dízimo Pastoral salvas com sucesso!');
+            } catch(e) {
+                alert('Erro ao salvar o Dízimo Pastoral.');
+            }
+        });
+    }
 
-    // AQUI ESTÁ O BOTÃO SOLICITADO QUE ATUALIZA A ABA DE CONFIGURAÇÕES INSTANTANEAMENTE
     const btnSalvarCores = document.getElementById('btn-salvar-cores');
     if(btnSalvarCores) {
         btnSalvarCores.addEventListener('click', async () => {
@@ -1455,7 +1484,6 @@ var iniciarFinanceiro = () => {
             try {
                 await window.api.patch('/api/configs', { coresCategorias: configCores });
                 alert('Cores salvas e sincronizadas com sucesso!');
-                // Atualiza o gráfico pizza e a tabela de lançamentos instantaneamente com as novas cores
                 aplicarFiltros(); 
             } catch(error) { 
                 alert('Erro ao salvar as cores.'); 
@@ -1495,11 +1523,15 @@ var iniciarFinanceiro = () => {
                 return;
             }
 
+            const tipo = selectTipo ? selectTipo.value : '';
+            const nomeCategoria = selectCategoria ? selectCategoria.value : '';
+            const valorFloat = parseMoedaToFloat(inputValorLancamento ? inputValorLancamento.value : '0');
+
             const dados = {
-                tipo: selectTipo ? selectTipo.value : '',
+                tipo: tipo,
                 data: document.getElementById('data').value,
-                valor: parseMoedaToFloat(inputValorLancamento ? inputValorLancamento.value : '0'),
-                categoria: selectCategoria ? selectCategoria.value : '',
+                valor: valorFloat,
+                categoria: nomeCategoria,
                 cor: inputCorLancamento ? inputCorLancamento.value : '#007bff',
                 descricao: document.getElementById('descricao').value,
                 membroId: membroIdHiddenInput && membroIdHiddenInput.value ? membroIdHiddenInput.value : null,
@@ -1507,6 +1539,24 @@ var iniciarFinanceiro = () => {
                 itemId: selectFundoItem && selectFundoItem.value && selectFundo && selectFundo.value ? selectFundoItem.value : null,
                 comprovanteUrl: comprovanteUrl
             };
+            
+            // --- LÓGICA INTELIGENTE DO DÍZIMO PASTORAL ---
+            if (nomeCategoria === 'Dízimo Pastoral' && tipo === 'entrada') {
+                const querAtualizar = await window.showConfirmCustom(`Você registrou um lançamento na categoria "Dízimo Pastoral" no valor de ${formatarMoeda(valorFloat)}.\n\nDeseja atualizar este valor também nas configurações para que ele apareça no rodapé do Relatório Financeiro PDF?`);
+                if (querAtualizar) {
+                    try {
+                        await window.api.patch('/api/configs', { 
+                            dizimoPastoral: { valor: valorFloat, exibirNoRelatorio: configDizimoPastoral.exibirNoRelatorio } 
+                        });
+                        configDizimoPastoral.valor = valorFloat;
+                        // Atualiza a UI visualmente na aba de config
+                        const inputPastoralUI = document.getElementById('config-valor-pastoral');
+                        if (inputPastoralUI) inputPastoralUI.value = formatarMoeda(valorFloat);
+                    } catch (err) {
+                        console.error("Falha ao sincronizar dízimo pastoral com as configs", err);
+                    }
+                }
+            }
 
             try {
                 if (lancamentoEmEdicaoId) {
@@ -1690,7 +1740,6 @@ var iniciarFinanceiro = () => {
             atualizarCategoriasModal(e.target.value);
             toggleMembroSearch();
             
-            // Dispara para atualizar a cor ao mudar o tipo
             setTimeout(() => { 
                 if(selectCategoria) selectCategoria.dispatchEvent(new Event('change')) 
             }, 50);
@@ -1846,23 +1895,29 @@ var iniciarFinanceiro = () => {
             const despesas = lancamentosFiltrados.filter(l => l.tipo === 'saida' && !l.fundoId).reduce((acc, l) => acc + l.valor, 0);
             const balanco = receitas - despesas;
             
-            // --- CÁLCULO DA SEDE AUTOMÁTICO ---
             const valorSede = receitas * (configPorc / 100);
 
             const finalY = doc.lastAutoTable.finalY + 10;
 
             doc.setFontSize(12);
             doc.text('Resumo do Período (Caixa Geral)', 14, finalY);
+            
+            const rowsResumo = [
+                ['Total de Receitas', formatarMoeda(receitas)],
+                ['Total de Despesas', formatarMoeda(despesas)],
+                ['Balanço Líquido (Caixa Atual)', formatarMoeda(balanco)],
+                [`Contribuição Sede (${configPorc}%)`, formatarMoeda(valorSede)]
+            ];
+            
+            // --- LÓGICA DE INCLUSÃO DO DÍZIMO PASTORAL NO PDF ---
+            if (configDizimoPastoral.exibirNoRelatorio && configDizimoPastoral.valor > 0) {
+                rowsResumo.push(['Dízimo Pastoral (Externo)', formatarMoeda(configDizimoPastoral.valor)]);
+            }
+
             doc.autoTable({
                 startY: finalY + 2,
                 theme: 'grid',
-                body: [
-                    ['Total de Receitas', formatarMoeda(receitas)],
-                    ['Total de Despesas', formatarMoeda(despesas)],
-                    ['Balanço Líquido (Caixa Atual)', formatarMoeda(balanco)],
-                    // LINHA DA SEDE ADICIONADA AO PDF
-                    [`Contribuição Sede (${configPorc}%)`, formatarMoeda(valorSede)]
-                ],
+                body: rowsResumo,
                 bodyStyles: { fontStyle: 'bold' },
                 columnStyles: { 1: { halign: 'right' } }
             });
