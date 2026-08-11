@@ -1,4 +1,3 @@
-// Garante que a função de init seja global ANTES de qualquer coisa
 window.initMenu = function() {
     if (typeof iniciarMenu === 'function') {
         iniciarMenu();
@@ -17,6 +16,7 @@ var iniciarMenu = () => {
     class ChurchIdentity {
         static async loadAndApplyIdentity() {
             try {
+                // 1. Busca os dados reais da Igreja logada
                 const tenant = await window.api.get('/api/tenants/current');
                 if (!tenant) throw new Error('Identidade não encontrada');
                 
@@ -25,6 +25,39 @@ var iniciarMenu = () => {
                 
                 this.updateMenuDisplay(nomeIgreja, logoIgrejaUrl);
                 localStorage.setItem('churchIdentity', JSON.stringify({ nomeIgreja, logoIgrejaUrl }));
+
+                // ==============================================================
+                // MÁGICA DA SEDE: Injeta os botões de controle independentemente do cache
+                // ==============================================================
+                const sidebarLinks = document.querySelector('.sidebar-links');
+                const subMenuCategorias = document.querySelector('.menu-categorias');
+                let userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+
+                // Se a Igreja é do tipo SEDE e não estamos em modo de Auditoria (Impersonate)
+                if (tenant.tenantType === 'sede' && !userInfo.impersonatorId) {
+                    
+                    // 1. Injeta no Menu Lateral (Mobile/Sidebar)
+                    if (sidebarLinks && !document.getElementById('nav-link-sede')) {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<a href="/pages/sede-panel/sede.html" id="nav-link-sede" style="color: #ff9800; font-weight: bold; background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800;"><i class='bx bxs-institution'></i> Painel da Sede</a>`;
+                        sidebarLinks.insertBefore(li, sidebarLinks.firstChild);
+                    }
+                    
+                    // 2. Injeta na Barra Azul Superior (Desktop)
+                    if (subMenuCategorias && !document.getElementById('sub-menu-sede-link')) {
+                        const a = document.createElement('a');
+                        a.href = "/pages/sede-panel/sede.html";
+                        a.className = "sub-menu-link";
+                        a.id = "sub-menu-sede-link";
+                        a.innerHTML = "<i class='bx bxs-institution'></i> Painel da Sede";
+                        
+                        if (window.location.pathname.includes('sede.html')) {
+                            a.classList.add('active');
+                        }
+                        subMenuCategorias.insertBefore(a, subMenuCategorias.firstChild);
+                    }
+                }
+
             } catch (error) {
                 const storedIdentity = JSON.parse(localStorage.getItem('churchIdentity'));
                 if (storedIdentity) {
@@ -68,17 +101,10 @@ var iniciarMenu = () => {
             });
 
             this.loadAndApplyIdentity();
-
-            window.addEventListener('storage', (event) => {
-                if (event.key === 'churchIdentity') {
-                    const newIdentity = JSON.parse(event.newValue);
-                    if (newIdentity) ChurchIdentity.updateMenuDisplay(newIdentity.nomeIgreja, newIdentity.logoIgrejaUrl);
-                }
-            });
         }
     }
 
-    let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    let userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
 
     const aplicarAparencia = async () => {
         try {
@@ -99,80 +125,48 @@ var iniciarMenu = () => {
     });
 
     window.updateUserDisplay = () => {
-        userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        if (userInfo) {
-            // CORREÇÃO DO BUG CHARAT: Fallback seguro caso name e username sejam nulos
-            const nome = userInfo.name || userInfo.username || 'Usuário';
-            const userAvatar = document.getElementById('user-avatar');
-            if (userAvatar && typeof nome === 'string') {
-                userAvatar.textContent = nome.charAt(0).toUpperCase();
-            }
+        const currentInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+        const nome = currentInfo.name || currentInfo.username || 'Usuário';
+        const userAvatar = document.getElementById('user-avatar');
+        
+        // CORREÇÃO CRÍTICA DO BUG DO CHARAT: Garantimos que é uma string válida antes de cortar
+        if (userAvatar && typeof nome === 'string' && nome.length > 0) {
+            userAvatar.textContent = nome.charAt(0).toUpperCase();
+        } else if (userAvatar) {
+            userAvatar.textContent = 'U'; // Fallback seguro
         }
     };
 
-    // --- LÓGICA DE INJEÇÃO DO MENU DA SEDE ---
-    if (userInfo) {
-        if (userInfo.role !== 'admin') {
-            const configLink = document.querySelector('a[href*="configuracoes.html"]');
-            if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
-        }
+    // --- CONTROLE GERAL DO MENU ---
+    if (userInfo.role !== 'admin') {
+        const configLink = document.querySelector('a[href*="configuracoes.html"]');
+        if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
+    }
 
-        // Injeta "Painel da Sede" no menu lateral (Mobile)
-        const sidebarLinks = document.querySelector('.sidebar-links');
-        if (userInfo.tenantType === 'sede' && !userInfo.impersonatorId && sidebarLinks) {
-            const sedeLinkExists = document.getElementById('nav-link-sede');
-            if (!sedeLinkExists) {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="/pages/sede-panel/sede.html" id="nav-link-sede" style="color: #ff9800; font-weight: bold;"><i class='bx bxs-institution'></i> Painel da Sede</a>`;
-                sidebarLinks.insertBefore(li, sidebarLinks.firstChild);
-            }
-        }
-        
-        // NOVO: Injeta "Painel da Sede" na barra horizontal azul (Desktop)
-        const subMenuCategorias = document.querySelector('.menu-categorias');
-        if (userInfo.tenantType === 'sede' && !userInfo.impersonatorId && subMenuCategorias) {
-            const subMenuSedeExists = document.getElementById('sub-menu-sede-link');
-            if (!subMenuSedeExists) {
-                const a = document.createElement('a');
-                a.href = "/pages/sede-panel/sede.html";
-                a.className = "sub-menu-link";
-                a.id = "sub-menu-sede-link";
-                a.innerHTML = "<i class='bx bxs-institution'></i> Painel da Sede";
-                
-                // Se a pessoa estiver na página da Sede, marca como ativo
-                if (currentPage.includes('sede.html')) {
-                    a.classList.add('active');
+    // Se estiver em modo de Auditoria (Impersonate), mostra botão de "Voltar à Sede"
+    const sidebarLinks = document.querySelector('.sidebar-links');
+    if (userInfo.impersonatorId && sidebarLinks) {
+        const exitImpersonateExists = document.getElementById('nav-exit-impersonate');
+        if (!exitImpersonateExists) {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" id="nav-exit-impersonate" style="background-color: #dc3545; color: white; border-radius: 6px; text-align: center; justify-content: center; margin-top: 15px; font-weight: bold;"><i class='bx bx-exit'></i> Encerrar Auditoria (Voltar à Sede)</a>`;
+            sidebarLinks.appendChild(li);
+
+            document.getElementById('nav-exit-impersonate').addEventListener('click', (e) => {
+                e.preventDefault();
+                const originalToken = localStorage.getItem('originalUserToken');
+                if (originalToken) {
+                    localStorage.setItem('userToken', originalToken);
+                    localStorage.removeItem('originalUserToken');
+                    window.location.href = '/pages/sede-panel/sede.html';
                 }
-                
-                // Insere como o primeiro item do Submenu
-                subMenuCategorias.insertBefore(a, subMenuCategorias.firstChild);
-            }
-        }
-
-        // Botão de Sair do Modo de Auditoria
-        if (userInfo.impersonatorId && sidebarLinks) {
-            const exitImpersonateExists = document.getElementById('nav-exit-impersonate');
-            if (!exitImpersonateExists) {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="#" id="nav-exit-impersonate" style="background-color: #dc3545; color: white; border-radius: 4px; text-align: center; justify-content: center; margin-top: 15px;"><i class='bx bx-exit'></i> Encerrar Auditoria (Voltar à Sede)</a>`;
-                sidebarLinks.appendChild(li);
-
-                document.getElementById('nav-exit-impersonate').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const originalToken = localStorage.getItem('originalUserToken');
-                    if (originalToken) {
-                        localStorage.setItem('userToken', originalToken);
-                        localStorage.removeItem('originalUserToken');
-                        window.location.href = '/pages/sede-panel/sede.html';
-                    }
-                });
-            }
+            });
         }
     }
 
     ChurchIdentity.init();
     aplicarAparencia();
-    if (window.updateUserDisplay) window.updateUserDisplay();
+    window.updateUserDisplay();
 
     window.addEventListener('configsUpdated', (e) => {
         if (e.detail && e.detail.aparencia) {
@@ -181,6 +175,9 @@ var iniciarMenu = () => {
         }
     });
 
+    // ========================================================
+    // --- LÓGICA DE NOTIFICAÇÕES ---
+    // ========================================================
     window.fetchNotifications = async () => {
         const badge = document.querySelector('.notification-badge');
         const notificationList = document.querySelector('.notifications-list');
@@ -249,8 +246,10 @@ var iniciarMenu = () => {
     window.notifInterval = setInterval(() => { if(window.api) window.fetchNotifications(); }, 60000);
 }
 
+// DELEGAÇÃO DE EVENTOS GLOBAL
 document.removeEventListener('click', window.menuClickHandler);
 window.menuClickHandler = async (e) => {
+    
     if (e.target.closest('#hamburger-btn-desktop') || e.target.closest('#hamburger-btn-mobile')) {
         const sidebar = document.getElementById('sidebar-menu');
         const overlay = document.getElementById('sidebar-overlay');
@@ -268,20 +267,21 @@ window.menuClickHandler = async (e) => {
         }
     }
 
-    let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    let currentUserInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
     if (e.target.closest('#conta-area-trigger')) {
         e.stopPropagation();
         const modalConta = document.getElementById('modal-conta-usuario');
-        if (modalConta && userInfo) {
-            const nome = userInfo.name || userInfo.username || 'U';
+        if (modalConta && currentUserInfo) {
+            const nome = currentUserInfo.name || currentUserInfo.username || 'Usuário';
             const avatarEl = document.getElementById('conta-modal-avatar');
-            if(avatarEl) avatarEl.textContent = nome.charAt(0).toUpperCase();
+            if(avatarEl) avatarEl.textContent = typeof nome === 'string' ? nome.charAt(0).toUpperCase() : 'U';
+            
             const nomeEl = document.getElementById('conta-modal-nome');
             if(nomeEl) nomeEl.textContent = nome;
             const emailEl = document.getElementById('conta-modal-email');
-            if(emailEl) emailEl.textContent = userInfo.username;
+            if(emailEl) emailEl.textContent = currentUserInfo.username;
             const roleEl = document.getElementById('conta-modal-role');
-            if(roleEl) roleEl.textContent = userInfo.role === 'admin' ? 'Administrador' : 'Operador';
+            if(roleEl) roleEl.textContent = currentUserInfo.role === 'admin' ? 'Administrador' : 'Operador';
             modalConta.style.display = 'flex';
         }
     } 
