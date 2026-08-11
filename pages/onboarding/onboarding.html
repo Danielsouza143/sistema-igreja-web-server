@@ -26,14 +26,27 @@
             <!-- Passo 1: Dados da Igreja -->
             <div class="form-step active" data-step="1">
                 <h2>Passo 1: Dados da Igreja</h2>
+                
                 <div class="form-group">
                     <label for="name">Nome da Igreja (Sede)</label>
                     <input type="text" id="name" name="name" required>
                 </div>
+                
                 <div class="form-group">
-                    <label for="cnpj">CNPJ</label>
-                    <input type="text" id="cnpj" name="cnpj">
+                    <label for="tipoDocumento">Identificação Fiscal</label>
+                    <select id="tipoDocumento" name="tipoDocumento">
+                        <option value="CNPJ">Pessoa Jurídica (CNPJ)</option>
+                        <option value="CPF">Pessoa Física (CPF - Transição)</option>
+                    </select>
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Selecione como a igreja é identificada fiscalmente no momento.</p>
                 </div>
+                
+                <div class="form-group">
+                    <label id="labelDocumento" for="cnpj">CNPJ</label>
+                    <!-- Mantemos o name="cnpj" para evitar quebras de compatibilidade com o backend -->
+                    <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00">
+                </div>
+                
                 <div class="form-group">
                     <label for="address">Endereço Completo</label>
                     <input type="text" id="address" name="address" required>
@@ -101,5 +114,6 @@
 
     <script src="/js/global-loader.js" defer></script>
     <script src="/js/api.js"></script>
-    <script src="onboarding.js"></script></body>
+    <script src="onboarding.js"></script>
+</body>
 </html>
