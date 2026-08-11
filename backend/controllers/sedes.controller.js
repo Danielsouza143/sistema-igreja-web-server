@@ -8,15 +8,45 @@ import Lancamento from '../models/lancamento.model.js';
 export const getFiliais = async (req, res, next) => {
     try {
         const sedeId = req.tenant.id;
-        const filiais = await Tenant.find({ parentTenant: sedeId });
-        res.status(200).json(filiais);
+        const filiais = await Tenant.find({ parentTenant: sedeId }).lean();
+        
+        // Mágica SaaS: Busca os dados enriquecidos de cada Filial para o Modal e Tabela
+        const filiaisEnriquecidas = await Promise.all(filiais.map(async (filial) => {
+            // Puxa o administrador (Pastor local)
+            const admin = await User.findOne({ tenantId: filial._id, role: 'admin' }).select('name username').lean();
+            
+            // Puxa total de Membros
+            const membrosCount = await Membro.countDocuments({ tenantId: filial._id });
+            
+            // Puxa balanço financeiro exclusivo desta filial
+            const lancamentos = await Lancamento.aggregate([
+                { $match: { tenantId: filial._id } },
+                { $group: { _id: '$tipo', total: { $sum: '$valor' } } }
+            ]);
+            const financeiro = lancamentos.reduce((acc, curr) => {
+                acc[curr._id] = curr.total; return acc;
+            }, { entrada: 0, saida: 0 });
+
+            return {
+                ...filial,
+                pastor: admin ? admin.name : 'Não Designado',
+                membros: membrosCount,
+                receitas: financeiro.entrada,
+                despesas: financeiro.saida,
+                saldo: financeiro.entrada - financeiro.saida,
+                logoUrl: filial.config ? filial.config.logoUrl : null
+            };
+        }));
+
+        res.status(200).json(filiaisEnriquecidas);
     } catch (error) {
         next(error);
     }
 };
 
 export const createFilial = async (req, res, next) => {
-    const { name, adminUsername, adminName, adminPassword } = req.body;
+    // CORREÇÃO CRÍTICA: Extraindo e salvando cnpj, address e telefone na criação
+    const { name, adminUsername, adminName, adminPassword, cnpj, address, telefone } = req.body;
     const sedeId = req.tenant.id;
 
     if (!name || !adminUsername || !adminName || !adminPassword) {
@@ -36,6 +66,9 @@ export const createFilial = async (req, res, next) => {
 
         const newFilial = new Tenant({
             name,
+            cnpj: cnpj || '',
+            address: address || '',
+            telefone: telefone || '',
             tenantType: 'filial',
             parentTenant: sedeId,
         });
@@ -65,7 +98,7 @@ export const createFilial = async (req, res, next) => {
 export const updateFilial = async (req, res, next) => {
     const { id: filialId } = req.params;
     const sedeId = req.tenant.id;
-    const { name, address, cnpj } = req.body;
+    const { name, address, cnpj, telefone } = req.body;
 
     try {
         const filial = await Tenant.findById(filialId);
@@ -81,6 +114,7 @@ export const updateFilial = async (req, res, next) => {
         filial.name = name || filial.name;
         filial.address = address || filial.address;
         filial.cnpj = cnpj || filial.cnpj;
+        if (telefone) filial.telefone = telefone;
 
         const updatedFilial = await filial.save();
 
@@ -103,19 +137,38 @@ export const getDashboardData = async (req, res, next) => {
         const [
             totalMembros,
             totalFinanceiro,
-            membrosPorTenant
+            membrosPorTenant,
+            evolucaoMensalRaw
         ] = await Promise.all([
             Membro.countDocuments({ tenantId: { $in: tenantIds } }),
+            
             Lancamento.aggregate([
                 { $match: { tenantId: { $in: tenantIds } } },
                 { $group: { _id: '$tipo', total: { $sum: '$valor' } } }
             ]),
+            
             Membro.aggregate([
                 { $match: { tenantId: { $in: tenantIds } } },
                 { $group: { _id: '$tenantId', count: { $sum: 1 } } },
                 { $lookup: { from: 'tenants', localField: '_id', foreignField: '_id', as: 'tenantInfo' } },
                 { $unwind: '$tenantInfo' },
                 { $project: { tenantId: '$_id', nome: '$tenantInfo.name', membros: '$count' } }
+            ]),
+
+            // Agregação para o Gráfico de Evolução Financeira Global
+            Lancamento.aggregate([
+                { $match: { tenantId: { $in: tenantIds }, data: { $exists: true } } },
+                { $project: {
+                    ano: { $year: "$data" },
+                    mes: { $month: "$data" },
+                    tipo: 1,
+                    valor: 1
+                }},
+                { $match: { ano: new Date().getFullYear() } }, // Filtra só o ano atual
+                { $group: {
+                    _id: { mes: "$mes", tipo: "$tipo" },
+                    total: { $sum: "$valor" }
+                }}
             ])
         ]);
 
@@ -124,14 +177,26 @@ export const getDashboardData = async (req, res, next) => {
             return acc;
         }, { entrada: 0, saida: 0 });
         
+        // Estruturando os dados para os gráficos do Frontend
+        const evolucaoMensal = Array(12).fill(null).map(() => ({ entradas: 0, saidas: 0 }));
+        evolucaoMensalRaw.forEach(item => {
+            const mesIdx = item._id.mes - 1;
+            if (item._id.tipo === 'entrada') evolucaoMensal[mesIdx].entradas = item.total;
+            if (item._id.tipo === 'saida') evolucaoMensal[mesIdx].saidas = item.total;
+        });
+
         const dashboardData = {
             resumo: {
                 totalFiliais: filiais.length,
                 totalMembros: totalMembros,
                 totalEntradas: financeiro.entrada,
-                totalSaidas: financeiro.saida
+                totalSaidas: financeiro.saida,
+                saldoGlobal: financeiro.entrada - financeiro.saida
             },
-            comparativoFiliais: membrosPorTenant.sort((a, b) => b.membros - a.membros)
+            comparativoFiliais: membrosPorTenant.sort((a, b) => b.membros - a.membros),
+            graficos: {
+                evolucaoFinanceira: evolucaoMensal
+            }
         };
 
         res.status(200).json(dashboardData);
