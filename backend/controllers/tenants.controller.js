@@ -7,7 +7,9 @@ import Tenant from '../models/tenant.model.js';
 export const completeOnboarding = async (req, res, next) => {
     try {
         const { id: tenantId } = req.tenant; // Injetado pelo middleware 'protect'
-        const { name, cnpj, address, primaryColor, secondaryColor, timezone, currency } = req.body;
+        
+        // NOVO: Adicionado 'tipoDocumento' na extração de dados
+        const { name, cnpj, tipoDocumento, address, primaryColor, secondaryColor, timezone, currency } = req.body;
 
         // Validação básica dos dados recebidos
         if (!name || !address || !primaryColor || !secondaryColor) {
@@ -22,6 +24,12 @@ export const completeOnboarding = async (req, res, next) => {
 
         // Atualiza os dados do tenant
         tenant.name = name;
+        
+        // Se o front enviar o tipoDocumento (CNPJ ou CPF), ele atualiza
+        if (tipoDocumento) {
+            tenant.tipoDocumento = tipoDocumento;
+        }
+        
         tenant.cnpj = cnpj || tenant.cnpj;
         tenant.address = address;
         
@@ -75,6 +83,7 @@ export const getTenantStatus = async (req, res, next) => {
         next(error);
     }
 };
+
 export const getMyTenant = async (req, res, next) => {
     try {
         const { id: tenantId } = req.tenant;
