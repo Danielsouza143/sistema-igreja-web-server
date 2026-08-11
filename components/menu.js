@@ -1,3 +1,10 @@
+// Garante que a função de init seja global ANTES de qualquer coisa
+window.initMenu = function() {
+    if (typeof iniciarMenu === 'function') {
+        iniciarMenu();
+    }
+};
+
 if (typeof handleLogout === 'undefined') {
     window.handleLogout = () => {
         localStorage.clear();
@@ -94,48 +101,68 @@ var iniciarMenu = () => {
     window.updateUserDisplay = () => {
         userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (userInfo) {
-            const nome = userInfo.name || userInfo.username;
+            // CORREÇÃO DO BUG CHARAT: Fallback seguro caso name e username sejam nulos
+            const nome = userInfo.name || userInfo.username || 'Usuário';
             const userAvatar = document.getElementById('user-avatar');
-            if (userAvatar) userAvatar.textContent = nome.charAt(0).toUpperCase();
+            if (userAvatar && typeof nome === 'string') {
+                userAvatar.textContent = nome.charAt(0).toUpperCase();
+            }
         }
     };
 
-    // --- NOVA LÓGICA: Injetar botão "Painel da Sede" e "Sair do Modo Auditoria" ---
+    // --- LÓGICA DE INJEÇÃO DO MENU DA SEDE ---
     if (userInfo) {
-        // Se for operador comum, esconde o menu de configs
         if (userInfo.role !== 'admin') {
             const configLink = document.querySelector('a[href*="configuracoes.html"]');
             if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
         }
 
-        // Se for Sede (e não estiver em modo de auditoria), mostra o botão
+        // Injeta "Painel da Sede" no menu lateral (Mobile)
         const sidebarLinks = document.querySelector('.sidebar-links');
         if (userInfo.tenantType === 'sede' && !userInfo.impersonatorId && sidebarLinks) {
             const sedeLinkExists = document.getElementById('nav-link-sede');
             if (!sedeLinkExists) {
                 const li = document.createElement('li');
                 li.innerHTML = `<a href="/pages/sede-panel/sede.html" id="nav-link-sede" style="color: #ff9800; font-weight: bold;"><i class='bx bxs-institution'></i> Painel da Sede</a>`;
-                // Insere logo no topo do menu
                 sidebarLinks.insertBefore(li, sidebarLinks.firstChild);
             }
         }
+        
+        // NOVO: Injeta "Painel da Sede" na barra horizontal azul (Desktop)
+        const subMenuCategorias = document.querySelector('.menu-categorias');
+        if (userInfo.tenantType === 'sede' && !userInfo.impersonatorId && subMenuCategorias) {
+            const subMenuSedeExists = document.getElementById('sub-menu-sede-link');
+            if (!subMenuSedeExists) {
+                const a = document.createElement('a');
+                a.href = "/pages/sede-panel/sede.html";
+                a.className = "sub-menu-link";
+                a.id = "sub-menu-sede-link";
+                a.innerHTML = "<i class='bx bxs-institution'></i> Painel da Sede";
+                
+                // Se a pessoa estiver na página da Sede, marca como ativo
+                if (currentPage.includes('sede.html')) {
+                    a.classList.add('active');
+                }
+                
+                // Insere como o primeiro item do Submenu
+                subMenuCategorias.insertBefore(a, subMenuCategorias.firstChild);
+            }
+        }
 
-        // Se estiver em modo de Auditoria (Impersonate), mostra botão de "Voltar à Sede"
+        // Botão de Sair do Modo de Auditoria
         if (userInfo.impersonatorId && sidebarLinks) {
             const exitImpersonateExists = document.getElementById('nav-exit-impersonate');
             if (!exitImpersonateExists) {
                 const li = document.createElement('li');
-                li.innerHTML = `<a href="#" id="nav-exit-impersonate" style="background-color: #dc3545; color: white; border-radius: 4px; text-align: center; justify-content: center; margin-top: 15px;"><i class='bx bx-exit'></i> Voltar ao Painel da Sede</a>`;
+                li.innerHTML = `<a href="#" id="nav-exit-impersonate" style="background-color: #dc3545; color: white; border-radius: 4px; text-align: center; justify-content: center; margin-top: 15px;"><i class='bx bx-exit'></i> Encerrar Auditoria (Voltar à Sede)</a>`;
                 sidebarLinks.appendChild(li);
 
                 document.getElementById('nav-exit-impersonate').addEventListener('click', (e) => {
                     e.preventDefault();
-                    // Restaura o token original do LocalStorage
                     const originalToken = localStorage.getItem('originalUserToken');
                     if (originalToken) {
                         localStorage.setItem('userToken', originalToken);
                         localStorage.removeItem('originalUserToken');
-                        // Força a redecodificação no frontend recarregando para o painel
                         window.location.href = '/pages/sede-panel/sede.html';
                     }
                 });
@@ -224,7 +251,6 @@ var iniciarMenu = () => {
 
 document.removeEventListener('click', window.menuClickHandler);
 window.menuClickHandler = async (e) => {
-    
     if (e.target.closest('#hamburger-btn-desktop') || e.target.closest('#hamburger-btn-mobile')) {
         const sidebar = document.getElementById('sidebar-menu');
         const overlay = document.getElementById('sidebar-overlay');
@@ -247,7 +273,7 @@ window.menuClickHandler = async (e) => {
         e.stopPropagation();
         const modalConta = document.getElementById('modal-conta-usuario');
         if (modalConta && userInfo) {
-            const nome = userInfo.name || userInfo.username;
+            const nome = userInfo.name || userInfo.username || 'U';
             const avatarEl = document.getElementById('conta-modal-avatar');
             if(avatarEl) avatarEl.textContent = nome.charAt(0).toUpperCase();
             const nomeEl = document.getElementById('conta-modal-nome');
@@ -311,9 +337,3 @@ document.addEventListener('DOMContentLoaded', iniciarMenu);
 document.body.addEventListener('htmx:afterSwap', iniciarMenu);
 
 if (document.readyState !== 'loading') iniciarMenu();
-
-window.initMenu = function() {
-    if (typeof iniciarMenu === 'function') {
-        iniciarMenu();
-    }
-};
