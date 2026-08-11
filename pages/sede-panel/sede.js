@@ -44,8 +44,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutButton = document.getElementById('logout-button');
     const sections = document.querySelectorAll('.panel-section');
     const navLinks = document.querySelectorAll('.nav-link');
+    
     let globalChartInstance = null;
-    let cacheFiliais = []; // Armazena os dados para o mega modal
+    let pieChartInstance = null;
+    let cacheFiliais = []; 
 
     const DashboardManager = {
         formatCurrency(value) {
@@ -86,7 +88,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     comparativoBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: #888;">Nenhum dado para comparar.</td></tr>';
                 }
 
+                // Gráfico Global Line
                 this.renderChart(graficos.evolucaoFinanceira);
+                // Novo: Gráfico de Pizza
+                this.renderPieChart(comparativoFiliais);
 
             } catch (error) {
                 console.error("Erro ao carregar dados do dashboard:", error);
@@ -136,6 +141,35 @@ document.addEventListener('DOMContentLoaded', async () => {
                         y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
                         x: { grid: { display: false } }
                     }
+                }
+            });
+        },
+        renderPieChart(comparativo) {
+            const canvas = document.getElementById('grafico-distribuicao-membros');
+            if(!canvas || !comparativo || comparativo.length === 0) return;
+
+            if(pieChartInstance) pieChartInstance.destroy();
+
+            const labels = comparativo.map(c => c.nome || 'Sede');
+            const data = comparativo.map(c => c.membros);
+            const cores = ['#0033a0', '#ff8800', '#28a745', '#0056b3', '#ffcd56', '#4bc0c0', '#6c757d'];
+
+            pieChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: cores,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    cutout: '60%'
                 }
             });
         }
@@ -232,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('admin-name').required = true;
             document.getElementById('admin-password').required = true;
 
-            this.modal.style.display = 'flex';
+            this.modal.classList.add('active');
         },
 
         openModalForEdit(id) {
@@ -252,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('admin-name').required = false;
             document.getElementById('admin-password').required = false;
 
-            this.modal.style.display = 'flex';
+            this.modal.classList.add('active');
         },
         
         openFilialDetails(id) {
@@ -271,6 +305,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('fd-saldo').textContent = DashboardManager.formatCurrency(f.saldo);
             document.getElementById('fd-receitas').textContent = DashboardManager.formatCurrency(f.receitas);
             document.getElementById('fd-despesas').textContent = DashboardManager.formatCurrency(f.despesas);
+            
+            // Popula a barra de progresso do impacto na rede
+            const perc = f.percentualMembros || 0;
+            document.getElementById('fd-perc-membros').textContent = perc;
+            document.getElementById('fd-bar-membros').style.width = `${perc}%`;
 
             document.getElementById('fd-btn-auditar').dataset.id = id;
             document.getElementById('fd-btn-editar').dataset.id = id;
@@ -279,7 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         closeModal() {
-            this.modal.style.display = 'none';
+            this.modal.classList.remove('active');
             this.modalError.textContent = '';
         },
 
@@ -530,7 +569,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Fechar modais ao clicar fora
     const modalFilialOverlay = document.getElementById('filial-modal');
     const modalDetailsOverlay = document.getElementById('filial-details-modal');
     window.addEventListener('click', (e) => {
