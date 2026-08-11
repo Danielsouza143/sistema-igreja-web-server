@@ -78,7 +78,6 @@
                             <h2 id="total-entradas" style="color: #007bff;">R$ --</h2>
                         </div>
                     </div>
-                    <!-- CORREÇÃO: Adicionado o card de Saídas que faltava -->
                     <div class="card-dashboard card-sede">
                         <div class="card-icon" style="background: rgba(253, 126, 20, 0.1); color: #fd7e14;"><i class='bx bx-trending-down'></i></div>
                         <div>
@@ -118,17 +117,19 @@
 
                 <div class="dashboard-container" style="margin-top: 30px;">
                     <h2 class="section-title"><i class='bx bx-bar-chart-alt-2'></i> Engajamento por Congregação</h2>
+                    <p style="font-size: 0.85rem; color: #666; margin-top: -15px; margin-bottom: 15px;">Clique sobre qualquer congregação para abrir o Raio-X detalhado.</p>
                     <div class="tabela-container" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                         <table id="comparativo-table" class="tabela-padrao">
                             <thead>
                                 <tr>
-                                    <th style="width: 100px;">Ranking</th>
-                                    <th>Congregação</th>
-                                    <th>Volume de Membros</th>
+                                    <th style="width: 70px;">Ranking</th>
+                                    <th>Congregação / Dirigente</th>
+                                    <th>Contato e Endereço</th>
+                                    <th style="text-align: right;">Volume de Membros</th>
                                 </tr>
                             </thead>
                             <tbody id="comparativo-tbody">
-                                <tr><td colspan="3" class="loading-text">Analisando dados...</td></tr>
+                                <tr><td colspan="4" class="loading-text">Analisando dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -142,7 +143,6 @@
                         <h1 class="title-page" style="text-align: left; margin-bottom: 5px;">Rede de Filiais</h1>
                         <p class="subtitulo-pagina">Gerencie e audite as congregações ligadas a esta Sede.</p>
                     </div>
-                    <!-- PADRÃO CONÉKTA -->
                     <button id="add-filial-btn" class="btn btn-principal"><i class='bx bx-plus'></i> Cadastrar Filial</button>
                 </div>
                 
@@ -224,7 +224,6 @@
                                 <div class="logo-upload-wrapper">
                                     <img id="settings-logo-preview" src="/assets/placeholder-image.png" alt="Logo">
                                     <div class="logo-actions">
-                                        <!-- PADRÃO CONÉKTA -->
                                         <button type="button" id="btn-trocar-logo-sede" class="btn btn-secundario"><i class='bx bx-upload'></i> Alterar Arquivo</button>
                                         <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Formatos aceitos: JPG, PNG (Max 2MB)</p>
                                     </div>
@@ -299,7 +298,6 @@
 
                 <div class="modal-actions" style="margin-top: 25px;">
                     <span id="modal-error-message" style="color: var(--cor-perigo); font-size: 0.9rem; margin-right: auto; align-self: center;"></span>
-                    <!-- PADRÃO CONÉKTA -->
                     <button type="button" class="btn btn-secundario" id="cancel-filial-btn">Cancelar</button>
                     <button type="submit" id="save-filial-btn" class="btn btn-principal">Concluir Cadastro</button>
                 </div>
@@ -393,7 +391,6 @@
                         </div>
                     </div>
 
-                    <!-- NOVO: Impacto na Rede -->
                     <div class="mega-impact-section" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                         <h3 style="color: var(--cor-texto); font-size: 1.1rem; margin-bottom: 15px;"><i class='bx bx-pie-chart-alt-2'></i> Impacto na Rede</h3>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
