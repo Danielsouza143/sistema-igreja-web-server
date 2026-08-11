@@ -7,8 +7,6 @@ var iniciarFinanceiro = () => {
     let tenantInfo = null; 
     let configPorc = 0;
     let configCores = {};
-    
-    // --- NOVO ESTADO: Dízimo Pastoral ---
     let configDizimoPastoral = { valor: 0, exibirNoRelatorio: true };
 
     let lancamentoEmEdicaoId = null;
@@ -164,7 +162,6 @@ var iniciarFinanceiro = () => {
     if(inputMetaFundo) inputMetaFundo.oninput = aplicarMascaraMoeda;
     if(inputNovoItemValor) inputNovoItemValor.oninput = aplicarMascaraMoeda;
     
-    // Máscara para o input Pastoral
     const inputPastoral = document.getElementById('config-valor-pastoral');
     if(inputPastoral) inputPastoral.oninput = aplicarMascaraMoeda;
 
@@ -1333,22 +1330,25 @@ var iniciarFinanceiro = () => {
             
             try {
                 const resConfig = await window.api.get(`/api/configs?_t=${Date.now()}`);
-                categoriasConfig = resConfig?.financeiro_categorias || { entradas: [], saidas: [] };
                 
-                configPorc = resConfig?.porcentagemSede || 0;
-                configCores = resConfig?.coresCategorias || {};
+                // MÁGICA DE PARSE ROBUSTO: Lida com respostas em res.data, res.config ou res direto
+                const configData = resConfig?.config || resConfig || {};
+
+                categoriasConfig = configData.financeiro_categorias || { entradas: [], saidas: [] };
+                configPorc = configData.porcentagemSede || 0;
+                configCores = configData.coresCategorias || {};
                 
-                // NOVO: Carrega os dados do dízimo pastoral salvos no banco
-                if (resConfig?.dizimoPastoral) {
-                    configDizimoPastoral = resConfig.dizimoPastoral;
+                if (configData.dizimoPastoral) {
+                    configDizimoPastoral = configData.dizimoPastoral;
                 }
 
+                // Sincroniza e cria cores automáticas para categorias que não têm cor
                 await sincronizarCores();
 
+                // Preenche Aba de Configurações
                 const inputSede = document.getElementById('config-porc-sede');
                 if(inputSede) inputSede.value = configPorc;
                 
-                // Popula o campo do Dízimo Pastoral na UI
                 const inputPastoral = document.getElementById('config-valor-pastoral');
                 const checkboxPastoral = document.getElementById('config-exibir-pastoral');
                 if(inputPastoral) inputPastoral.value = formatarMoeda(configDizimoPastoral.valor);
@@ -1396,11 +1396,9 @@ var iniciarFinanceiro = () => {
         (categoriasConfig.saidas || []).forEach(cat => {
             if (!configCores[cat]) {
                 configCores[cat] = paletaSaidas[indexSaida % paletaSaidas.length];
-                indexSaida++;
                 alterado = true;
-            } else {
-                indexSaida++; 
             }
+            indexSaida++; 
         });
 
         if (alterado) {
@@ -1436,7 +1434,7 @@ var iniciarFinanceiro = () => {
     };
 
     // ==========================================
-    // 11. EVENT LISTENERS GERAIS
+    // 11. EVENT LISTENERS GERAIS E CONFIGS
     // ==========================================
 
     const btnSalvarSede = document.getElementById('btn-salvar-sede');
@@ -1454,7 +1452,6 @@ var iniciarFinanceiro = () => {
         });
     }
     
-    // --- NOVO EVENT LISTENER: SALVAR DÍZIMO PASTORAL MANUAL ---
     const btnSalvarPastoral = document.getElementById('btn-salvar-pastoral');
     if(btnSalvarPastoral) {
         btnSalvarPastoral.addEventListener('click', async () => {
@@ -1540,7 +1537,7 @@ var iniciarFinanceiro = () => {
                 comprovanteUrl: comprovanteUrl
             };
             
-            // --- LÓGICA INTELIGENTE DO DÍZIMO PASTORAL ---
+            // Pergunta Dízimo Pastoral Automático
             if (nomeCategoria === 'Dízimo Pastoral' && tipo === 'entrada') {
                 const querAtualizar = await window.showConfirmCustom(`Você registrou um lançamento na categoria "Dízimo Pastoral" no valor de ${formatarMoeda(valorFloat)}.\n\nDeseja atualizar este valor também nas configurações para que ele apareça no rodapé do Relatório Financeiro PDF?`);
                 if (querAtualizar) {
@@ -1549,7 +1546,6 @@ var iniciarFinanceiro = () => {
                             dizimoPastoral: { valor: valorFloat, exibirNoRelatorio: configDizimoPastoral.exibirNoRelatorio } 
                         });
                         configDizimoPastoral.valor = valorFloat;
-                        // Atualiza a UI visualmente na aba de config
                         const inputPastoralUI = document.getElementById('config-valor-pastoral');
                         if (inputPastoralUI) inputPastoralUI.value = formatarMoeda(valorFloat);
                     } catch (err) {
@@ -1909,7 +1905,6 @@ var iniciarFinanceiro = () => {
                 [`Contribuição Sede (${configPorc}%)`, formatarMoeda(valorSede)]
             ];
             
-            // --- LÓGICA DE INCLUSÃO DO DÍZIMO PASTORAL NO PDF ---
             if (configDizimoPastoral.exibirNoRelatorio && configDizimoPastoral.valor > 0) {
                 rowsResumo.push(['Dízimo Pastoral (Externo)', formatarMoeda(configDizimoPastoral.valor)]);
             }
