@@ -11,269 +11,274 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
     <!-- Adicionando Cropper.js -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-
 
     <link rel="stylesheet" href="/pages/styles/global.css">
     <link rel="stylesheet" href="/components/menu.css">
     <link rel="stylesheet" href="/components/notifications.css">
     <link rel="stylesheet" href="/pages/styles/tabelas-abas.css">
-            <link rel="stylesheet" href="utensilios.css">
-        </head>
-        <body hx-boost="true" hx-ext="preload">
-            <!-- Barra de Progresso do HTMX -->        <div class="htmx-indicator"></div>
-        <header id="menu-placeholder"></header>
-<main class="conteudo">
-    <div class="header-pagina">
-        <h1 class="title-page">Gestão de Utensílios</h1>
-        <div class="acoes-header">
-            <button id="btn-novo-item" class="btn btn-principal"><i class='bx bx-plus'></i> Adicionar Item</button>
-            <button id="btn-novo-emprestimo" class="btn btn-secundario"><i class='bx bx-transfer-alt'></i> Registrar Empréstimo</button>
-            <button id="btn-nova-manutencao" class="btn btn-secundario"><i class='bx bxs-wrench'></i> Registrar Manutenção</button>
-        </div>
-    </div>
-
-    <div class="container-abas">
-        <div class="abas-links">
-            <button class="aba-link active" data-aba="inventario">Inventário</button>
-            <button class="aba-link" data-aba="emprestimos">Empréstimos</button>
-            <button class="aba-link" data-aba="manutencao">Manutenção</button>
-        </div>
-
-        <div class="abas-conteudo-wrapper">
-            <!-- Aba de Inventário -->
-            <div id="inventario" class="aba-conteudo active">
-                <div class="filtros-tabela">
-                    <input type="text" id="filtro-inventario-nome" placeholder="Buscar por nome...">
-                    <select id="filtro-inventario-categoria">
-                        <option value="">Todas as categorias</option>
-                    </select>
-                </div>
-                <div class="tabela-container">
-                    <table class="tabela-padrao">
-                        <thead>
-                            <tr>
-                                <th class="coluna-foto">Foto</th>
-                                <th>Nome do Item</th>
-                                <th>Categoria</th>
-                                <th>Quantidade</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr> 
-                        </thead>
-                        <tbody id="corpo-tabela-inventario">
-                            <!-- Linhas inseridas via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Aba de Empréstimos -->
-            <div id="emprestimos" class="aba-conteudo">
-                <div class="filtros-tabela">
-                    <input type="text" id="filtro-emprestimo-item" placeholder="Buscar por item ou membro...">
-                    <select id="filtro-emprestimo-status">
-                        <option value="">Todos os status</option>
-                        <option value="Emprestado">Emprestado</option>
-                        <option value="Atrasado">Atrasado</option>
-                        <option value="Devolvido">Devolvido</option>
-                    </select>
-                </div>
-                <div class="tabela-container">
-                    <table class="tabela-padrao">
-                        <thead>
-                            <tr>
-                                <th class="coluna-foto">Foto</th>
-                                <th>Item Emprestado</th>
-                                <th>Membro Responsável</th>
-                                <th>Data do Empréstimo</th>
-                                <th>Devolução Prevista</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="corpo-tabela-emprestimos">
-                            <!-- Linhas inseridas via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Aba de Manutenção -->
-            <div id="manutencao" class="aba-conteudo">
-                <div class="filtros-tabela">
-                    <input type="text" id="filtro-manutencao-item" placeholder="Buscar por item em manutenção...">
-                </div>
-                <div class="tabela-container">
-                    <table class="tabela-padrao">
-                        <thead>
-                            <tr>
-                                <th class="coluna-foto">Foto</th>
-                                <th>Item em Manutenção</th>
-                                <th>Quantidade</th>
-                                <th>Data de Início</th>
-                                <th>Observações</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="corpo-tabela-manutencao">
-                            <!-- Linhas inseridas via JS -->
-                        </tbody>
-                    </table>
-                </div>
+    <link rel="stylesheet" href="utensilios.css">
+</head>
+<body hx-boost="true" hx-ext="preload">
+    <!-- Barra de Progresso do HTMX -->        
+    <div class="htmx-indicator"></div>
+    <header id="menu-placeholder"></header>
+    
+    <main class="conteudo">
+        <div class="header-pagina">
+            <h1 class="title-page">Gestão de Utensílios</h1>
+            <div class="acoes-header">
+                <button id="btn-novo-item" class="btn btn-principal"><i class='bx bx-plus'></i> Adicionar Item</button>
+                <button id="btn-novo-emprestimo" class="btn btn-secundario"><i class='bx bx-transfer-alt'></i> Registrar Empréstimo</button>
+                <button id="btn-nova-manutencao" class="btn btn-secundario"><i class='bx bxs-wrench'></i> Registrar Manutenção</button>
             </div>
         </div>
-    </div>
-</main>
 
-<!-- MODAL PARA NOVO/EDITAR ITEM -->
-<div id="modal-item" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-item-titulo">Adicionar Novo Item</h2>
-            <button class="btn-fechar-modal" data-close>&times;</button>
-        </div>
-        <form id="form-item">
-            <input type="hidden" id="item-id">
-            <div class="form-group">
-                <label for="item-nome">Nome do Item</label>
-                <input type="text" id="item-nome" required>
+        <div class="container-abas">
+            <div class="abas-links">
+                <button class="aba-link active" data-aba="inventario">Inventário</button>
+                <button class="aba-link" data-aba="emprestimos">Empréstimos</button>
+                <button class="aba-link" data-aba="manutencao">Manutenção</button>
             </div>
-            <div class="form-group">
-                <label for="item-categoria">Categoria</label>
-                <select id="item-categoria" required></select>
-            </div>
-            <div class="form-group">
-                <label for="item-quantidade">Quantidade Total</label>
-                <input type="number" id="item-quantidade" required min="0">
-            </div>
-            <div class="form-group">
-                <label for="item-status">Status</label>
-                <select id="item-status" required>
-                    <option value="Disponível">Disponível</option>
-                    <option value="Em Manutenção">Em Manutenção</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="item-valor">Valor do Item (R$)</label>
-                <input type="number" id="item-valor" step="0.01" placeholder="Ex: 150.50">
-            </div>
-            <hr>
-            <div class="form-group">
-                <label for="item-foto">Foto do Produto</label>
-                <div class="foto-preview-container-utensilio">
-                    <img id="foto-preview" src="/assets/placeholder-image.png" alt="Pré-visualização da foto">
+
+            <div class="abas-conteudo-wrapper">
+                <!-- Aba de Inventário -->
+                <div id="inventario" class="aba-conteudo active">
+                    <div class="filtros-tabela">
+                        <input type="text" id="filtro-inventario-nome" placeholder="Buscar por nome...">
+                        <select id="filtro-inventario-categoria">
+                            <option value="">Todas as categorias</option>
+                        </select>
+                    </div>
+                    <div class="tabela-container">
+                        <table class="tabela-padrao">
+                            <thead>
+                                <tr>
+                                    <th class="coluna-foto">Foto</th>
+                                    <th>Nome do Item</th>
+                                    <th>Categoria</th>
+                                    <th>Quantidade</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr> 
+                            </thead>
+                            <tbody id="corpo-tabela-inventario">
+                                <!-- Linhas inseridas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <button type="button" id="btn-escolher-foto" class="btn btn-secundario">Escolher Foto</button>
-                <input type="file" id="item-foto-upload" accept="image/*" style="display:none;">
+
+                <!-- Aba de Empréstimos -->
+                <div id="emprestimos" class="aba-conteudo">
+                    <div class="filtros-tabela">
+                        <input type="text" id="filtro-emprestimo-item" placeholder="Buscar por item ou membro...">
+                        <select id="filtro-emprestimo-status">
+                            <option value="">Todos os status</option>
+                            <option value="Emprestado">Emprestado</option>
+                            <option value="Atrasado">Atrasado</option>
+                            <option value="Devolvido">Devolvido</option>
+                        </select>
+                    </div>
+                    <div class="tabela-container">
+                        <table class="tabela-padrao">
+                            <thead>
+                                <tr>
+                                    <th class="coluna-foto">Foto</th>
+                                    <th>Item Emprestado</th>
+                                    <th>Membro Responsável</th>
+                                    <th>Data do Empréstimo</th>
+                                    <th>Devolução Prevista</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpo-tabela-emprestimos">
+                                <!-- Linhas inseridas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Aba de Manutenção -->
+                <div id="manutencao" class="aba-conteudo">
+                    <div class="filtros-tabela">
+                        <input type="text" id="filtro-manutencao-item" placeholder="Buscar por item em manutenção...">
+                    </div>
+                    <div class="tabela-container">
+                        <table class="tabela-padrao">
+                            <thead>
+                                <tr>
+                                    <th class="coluna-foto">Foto</th>
+                                    <th>Item em Manutenção</th>
+                                    <th>Quantidade</th>
+                                    <th>Data de Início</th>
+                                    <th>Observações</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpo-tabela-manutencao">
+                                <!-- Linhas inseridas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="form-group-grid">
+        </div>
+    </main>
+
+    <!-- MODAL PARA NOVO/EDITAR ITEM -->
+    <div id="modal-item" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-item-titulo">Adicionar Novo Item</h2>
+                <button class="btn-fechar-modal" data-close>&times;</button>
+            </div>
+            <form id="form-item">
+                <input type="hidden" id="item-id">
                 <div class="form-group">
-                    <label for="item-data-compra">Data da Compra</label>
-                    <input type="date" id="item-data-compra">
+                    <label for="item-nome">Nome do Item</label>
+                    <input type="text" id="item-nome" required>
                 </div>
                 <div class="form-group">
-                    <label for="item-numero-serie">Nº de Série (Opcional)</label>
-                    <input type="text" id="item-numero-serie">
+                    <label for="item-categoria">Categoria</label>
+                    <select id="item-categoria" required></select>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="item-nf">Nota Fiscal (PDF ou Imagem)</label>
-                <input type="file" id="item-nf" accept="image/*,application/pdf">
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secundario" data-close>Cancelar</button>
-                <button type="submit" class="btn btn-principal">Salvar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL PARA DETALHES DO ITEM -->
-<div id="modal-detalhes" class="modal-overlay">
-    <div class="modal-content modal-lg">
-        <div class="modal-header">
-            <h2 id="detalhes-item-titulo">Detalhes do Item</h2>
-            <button class="btn-fechar-modal" data-close>&times;</button>
+                <div class="form-group">
+                    <label for="item-quantidade">Quantidade Total</label>
+                    <input type="number" id="item-quantidade" required min="0">
+                </div>
+                <div class="form-group">
+                    <label for="item-status">Status</label>
+                    <select id="item-status" required>
+                        <option value="Disponível">Disponível</option>
+                        <option value="Em Manutenção">Em Manutenção</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="item-valor">Valor do Item (R$)</label>
+                    <input type="number" id="item-valor" step="0.01" placeholder="Ex: 150.50">
+                </div>
+                <hr>
+                <div class="form-group">
+                    <!-- CORREÇÃO: "for" atualizado para corresponder ao ID real do input file -->
+                    <label for="item-foto-upload">Foto do Produto</label>
+                    <div class="foto-preview-container-utensilio">
+                        <img id="foto-preview" src="/assets/placeholder-image.png" alt="Pré-visualização da foto">
+                    </div>
+                    <button type="button" id="btn-escolher-foto" class="btn btn-secundario">Escolher Foto</button>
+                    <input type="file" id="item-foto-upload" accept="image/*" style="display:none;">
+                </div>
+                <div class="form-group-grid">
+                    <div class="form-group">
+                        <label for="item-data-compra">Data da Compra</label>
+                        <input type="date" id="item-data-compra">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-numero-serie">Nº de Série (Opcional)</label>
+                        <input type="text" id="item-numero-serie">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="item-nf">Nota Fiscal (PDF ou Imagem)</label>
+                    <input type="file" id="item-nf" accept="image/*,application/pdf">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secundario" data-close>Cancelar</button>
+                    <button type="submit" class="btn btn-principal">Salvar</button>
+                </div>
+            </form>
         </div>
-        <div id="detalhes-item-corpo" class="detalhes-item-corpo">
-            <!-- Conteúdo inserido via JS -->
+    </div>
+
+    <!-- MODAL PARA DETALHES DO ITEM -->
+    <div id="modal-detalhes" class="modal-overlay">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 id="detalhes-item-titulo">Detalhes do Item</h2>
+                <button class="btn-fechar-modal" data-close>&times;</button>
+            </div>
+            <div id="detalhes-item-corpo" class="detalhes-item-corpo">
+                <!-- Conteúdo inserido via JS -->
+            </div>
         </div>
     </div>
-</div>
 
-<!-- MODAL PARA CORTAR A IMAGEM -->
-<div id="modal-cropper" class="modal-overlay">
-  <div class="modal-content">
-    <h2>Editar e Cortar Foto</h2>
-    <div class="cropper-container">
-        <img id="image-to-crop" src="">
-    </div>
-    <div class="modal-actions">
-      <button type="button" id="btn-cancelar-crop" class="btn btn-secundario">Cancelar</button>
-      <button type="button" id="btn-cortar" class="btn btn-principal">Cortar e Confirmar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL PARA NOVO EMPRÉSTIMO -->
-<div id="modal-emprestimo" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Registrar Novo Empréstimo</h2>
-            <button class="btn-fechar-modal" data-close>&times;</button>
+    <!-- MODAL PARA CORTAR A IMAGEM -->
+    <div id="modal-cropper" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Editar e Cortar Foto</h2>
+        <div class="cropper-container">
+            <img id="image-to-crop" src="">
         </div>
-        <form id="form-emprestimo">
-            <div class="form-group">
-                <label for="emprestimo-utensilio">Utensílio (apenas itens disponíveis são listados)</label>
-                <select id="emprestimo-utensilio" required></select>
-            </div>
-            <div class="form-group">
-                <label for="emprestimo-membro">Membro Responsável</label>
-                <select id="emprestimo-membro" required></select>
-            </div>
-            <div class="form-group">
-                <label for="emprestimo-quantidade">Quantidade Emprestada</label>
-                <input type="number" id="emprestimo-quantidade" value="1" min="1" required>
-            </div>
-            <div class="form-group">
-                <label for="emprestimo-data-devolucao">Data de Devolução Prevista</label>
-                <input type="date" id="emprestimo-data-devolucao" required>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secundario" data-close>Cancelar</button>
-                <button type="submit" class="btn btn-principal">Salvar Empréstimo</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL PARA ENVIAR PARA MANUTENÇÃO -->
-<div id="modal-manutencao" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-manutencao-titulo">Enviar Item para Manutenção</h2>
-            <button class="btn-fechar-modal" data-close>&times;</button>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancelar-crop" class="btn btn-secundario">Cancelar</button>
+          <button type="button" id="btn-cortar" class="btn btn-principal">Cortar e Confirmar</button>
         </div>
-        <form id="form-manutencao">
-            <div class="form-group" id="manutencao-select-container">
-                <label for="manutencao-item-select">Selecione o item</label>
-                <select id="manutencao-item-select" required></select>
-            </div>
-            <p id="manutencao-texto-item-selecionado" style="display: none;">Você está enviando o item "<strong><span id="manutencao-item-nome"></span></strong>" para manutenção.</p>
-            <div class="form-group">
-                <label for="manutencao-observacoes">Observações (motivo, defeito, etc.)</label>
-                <textarea id="manutencao-observacoes" rows="4"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secundario" data-close>Cancelar</button>
-                <button type="submit" class="btn btn-principal">Confirmar Manutenção</button>
-            </div>
-        </form>
+      </div>
     </div>
-</div>
 
-<script src="/js/global-loader.js" defer></script>
-<script src="/js/api.js"></script>
-<script src="utensilios.js"></script>
+    <!-- MODAL PARA NOVO EMPRÉSTIMO -->
+    <div id="modal-emprestimo" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Novo Empréstimo</h2>
+                <button class="btn-fechar-modal" data-close>&times;</button>
+            </div>
+            <form id="form-emprestimo">
+                <div class="form-group">
+                    <label for="emprestimo-utensilio">Utensílio (apenas itens disponíveis são listados)</label>
+                    <select id="emprestimo-utensilio" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="emprestimo-membro">Membro Responsável</label>
+                    <select id="emprestimo-membro" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="emprestimo-quantidade">Quantidade Emprestada</label>
+                    <input type="number" id="emprestimo-quantidade" value="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="emprestimo-data-devolucao">Data de Devolução Prevista</label>
+                    <input type="date" id="emprestimo-data-devolucao" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secundario" data-close>Cancelar</button>
+                    <button type="submit" class="btn btn-principal">Salvar Empréstimo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PARA ENVIAR PARA MANUTENÇÃO -->
+    <div id="modal-manutencao" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-manutencao-titulo">Enviar Item para Manutenção</h2>
+                <button class="btn-fechar-modal" data-close>&times;</button>
+            </div>
+            <form id="form-manutencao">
+                <div class="form-group" id="manutencao-select-container">
+                    <label for="manutencao-item-select">Selecione o item</label>
+                    <select id="manutencao-item-select" required></select>
+                </div>
+                <p id="manutencao-texto-item-selecionado" style="display: none;">Você está enviando o item "<strong><span id="manutencao-item-nome"></span></strong>" para manutenção.</p>
+                <div class="form-group">
+                    <label for="manutencao-observacoes">Observações (motivo, defeito, etc.)</label>
+                    <textarea id="manutencao-observacoes" rows="4"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secundario" data-close>Cancelar</button>
+                    <button type="submit" class="btn btn-principal">Confirmar Manutenção</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/global-loader.js" defer></script>
+    <script src="/js/api.js"></script>
+    <script src="utensilios.js"></script>
+</body>
+</html>
