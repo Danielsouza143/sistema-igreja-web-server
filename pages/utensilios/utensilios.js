@@ -46,6 +46,11 @@ const iniciarUtensilios = () => {
     const manutencaoSelectContainer = document.getElementById('manutencao-select-container');
     const manutencaoTextoItem = document.getElementById('manutencao-texto-item-selecionado');
 
+    // Função auxiliar para garantir a imagem correta do backend
+    const obterUrlFoto = (item) => {
+        if (!item) return '/assets/placeholder-image.png';
+        return item.fotoUrl || item.foto || '/assets/placeholder-image.png';
+    };
 
     // --- FUNÇÕES DE RENDERIZAÇÃO ---
     const renderizarTabelaInventario = () => {
@@ -58,7 +63,9 @@ const iniciarUtensilios = () => {
             const tr = document.createElement('tr');
             tr.dataset.id = item._id;
             tr.innerHTML = `
-                <td data-label="Foto"><img src="${item.fotoUrl || '/assets/placeholder-image.png'}" alt="Foto de ${item.nome}" class="foto-tabela"></td>
+                <td data-label="Foto">
+                    <img src="${obterUrlFoto(item)}" alt="Foto de ${item.nome}" class="foto-tabela" crossorigin="anonymous">
+                </td>
                 <td data-label="Nome">${item.nome}</td>
                 <td>${item.categoria}</td>
                 <td data-label="Quantidade">${item.quantidade}</td>
@@ -82,7 +89,7 @@ const iniciarUtensilios = () => {
                     const item = inventario.find(i => i._id === itemId);
                     abrirModalManutencao(item);
                 } else if (e.target.matches('.bxs-trash')) {
-                    // Adicionar lógica de exclusão aqui
+                    excluirItemInventario(itemId);
                 } else {
                     handleRowClick(e, inventario);
                 }
@@ -108,7 +115,9 @@ const iniciarUtensilios = () => {
             const tr = document.createElement('tr');
             tr.dataset.id = emp.utensilioId?._id;
             tr.innerHTML = `
-                <td data-label="Foto"><img src="${emp.utensilioId?.fotoUrl || '/assets/placeholder-image.png'}" alt="Foto de ${emp.utensilioId?.nome}" class="foto-tabela"></td>
+                <td data-label="Foto">
+                    <img src="${obterUrlFoto(emp.utensilioId)}" alt="Foto de ${emp.utensilioId?.nome}" class="foto-tabela" crossorigin="anonymous">
+                </td>
                 <td data-label="Item">${emp.utensilioId?.nome || 'Item não encontrado'}</td>
                 <td data-label="Membro">${emp.membroId?.nome || 'Membro não encontrado'}</td>
                 <td data-label="Data Empréstimo">${new Date(emp.dataEmprestimo).toLocaleDateString('pt-BR')}</td>
@@ -133,7 +142,9 @@ const iniciarUtensilios = () => {
             const tr = document.createElement('tr');
             tr.dataset.id = item._id;
             tr.innerHTML = `
-                <td data-label="Foto"><img src="${item.fotoUrl || '/assets/placeholder-image.png'}" alt="Foto de ${item.nome}" class="foto-tabela"></td>
+                <td data-label="Foto">
+                    <img src="${obterUrlFoto(item)}" alt="Foto de ${item.nome}" class="foto-tabela" crossorigin="anonymous">
+                </td>
                 <td data-label="Item">${item.nome}</td>
                 <td data-label="Quantidade">${item.quantidade}</td>
                 <td data-label="Início Manutenção">${item.dataManutencao ? new Date(item.dataManutencao).toLocaleDateString('pt-BR') : 'Não informado'}</td>
@@ -146,27 +157,39 @@ const iniciarUtensilios = () => {
             corpoTabelaManutencao.appendChild(tr);
         });
 
-        // Adiciona os event listeners para as ações e para o clique na linha
         corpoTabelaManutencao.querySelectorAll('tr').forEach(row => {
             row.addEventListener('click', (e) => {
                 const itemId = e.target.dataset.id;
                 if (e.target.matches('.bxs-check-square')) {
                     marcarComoDisponivel(itemId);
                 } else if (e.target.matches('.bxs-trash')) {
-                    // Adicionar lógica de exclusão aqui
+                    excluirItemInventario(itemId);
                 } else {
-                    // Se não clicou em um ícone de ação, abre os detalhes
                     handleRowClick(e, inventario);
                 }
             });
         });
     };
 
+    // --- AÇÕES DO BANCO DE DADOS ---
+    const excluirItemInventario = async (id) => {
+        if (confirm('Tem certeza que deseja excluir este item permanentemente?')) {
+            try {
+                await window.api.delete(`/api/utensilios/${id}`);
+                await carregarDados();
+                alert('Item excluído com sucesso.');
+            } catch (error) {
+                alert(`Erro ao excluir item: ${error.message}`);
+            }
+        }
+    };
+
     // --- LÓGICA DO MODAL ---
     const abrirModalItem = (item = null) => {
         formItem.reset();
-        fotoCortadaBlob = null; // Limpa a foto cortada anterior
-        fotoPreview.src = '/assets/placeholder-image.png'; // Reseta a preview
+        fotoCortadaBlob = null; 
+        fotoPreview.src = '/assets/placeholder-image.png'; 
+        
         if (item) {
             modalItemTitulo.textContent = 'Editar Item';
             itemIdInput.value = item._id;
@@ -174,12 +197,13 @@ const iniciarUtensilios = () => {
             document.getElementById('item-categoria').value = item.categoria;
             document.getElementById('item-quantidade').value = item.quantidade;
             document.getElementById('item-status').value = item.status;
-            // Novos campos
             document.getElementById('item-data-compra').value = item.dataCompra ? item.dataCompra.split('T')[0] : '';
             document.getElementById('item-valor').value = item.valor || '';
             document.getElementById('item-numero-serie').value = item.numeroSerie || '';
-            if (item.fotoUrl) {
-                fotoPreview.src = item.fotoUrl;
+            
+            const urlImg = obterUrlFoto(item);
+            if (urlImg && urlImg !== '/assets/placeholder-image.png') {
+                fotoPreview.src = urlImg;
             }
 
         } else {
@@ -236,7 +260,6 @@ const iniciarUtensilios = () => {
         const nfFile = document.getElementById('item-nf').files[0];
         const formData = new FormData();
 
-        // Adiciona os dados do formulário ao FormData
         formData.append('nome', document.getElementById('item-nome').value);
         formData.append('categoria', document.getElementById('item-categoria').value);
         formData.append('quantidade', document.getElementById('item-quantidade').value);
@@ -260,7 +283,7 @@ const iniciarUtensilios = () => {
                 await window.api.post(url, formData);
             }
             fecharModalItem();
-            await carregarDados(); // Recarrega tudo
+            await carregarDados(); 
             alert('Item salvo com sucesso!');
         } catch (error) {
             console.error('Erro ao salvar item:', error);
@@ -271,12 +294,10 @@ const iniciarUtensilios = () => {
     // --- LÓGICA DO MODAL DE EMPRÉSTIMO ---
     const abrirModalEmprestimo = () => {
         formEmprestimo.reset();
-        // Popula o select de utensílios apenas com os disponíveis
         const selectUtensilio = document.getElementById('emprestimo-utensilio');
         const utensiliosDisponiveis = inventario.filter(item => item.status === 'Disponível');
         selectUtensilio.innerHTML = utensiliosDisponiveis.map(item => `<option value="${item._id}">${item.nome}</option>`).join('');
 
-        // Popula o select de membros
         const selectMembro = document.getElementById('emprestimo-membro');
         selectMembro.innerHTML = membros.map(membro => `<option value="${membro._id}">${membro.nome}</option>`).join('');
 
@@ -313,17 +334,13 @@ const iniciarUtensilios = () => {
     const abrirModalManutencao = (item = null) => {
         formManutencao.reset();
         if (item) {
-            // Veio do ícone da tabela
             manutencaoSelectContainer.style.display = 'none';
             manutencaoTextoItem.style.display = 'block';
             document.getElementById('manutencao-item-nome').textContent = item.nome;
-            // Define o valor no select escondido para o formulário funcionar
             manutencaoItemSelect.innerHTML = `<option value="${item._id}" selected>${item.nome}</option>`;
         } else {
-            // Veio do botão do cabeçalho
             manutencaoSelectContainer.style.display = 'block';
             manutencaoTextoItem.style.display = 'none';
-            // Popula o select com todos os itens que não estão em manutenção
             const itensDisponiveis = inventario.filter(i => i.status !== 'Em Manutenção');
             manutencaoItemSelect.innerHTML = '<option value="">Selecione um item...</option>' 
                 + itensDisponiveis.map(i => `<option value="${i._id}">${i.nome}</option>`).join('');
@@ -357,7 +374,6 @@ const iniciarUtensilios = () => {
         }
     });
 
-    // --- LÓGICA DE AÇÕES DA TABELA ---
     const marcarComoDisponivel = async (id) => {
         if (!confirm('Deseja marcar este item como "Disponível" e finalizar a manutenção?')) return;
 
@@ -377,7 +393,7 @@ const iniciarUtensilios = () => {
         corpoDetalhes.innerHTML = `
             <div class="detalhe-grid">
                 <div class="detalhe-foto-container">
-                    <img src="${item.fotoUrl || '/assets/placeholder-image.png'}" alt="Foto de ${item.nome}" class="detalhe-foto">
+                    <img src="${obterUrlFoto(item)}" alt="Foto de ${item.nome}" class="detalhe-foto" crossorigin="anonymous">
                 </div>
                 <div class="detalhe-info-container">
                     <div class="info-bloco">
