@@ -10,22 +10,21 @@ export const getFiliais = async (req, res, next) => {
         const sedeId = req.tenant.id;
         const filiais = await Tenant.find({ parentTenant: sedeId }).lean();
         
-        // Mágica SaaS: Busca os dados enriquecidos de cada Filial para o Modal e Tabela
         const filiaisEnriquecidas = await Promise.all(filiais.map(async (filial) => {
-            // Puxa o administrador (Pastor local)
             const admin = await User.findOne({ tenantId: filial._id, role: 'admin' }).select('name username').lean();
-            
-            // Puxa total de Membros
             const membrosCount = await Membro.countDocuments({ tenantId: filial._id });
             
-            // Puxa balanço financeiro exclusivo desta filial
             const lancamentos = await Lancamento.aggregate([
                 { $match: { tenantId: filial._id } },
                 { $group: { _id: '$tipo', total: { $sum: '$valor' } } }
             ]);
-            const financeiro = lancamentos.reduce((acc, curr) => {
-                acc[curr._id] = curr.total; return acc;
-            }, { entrada: 0, saida: 0 });
+            
+            const financeiro = { entrada: 0, saida: 0 };
+            lancamentos.forEach(curr => {
+                const tipoLimpo = String(curr._id).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if(tipoLimpo === 'entrada') financeiro.entrada = curr.total;
+                if(tipoLimpo === 'saida') financeiro.saida = curr.total;
+            });
 
             return {
                 ...filial,
@@ -45,7 +44,6 @@ export const getFiliais = async (req, res, next) => {
 };
 
 export const createFilial = async (req, res, next) => {
-    // CORREÇÃO CRÍTICA: Extraindo e salvando cnpj, address e telefone na criação
     const { name, adminUsername, adminName, adminPassword, cnpj, address, telefone } = req.body;
     const sedeId = req.tenant.id;
 
@@ -129,7 +127,6 @@ export const getDashboardData = async (req, res, next) => {
     try {
         const sedeId = req.tenant.id;
 
-        // Pega as filiais E a própria sede para consolidar TUDO da rede
         const filiais = await Tenant.find({ parentTenant: sedeId }).select('_id name');
         const tenantIds = filiais.map(f => f._id);
         tenantIds.push(new mongoose.Types.ObjectId(sedeId));
@@ -155,7 +152,6 @@ export const getDashboardData = async (req, res, next) => {
                 { $project: { tenantId: '$_id', nome: '$tenantInfo.name', membros: '$count' } }
             ]),
 
-            // Agregação para o Gráfico de Evolução Financeira Global
             Lancamento.aggregate([
                 { $match: { tenantId: { $in: tenantIds }, data: { $exists: true } } },
                 { $project: {
@@ -164,7 +160,7 @@ export const getDashboardData = async (req, res, next) => {
                     tipo: 1,
                     valor: 1
                 }},
-                { $match: { ano: new Date().getFullYear() } }, // Filtra só o ano atual
+                { $match: { ano: new Date().getFullYear() } }, 
                 { $group: {
                     _id: { mes: "$mes", tipo: "$tipo" },
                     total: { $sum: "$valor" }
@@ -172,17 +168,19 @@ export const getDashboardData = async (req, res, next) => {
             ])
         ]);
 
-        const financeiro = totalFinanceiro.reduce((acc, item) => {
-            acc[item._id] = item.total;
-            return acc;
-        }, { entrada: 0, saida: 0 });
+        const financeiro = { entrada: 0, saida: 0 };
+        totalFinanceiro.forEach(curr => {
+            const tipoLimpo = String(curr._id).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if(tipoLimpo === 'entrada') financeiro.entrada = curr.total;
+            if(tipoLimpo === 'saida') financeiro.saida = curr.total;
+        });
         
-        // Estruturando os dados para os gráficos do Frontend
         const evolucaoMensal = Array(12).fill(null).map(() => ({ entradas: 0, saidas: 0 }));
         evolucaoMensalRaw.forEach(item => {
             const mesIdx = item._id.mes - 1;
-            if (item._id.tipo === 'entrada') evolucaoMensal[mesIdx].entradas = item.total;
-            if (item._id.tipo === 'saida') evolucaoMensal[mesIdx].saidas = item.total;
+            const tipoLimpo = String(item._id.tipo).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (tipoLimpo === 'entrada') evolucaoMensal[mesIdx].entradas = item.total;
+            if (tipoLimpo === 'saida') evolucaoMensal[mesIdx].saidas = item.total;
         });
 
         const dashboardData = {
@@ -232,7 +230,7 @@ export const impersonateFilial = async (req, res, next) => {
             role: filialAdmin.role,
             tenantId: filial.id,
             tenantType: filial.tenantType,
-            impersonatorId: sedeAdminId, // Marca que é um acesso de auditoria
+            impersonatorId: sedeAdminId, 
         };
 
         const impersonationToken = jwt.sign(impersonationPayload, process.env.JWT_SECRET, {
