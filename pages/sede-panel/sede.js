@@ -66,31 +66,63 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const saldoGlobal = document.getElementById('saldo-global');
                 if(saldoGlobal) {
                     saldoGlobal.textContent = this.formatCurrency(resumo.saldoGlobal);
-                    saldoGlobal.style.color = resumo.saldoGlobal >= 0 ? '#28a745' : '#dc3545';
+                    saldoGlobal.style.color = resumo.saldoGlobal >= 0 ? '#6f42c1' : '#dc3545';
                 }
 
-                // Tabela Comparativa
+                // Tabela Comparativa de Engajamento
                 const comparativoBody = document.getElementById('comparativo-tbody');
                 comparativoBody.innerHTML = '';
                 
                 if (comparativoFiliais && comparativoFiliais.length > 0) {
+                    
+                    // Adiciona ao cache global de filiais se ainda não estiver presente
+                    comparativoFiliais.forEach(item => {
+                        const idObj = item.tenantId || item._id;
+                        if(!cacheFiliais.find(c => c._id === idObj.toString())) {
+                            cacheFiliais.push(item);
+                        }
+                    });
+
                     comparativoFiliais.forEach((item, index) => {
+                        const imgUrl = item.logoUrl || '/assets/placeholder-image.png';
+                        const idTarget = item.tenantId || item._id;
+                        const telefone = item.telefone ? `Tel: ${item.telefone}` : '';
+                        const endereco = item.address ? item.address : '<span style="color:#aaa;">Endereço não informado</span>';
+
                         const row = `
-                            <tr>
+                            <tr class="comparativo-row" data-id="${idTarget}" style="cursor:pointer; transition: background 0.2s;">
                                 <td style="font-weight: bold; color: var(--cor-texto-claro);">${index + 1}º</td>
-                                <td style="font-weight: 600;">${item.nome || 'Sede Principal'}</td>
-                                <td><span class="badge" style="background: rgba(77, 80, 255, 0.1); color: var(--cor-acao); padding: 5px 12px; border-radius: 20px;">${item.membros} Membro(s)</span></td>
+                                <td>
+                                    <div class="filial-info-td">
+                                        <img src="${imgUrl}" alt="Logo">
+                                        <div class="filial-info-text">
+                                            <strong>${item.nome || 'Congregação'}</strong>
+                                            <small><i class='bx bxs-user'></i> Pr. ${item.pastor || 'Dirigente Local'}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span style="display:block; font-size: 0.85rem;">${telefone}</span><span style="font-size: 0.8rem; color: #666;">${endereco}</span></td>
+                                <td style="text-align: right;"><span class="badge" style="background: rgba(77, 80, 255, 0.1); color: var(--cor-acao); padding: 6px 12px; border-radius: 20px; font-weight: 700;">${item.membros} Membro(s)</span></td>
                             </tr>
                         `;
                         comparativoBody.insertAdjacentHTML('beforeend', row);
                     });
+                    
+                    // Listener de Clique no comparativo
+                    comparativoBody.querySelectorAll('tr').forEach(tr => {
+                        tr.addEventListener('click', (e) => {
+                            const id = e.currentTarget.dataset.id;
+                            if(id) FilialManager.openFilialDetails(id);
+                        });
+                    });
+
                 } else {
-                    comparativoBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: #888;">Nenhum dado para comparar.</td></tr>';
+                    comparativoBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #888;">Nenhum dado para comparar.</td></tr>';
                 }
 
                 // Gráfico Global Line
                 this.renderChart(graficos.evolucaoFinanceira);
-                // Novo: Gráfico de Pizza
+                // Gráfico de Pizza
                 this.renderPieChart(comparativoFiliais);
 
             } catch (error) {
@@ -217,7 +249,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         async loadFiliais() {
             try {
                 const filiais = await window.api.get('/api/sedes/filiais');
-                cacheFiliais = filiais; 
+                
+                // Atualiza/Mescla o Cache das Filiais
+                filiais.forEach(f => {
+                    const idx = cacheFiliais.findIndex(c => c._id === f._id);
+                    if(idx !== -1) cacheFiliais[idx] = f;
+                    else cacheFiliais.push(f);
+                });
+
                 this.filialTableBody.innerHTML = ''; 
                 
                 if (filiais.length === 0) {
@@ -270,13 +309,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         openModalForEdit(id) {
-            const filial = cacheFiliais.find(f => f._id === id);
+            const filial = cacheFiliais.find(f => f._id.toString() === id.toString() || (f.tenantId && f.tenantId.toString() === id.toString()));
             if (!filial) return;
             
             this.modalTitle.textContent = 'Editar Congregação';
             this.filialForm.reset();
             this.filialIdField.value = id;
-            document.getElementById('filial-name').value = filial.name;
+            document.getElementById('filial-name').value = filial.name || filial.nome;
             document.getElementById('filial-cnpj').value = filial.cnpj || '';
             document.getElementById('filial-telefone').value = filial.telefone || '';
             document.getElementById('filial-address').value = filial.address || '';
@@ -290,23 +329,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         
         openFilialDetails(id) {
-            const f = cacheFiliais.find(f => f._id === id);
+            const f = cacheFiliais.find(f => f._id.toString() === id.toString() || (f.tenantId && f.tenantId.toString() === id.toString()));
             if(!f) return;
 
             document.getElementById('fd-logo').src = f.logoUrl || '/assets/placeholder-image.png';
-            document.getElementById('fd-name').textContent = f.name;
-            document.getElementById('fd-pastor').textContent = f.pastor;
+            document.getElementById('fd-name').textContent = f.name || f.nome;
+            document.getElementById('fd-pastor').textContent = f.pastor || 'Não informado';
             
             document.getElementById('fd-cnpj').textContent = f.cnpj || 'Não cadastrado';
             document.getElementById('fd-address').textContent = f.address || 'Não cadastrado';
-            document.getElementById('fd-date').textContent = new Date(f.createdAt).toLocaleDateString('pt-BR');
+            document.getElementById('fd-date').textContent = f.createdAt ? new Date(f.createdAt).toLocaleDateString('pt-BR') : '--/--/----';
 
-            document.getElementById('fd-membros').textContent = f.membros;
+            document.getElementById('fd-membros').textContent = f.membros || 0;
             document.getElementById('fd-saldo').textContent = DashboardManager.formatCurrency(f.saldo);
             document.getElementById('fd-receitas').textContent = DashboardManager.formatCurrency(f.receitas);
             document.getElementById('fd-despesas').textContent = DashboardManager.formatCurrency(f.despesas);
             
-            // Popula a barra de progresso do impacto na rede
             const perc = f.percentualMembros || 0;
             document.getElementById('fd-perc-membros').textContent = perc;
             document.getElementById('fd-bar-membros').style.width = `${perc}%`;
