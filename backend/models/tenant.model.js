@@ -23,17 +23,24 @@ const TenantSchema = new Schema({
         default: 'active',
         index: true
     },
+    // --- NOVO: Identificação Fiscal ---
+    tipoDocumento: {
+        type: String,
+        enum: ['CNPJ', 'CPF'],
+        default: 'CNPJ'
+    },
     cnpj: {
         type: String,
         trim: true,
         default: ''
     },
-    telefone: {           // <--- NOVO CAMPO
+    // ----------------------------------
+    telefone: {           
         type: String,
         trim: true,
         default: ''
     },
-    email: {              // <--- NOVO CAMPO
+    email: {              
         type: String,
         trim: true,
         default: ''
