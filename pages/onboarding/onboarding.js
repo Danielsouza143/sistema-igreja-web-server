@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
     };
+    
     const form = document.getElementById('onboarding-form');
     const nextBtn = document.getElementById('nextBtn');
     const prevBtn = document.getElementById('prevBtn');
@@ -20,6 +21,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoInput = document.getElementById('logo');
     const logoPreview = document.getElementById('logo-preview');
     
+    // --- LÓGICA DE MÁSCARA DINÂMICA DE DOCUMENTO ---
+    const tipoDocSelect = document.getElementById('tipoDocumento');
+    const docInput = document.getElementById('cnpj');
+    const labelDoc = document.getElementById('labelDocumento');
+
+    const applyMask = (value, type) => {
+        value = value.replace(/\D/g, ""); // Remove tudo o que não for dígito
+        
+        if (type === 'CPF') {
+            value = value.substring(0, 11); // Limita a 11 números
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        } else {
+            value = value.substring(0, 14); // Limita a 14 números
+            value = value.replace(/^(\d{2})(\d)/, "$1.$2");
+            value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+            value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
+            value = value.replace(/(\d{4})(\d)/, "$1-$2");
+        }
+        return value;
+    };
+
+    if (tipoDocSelect && docInput && labelDoc) {
+        tipoDocSelect.addEventListener('change', (e) => {
+            const tipo = e.target.value;
+            docInput.value = ''; // Limpa o campo ao trocar para evitar máscara quebrada
+            
+            if (tipo === 'CPF') {
+                labelDoc.textContent = 'CPF';
+                docInput.placeholder = '000.000.000-00';
+            } else {
+                labelDoc.textContent = 'CNPJ';
+                docInput.placeholder = '00.000.000/0000-00';
+            }
+        });
+
+        docInput.addEventListener('input', (e) => {
+            const tipo = tipoDocSelect.value;
+            e.target.value = applyMask(e.target.value, tipo);
+        });
+    }
+    // ------------------------------------------------
+
     const steps = [...document.querySelectorAll('.form-step')];
     const stepperItems = [...document.querySelectorAll('.stepper .step')];
     
@@ -57,11 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         
+        // Define o título visual dependendo da seleção
+        const tipoDoc = data.tipoDocumento === 'CPF' ? 'CPF' : 'CNPJ';
+        
         const summaryDiv = document.getElementById('summary-content');
         summaryDiv.innerHTML = `
             <h3>Dados da Igreja</h3>
             <p><strong>Nome:</strong> ${data.name}</p>
-            <p><strong>CNPJ:</strong> ${data.cnpj || 'Não informado'}</p>
+            <p><strong>${tipoDoc}:</strong> ${data.cnpj || 'Não informado'}</p>
             <p><strong>Endereço:</strong> ${data.address}</p>
             
             <h3>Aparência</h3>
@@ -122,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (payload && payload.tenantType === 'sede') {
                 window.location.href = '/pages/sede-panel/sede.html';
             } else {
-                // Fallback to login if token is weird
                 window.location.href = '/login.html'; 
             }
 
