@@ -17,15 +17,22 @@ export const getConfig = async (req, res, next) => {
             return res.status(404).json({ message: 'Tenant não encontrado.' });
         }
 
-        // Define a aparência padrão para evitar erros se não estiver configurada
+        // Define a configuração padrão para evitar erros se não estiver configurada
         const defaultConfig = {
             aparencia: { theme: 'light', corPrimaria: '#001f5d', corSecundaria: '#0033a0' },
-            logoUrl: ''
+            logoUrl: '',
+            // --- NOVOS CAMPOS FINANCEIROS INJETADOS AQUI ---
+            porcentagemSede: 10,
+            coresCategorias: {},
+            dizimoPastoral: { valor: 0, exibirNoRelatorio: true }
         };
 
         // Mescla a configuração do tenant com o padrão
         const tenantConfig = { ...defaultConfig, ...(tenant.config || {}) };
         tenantConfig.aparencia = { ...defaultConfig.aparencia, ...(tenantConfig.aparencia || {}) };
+        
+        // Garante que o dízimo pastoral não venha quebrado
+        tenantConfig.dizimoPastoral = { ...defaultConfig.dizimoPastoral, ...(tenantConfig.dizimoPastoral || {}) };
 
         // Combina as configurações: começa com a global e sobrescreve com a do tenant.
         const finalConfig = { 
@@ -35,8 +42,13 @@ export const getConfig = async (req, res, next) => {
                 nomeIgreja: tenant.name,
                 logoIgrejaUrl: tenantConfig.logoUrl
             },
-            // CORREÇÃO: Lê do local correto (tenant.config.aparencia)
-            aparencia: tenantConfig.aparencia
+            // Lê do local correto (tenant.config.aparencia)
+            aparencia: tenantConfig.aparencia,
+            
+            // Força as novas configurações financeiras na raiz da resposta para o Frontend ler facilmente
+            porcentagemSede: tenantConfig.porcentagemSede,
+            coresCategorias: tenantConfig.coresCategorias,
+            dizimoPastoral: tenantConfig.dizimoPastoral
         };
 
         res.status(200).json(finalConfig);
@@ -53,6 +65,7 @@ export const updateConfig = async (req, res, next) => {
     try {
         const updateData = {};
         // Mapeia o corpo da requisição para o formato $set do MongoDB
+        // Essa lógica brilhante faz com que as cores, a sede e o dízimo sejam salvos dinamicamente!
         for (const key in req.body) {
             updateData[`config.${key}`] = req.body[key];
         }
@@ -113,11 +126,9 @@ export const uploadLogo = async (req, res, next) => {
     }
 };
 
-
 // As funções de export/import operavam no config global e não fazem sentido
 // no contexto de um único tenant desta forma. Elas precisariam ser repensadas
 // para um admin do sistema. Por enquanto, retornam um erro.
-
 export const exportConfig = async (req, res, next) => {
     res.status(501).json({ message: 'Funcionalidade não implementada para tenants.' });
 };
