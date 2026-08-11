@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // Função local para decodificar JWT sem bibliotecas extras
     const decodeJwt = (token) => {
         try {
             const base64Url = token.split('.')[1];
@@ -27,15 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelDoc = document.getElementById('labelDocumento');
 
     const applyMask = (value, type) => {
-        value = value.replace(/\D/g, ""); // Remove tudo o que não for dígito
+        value = value.replace(/\D/g, ""); 
         
         if (type === 'CPF') {
-            value = value.substring(0, 11); // Limita a 11 números
+            value = value.substring(0, 11);
             value = value.replace(/(\d{3})(\d)/, "$1.$2");
             value = value.replace(/(\d{3})(\d)/, "$1.$2");
             value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
         } else {
-            value = value.substring(0, 14); // Limita a 14 números
+            value = value.substring(0, 14);
             value = value.replace(/^(\d{2})(\d)/, "$1.$2");
             value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
             value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tipoDocSelect && docInput && labelDoc) {
         tipoDocSelect.addEventListener('change', (e) => {
             const tipo = e.target.value;
-            docInput.value = ''; // Limpa o campo ao trocar para evitar máscara quebrada
+            docInput.value = ''; 
             
             if (tipo === 'CPF') {
                 labelDoc.textContent = 'CPF';
@@ -63,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.value = applyMask(e.target.value, tipo);
         });
     }
-    // ------------------------------------------------
-
+    
+    // --- CONTROLE DE ETAPAS (STEPS) ---
     const steps = [...document.querySelectorAll('.form-step')];
     const stepperItems = [...document.querySelectorAll('.stepper .step')];
     
@@ -102,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         
-        // Define o título visual dependendo da seleção
         const tipoDoc = data.tipoDocumento === 'CPF' ? 'CPF' : 'CNPJ';
         
         const summaryDiv = document.getElementById('summary-content');
@@ -165,21 +166,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('userToken');
             const payload = decodeJwt(token);
 
-            if (payload && (payload.role === 'admin' || payload.tenantType === 'filial')) {
-                window.location.href = '/pages/dashboard/dashboard.html';
-            } else if (payload && payload.tenantType === 'sede') {
+            // CORREÇÃO CRÍTICA DO REDIRECIONAMENTO DE SEDE E FILIAL
+            if (payload && payload.tenantType === 'sede') {
                 window.location.href = '/pages/sede-panel/sede.html';
+            } else if (payload && payload.tenantType === 'filial') {
+                window.location.href = '/pages/dashboard/dashboard.html';
             } else {
-                window.location.href = '/login.html'; 
+                window.location.href = '/pages/dashboard/dashboard.html'; 
             }
 
         } catch (error) {
-            errorMessage.textContent = error.message || 'Ocorreu um erro ao salvar as configurações.';
+            errorMessage.textContent = error.message || 'Ocorreu um erro ao salvar as configurações. Verifique o servidor.';
             submitBtn.disabled = false;
             submitBtn.textContent = 'Finalizar Configuração';
         }
     });
 
-    // Inicializa no primeiro passo
     showStep(1);
 });
