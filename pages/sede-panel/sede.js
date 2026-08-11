@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sections = document.querySelectorAll('.panel-section');
     const navLinks = document.querySelectorAll('.nav-link');
     let globalChartInstance = null;
-    let cacheFiliais = []; // Armazena os dados para o modal de detalhes
+    let cacheFiliais = []; // Armazena os dados para o mega modal
 
     const DashboardManager = {
         formatCurrency(value) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <tr>
                                 <td style="font-weight: bold; color: var(--cor-texto-claro);">${index + 1}º</td>
                                 <td style="font-weight: 600;">${item.nome || 'Sede Principal'}</td>
-                                <td><span class="badge" style="background: rgba(77, 80, 255, 0.1); color: var(--cor-acao);">${item.membros} Membro(s)</span></td>
+                                <td><span class="badge" style="background: rgba(77, 80, 255, 0.1); color: var(--cor-acao); padding: 5px 12px; border-radius: 20px;">${item.membros} Membro(s)</span></td>
                             </tr>
                         `;
                         comparativoBody.insertAdjacentHTML('beforeend', row);
@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     comparativoBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: #888;">Nenhum dado para comparar.</td></tr>';
                 }
 
-                // Gráfico Global
                 this.renderChart(graficos.evolucaoFinanceira);
 
             } catch (error) {
@@ -164,11 +163,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.filialForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
             this.filialTableBody.addEventListener('click', (e) => this.handleTableClick(e));
 
+            // Fechar Mega Modal
             document.getElementById('close-fd-modal-btn').addEventListener('click', () => {
                 this.detailsModal.style.display = 'none';
             });
             
-            // Botões de Ação dentro do Modal de Detalhes
+            // Botões do Mega Modal
             document.getElementById('fd-btn-auditar').addEventListener('click', (e) => {
                 const id = e.target.dataset.id;
                 if(id) this.impersonate(id);
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         async loadFiliais() {
             try {
                 const filiais = await window.api.get('/api/sedes/filiais');
-                cacheFiliais = filiais; // Salva para uso no modal de detalhes
+                cacheFiliais = filiais; 
                 this.filialTableBody.innerHTML = ''; 
                 
                 if (filiais.length === 0) {
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const endereco = f.address ? f.address : '<span style="color:#aaa;">Endereço não informado</span>';
                     
                     const row = `
-                        <tr class="filial-row" data-id="${f._id}" style="cursor:pointer;">
+                        <tr class="filial-row" data-id="${f._id}" style="cursor:pointer; transition: background 0.2s;">
                             <td>
                                 <div class="filial-info-td">
                                     <img src="${imgUrl}" alt="Logo">
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     </div>
                                 </div>
                             </td>
-                            <td>${telefone}<br>${endereco}</td>
+                            <td><span style="display:block; font-size: 0.9rem;">${telefone}</span><span style="font-size: 0.85rem; color: #666;">${endereco}</span></td>
                             <td>${f.cnpj || '<span style="color:#aaa;">S/N</span>'}</td>
                             <td class="actions">
                                 <a href="#" class="impersonate-btn" data-id="${f._id}"><i class='bx bx-log-in-circle'></i> Auditar</a>
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('admin-name').required = true;
             document.getElementById('admin-password').required = true;
 
-            this.modal.classList.add('active');
+            this.modal.style.display = 'flex';
         },
 
         openModalForEdit(id) {
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('admin-name').required = false;
             document.getElementById('admin-password').required = false;
 
-            this.modal.classList.add('active');
+            this.modal.style.display = 'flex';
         },
         
         openFilialDetails(id) {
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('fd-logo').src = f.logoUrl || '/assets/placeholder-image.png';
             document.getElementById('fd-name').textContent = f.name;
-            document.getElementById('fd-pastor').textContent = `Dirigente: Pr. ${f.pastor}`;
+            document.getElementById('fd-pastor').textContent = f.pastor;
             
             document.getElementById('fd-cnpj').textContent = f.cnpj || 'Não cadastrado';
             document.getElementById('fd-address').textContent = f.address || 'Não cadastrado';
@@ -272,7 +272,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('fd-receitas').textContent = DashboardManager.formatCurrency(f.receitas);
             document.getElementById('fd-despesas').textContent = DashboardManager.formatCurrency(f.despesas);
 
-            // Passa o ID para os botões de ação do modal
             document.getElementById('fd-btn-auditar').dataset.id = id;
             document.getElementById('fd-btn-editar').dataset.id = id;
 
@@ -280,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         closeModal() {
-            this.modal.classList.remove('active');
+            this.modal.style.display = 'none';
             this.modalError.textContent = '';
         },
 
@@ -294,7 +293,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             } 
             
-            // Se clicou na linha mas não no botão, abre os detalhes
             const row = e.target.closest('.filial-row');
             if(row) {
                 this.openFilialDetails(row.dataset.id);
@@ -302,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         async impersonate(id) {
-            const confirmed = await window.showConfirmCustom('Deseja acessar o painel desta congregação em modo de auditoria? Você poderá fazer alterações no sistema como um administrador local.');
+            const confirmed = await window.showConfirmCustom('Deseja acessar o painel desta congregação em modo de auditoria? Você poderá fazer alterações no sistema local.');
             if (!confirmed) return;
 
             try {
@@ -353,7 +351,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 this.closeModal();
                 this.loadFiliais();
-                DashboardManager.loadData(); // Recarrega gráficos
+                DashboardManager.loadData(); 
                 
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'Concluir Cadastro';
@@ -428,9 +426,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.logoPreview.src = data.config.logoUrl;
                     const headerLogo = document.getElementById('sidebar-sede-logo');
                     const headerIcon = document.getElementById('sidebar-sede-icon');
-                    headerLogo.src = data.config.logoUrl;
-                    headerLogo.style.display = 'block';
-                    headerIcon.style.display = 'none';
+                    if(headerLogo) {
+                        headerLogo.src = data.config.logoUrl;
+                        headerLogo.style.display = 'block';
+                    }
+                    if(headerIcon) headerIcon.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Erro ao carregar as configurações.', error);
@@ -530,6 +530,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // Fechar modais ao clicar fora
     const modalFilialOverlay = document.getElementById('filial-modal');
     const modalDetailsOverlay = document.getElementById('filial-details-modal');
     window.addEventListener('click', (e) => {
