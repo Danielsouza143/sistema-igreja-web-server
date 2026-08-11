@@ -10,6 +10,12 @@ export const getFiliais = async (req, res, next) => {
         const sedeId = req.tenant.id;
         const filiais = await Tenant.find({ parentTenant: sedeId }).lean();
         
+        // Pega todos os tenants da rede para cálculos globais
+        const tenantIds = filiais.map(f => f._id);
+        tenantIds.push(new mongoose.Types.ObjectId(sedeId));
+        
+        const totalMembrosRede = await Membro.countDocuments({ tenantId: { $in: tenantIds } });
+
         const filiaisEnriquecidas = await Promise.all(filiais.map(async (filial) => {
             const admin = await User.findOne({ tenantId: filial._id, role: 'admin' }).select('name username').lean();
             const membrosCount = await Membro.countDocuments({ tenantId: filial._id });
@@ -26,6 +32,9 @@ export const getFiliais = async (req, res, next) => {
                 if(tipoLimpo === 'saida') financeiro.saida = curr.total;
             });
 
+            // Calcula o impacto % da filial na rede
+            const percentualMembros = totalMembrosRede > 0 ? ((membrosCount / totalMembrosRede) * 100).toFixed(1) : 0;
+
             return {
                 ...filial,
                 pastor: admin ? admin.name : 'Não Designado',
@@ -33,7 +42,8 @@ export const getFiliais = async (req, res, next) => {
                 receitas: financeiro.entrada,
                 despesas: financeiro.saida,
                 saldo: financeiro.entrada - financeiro.saida,
-                logoUrl: filial.config ? filial.config.logoUrl : null
+                logoUrl: filial.config ? filial.config.logoUrl : null,
+                percentualMembros: percentualMembros
             };
         }));
 
