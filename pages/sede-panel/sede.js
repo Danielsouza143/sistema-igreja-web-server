@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    
-    // Função local para decodificar JWT sem bibliotecas extras
+
+    // --- FUNÇÕES DE DECODIFICAÇÃO E FORMATAÇÃO ---
     const decodeJwt = (token) => {
         try {
             const base64Url = token.split('.')[1];
@@ -12,6 +12,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             return null;
         }
+    };
+
+    window.showConfirmCustom = (msg) => {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-confirmacao');
+            const msgEl = document.getElementById('msg-confirmacao');
+            const btnSim = document.getElementById('btn-confirm-sim');
+            const btnNao = document.getElementById('btn-confirm-nao');
+
+            if(!modal || !msgEl || !btnSim || !btnNao) {
+                resolve(confirm(msg));
+                return;
+            }
+
+            msgEl.innerText = msg;
+            modal.style.display = 'flex';
+
+            const newBtnSim = btnSim.cloneNode(true);
+            const newBtnNao = btnNao.cloneNode(true);
+            btnSim.parentNode.replaceChild(newBtnSim, btnSim);
+            btnNao.parentNode.replaceChild(newBtnNao, btnNao);
+
+            newBtnSim.onclick = () => { 
+                modal.style.display = 'none'; 
+                resolve(true); 
+            };
+            newBtnNao.onclick = () => { 
+                modal.style.display = 'none'; 
+                resolve(false); 
+            };
+        });
     };
 
     // --- ELEMENTOS GLOBAIS DO PAINEL ---
@@ -39,19 +70,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const comparativoBody = document.getElementById('comparativo-tbody');
                 comparativoBody.innerHTML = '';
+                
                 if (comparativoFiliais && comparativoFiliais.length > 0) {
                     comparativoFiliais.forEach((item, index) => {
                         const row = `
                             <tr>
-                                <td>${index + 1}º</td>
-                                <td>${item.nome || 'Sede Principal'}</td>
-                                <td>${item.membros}</td>
+                                <td style="font-weight: bold; color: var(--cor-texto-claro);">${index + 1}º</td>
+                                <td style="font-weight: 600;">${item.nome || 'Sede Principal'}</td>
+                                <td><span class="badge" style="background: rgba(77, 80, 255, 0.1); color: var(--cor-acao);">${item.membros} Membro(s)</span></td>
                             </tr>
                         `;
                         comparativoBody.insertAdjacentHTML('beforeend', row);
                     });
                 } else {
-                    comparativoBody.innerHTML = '<tr><td colspan="3">Nenhum dado para comparar.</td></tr>';
+                    comparativoBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: #888;">Nenhum dado para comparar.</td></tr>';
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados do dashboard:", error);
@@ -63,17 +95,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const FilialManager = {
         modal: document.getElementById('filial-modal'),
         closeModalBtn: document.getElementById('close-modal-btn'),
+        cancelBtn: document.getElementById('cancel-filial-btn'),
         addFilialBtn: document.getElementById('add-filial-btn'),
         filialForm: document.getElementById('filial-form'),
         filialTableBody: document.querySelector('#filiais-table tbody'),
         modalTitle: document.getElementById('modal-title'),
         filialIdField: document.getElementById('filial-id'),
-        adminFields: document.getElementById('admin-fields'),
+        adminFields: document.getElementById('admin-fields-container'),
         modalError: document.getElementById('modal-error-message'),
 
         init() {
             this.addFilialBtn.addEventListener('click', () => this.openModalForCreate());
             this.closeModalBtn.addEventListener('click', () => this.closeModal());
+            if(this.cancelBtn) this.cancelBtn.addEventListener('click', () => this.closeModal());
+            
             this.filialForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
             this.filialTableBody.addEventListener('click', (e) => this.handleTableClick(e));
         },
@@ -82,19 +117,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const filiais = await window.api.get('/api/sedes/filiais');
                 this.filialTableBody.innerHTML = ''; 
+                
                 if (filiais.length === 0) {
-                    this.filialTableBody.innerHTML = '<tr><td colspan="4">Nenhuma filial cadastrada.</td></tr>';
+                    this.filialTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #888;">Nenhuma filial cadastrada no sistema.</td></tr>';
                     return;
                 }
+                
                 filiais.forEach(f => {
                     const row = `
                         <tr>
-                            <td>${f.name}</td>
-                            <td>${f.address || 'Não informado'}</td>
-                            <td>${f.cnpj || 'Não informado'}</td>
+                            <td style="font-weight: 600;">${f.name}</td>
+                            <td>${f.address || '<span style="color:#aaa;">Não informado</span>'}</td>
+                            <td>${f.cnpj || '<span style="color:#aaa;">Não informado</span>'}</td>
                             <td class="actions">
-                                <a href="#" class="edit-btn" data-id="${f._id}">Editar</a>
-                                <a href="#" class="impersonate-btn" data-id="${f._id}">Entrar (Auditar)</a>
+                                <a href="#" class="edit-btn" data-id="${f._id}"><i class='bx bxs-edit'></i> Editar</a>
+                                <a href="#" class="impersonate-btn" data-id="${f._id}"><i class='bx bx-log-in-circle'></i> Entrar (Auditoria)</a>
                             </td>
                         </tr>
                     `;
@@ -102,16 +139,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             } catch (error) {
                 console.error('Erro ao carregar filiais:', error);
-                this.filialTableBody.innerHTML = '<tr><td colspan="4">Erro ao carregar dados.</td></tr>';
+                this.filialTableBody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">Erro ao carregar os dados.</td></tr>';
             }
         },
 
         openModalForCreate() {
-            this.modalTitle.textContent = 'Adicionar Nova Filial';
+            this.modalTitle.textContent = 'Nova Congregação / Filial';
             this.filialForm.reset();
             this.filialIdField.value = '';
+            
+            // Exige campos de Admin na criação
             this.adminFields.style.display = 'block';
-            this.modal.style.display = 'block';
+            document.getElementById('admin-username').required = true;
+            document.getElementById('admin-name').required = true;
+            document.getElementById('admin-password').required = true;
+
+            this.modal.classList.add('active');
         },
 
         async openModalForEdit(id) {
@@ -120,38 +163,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!filial) return;
             
-            this.modalTitle.textContent = 'Editar Filial';
+            this.modalTitle.textContent = 'Editar Congregação';
             this.filialForm.reset();
             this.filialIdField.value = id;
             document.getElementById('filial-name').value = filial.name;
             document.getElementById('filial-cnpj').value = filial.cnpj || '';
             document.getElementById('filial-address').value = filial.address || '';
             
+            // Oculta os campos de Admin na edição
             this.adminFields.style.display = 'none';
-            this.modal.style.display = 'block';
+            document.getElementById('admin-username').required = false;
+            document.getElementById('admin-name').required = false;
+            document.getElementById('admin-password').required = false;
+
+            this.modal.classList.add('active');
         },
 
         closeModal() {
-            this.modal.style.display = 'none';
+            this.modal.classList.remove('active');
             this.modalError.textContent = '';
         },
 
         handleTableClick(e) {
-            if (e.target.classList.contains('edit-btn')) {
+            const target = e.target.closest('a');
+            if (!target) return;
+            
+            if (target.classList.contains('edit-btn')) {
                 e.preventDefault();
-                const id = e.target.dataset.id;
-                this.openModalForEdit(id);
-            } else if (e.target.classList.contains('impersonate-btn')) {
+                this.openModalForEdit(target.dataset.id);
+            } else if (target.classList.contains('impersonate-btn')) {
                 e.preventDefault();
-                const id = e.target.dataset.id;
-                this.impersonate(id);
+                this.impersonate(target.dataset.id);
             }
         },
 
         async impersonate(id) {
-            if (!confirm('Você tem certeza que deseja entrar no painel desta filial? Você verá os dados como se fosse um administrador de lá.')) {
-                return;
-            }
+            const confirmed = await window.showConfirmCustom('Deseja acessar o painel desta congregação em modo de auditoria? Você poderá fazer alterações no sistema como um administrador local.');
+            if (!confirmed) return;
 
             try {
                 const response = await window.api.post(`/api/sedes/filiais/${id}/impersonate`, {});
@@ -165,11 +213,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const newPayload = decodeJwt(impersonationToken);
                     localStorage.setItem('userInfo', JSON.stringify(newPayload));
                     
-                    // Redireciona para o dashboard geral (onde o menu novo de Auditoria vai aparecer)
                     window.location.href = '/pages/dashboard/dashboard.html';
                 }
             } catch (error) {
-                alert('Não foi possível entrar no painel da filial: ' + error.message);
+                alert('Não foi possível auditar a filial: ' + error.message);
             }
         },
 
@@ -188,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const saveBtn = document.getElementById('save-filial-btn');
                 saveBtn.disabled = true;
-                saveBtn.textContent = 'Salvando...';
+                saveBtn.textContent = 'Aguarde...';
 
                 if (isEditing) {
                     await window.api.put(`/api/sedes/filiais/${id}`, data);
@@ -198,16 +245,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     data.adminPassword = document.getElementById('admin-password').value;
                     await window.api.post('/api/sedes/filiais', data);
                 }
+                
                 this.closeModal();
                 this.loadFiliais();
                 
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Salvar';
+                saveBtn.textContent = 'Concluir Cadastro';
+                
             } catch (error) {
-                this.modalError.textContent = error.message || 'Ocorreu um erro.';
+                this.modalError.textContent = error.message || 'Ocorreu um erro no servidor.';
                 const saveBtn = document.getElementById('save-filial-btn');
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Salvar';
+                saveBtn.textContent = 'Concluir Cadastro';
             }
         }
     };
@@ -215,66 +264,119 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- MÓDULO DE CONFIGURAÇÕES (SEDE) ---
     const SettingsManager = {
         form: document.getElementById('settings-form'),
-        successMessage: document.getElementById('settings-success-message'),
-        errorMessage: document.getElementById('settings-error-message'),
+        logoInput: document.getElementById('settings-logo-upload'),
+        logoPreview: document.getElementById('settings-logo-preview'),
+        btnTrocarLogo: document.getElementById('btn-trocar-logo-sede'),
+        btnSalvar: document.getElementById('save-settings-btn'),
 
         init() {
             this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+            
+            // Interação com o input de cores
+            const pColor = document.getElementById('settings-primaryColor');
+            const pText = document.getElementById('settings-primaryColor-text');
+            pColor.addEventListener('input', (e) => { pText.value = e.target.value; });
+
+            const sColor = document.getElementById('settings-secondaryColor');
+            const sText = document.getElementById('settings-secondaryColor-text');
+            sColor.addEventListener('input', (e) => { sText.value = e.target.value; });
+
+            // Upload de Logo Preview
+            if(this.btnTrocarLogo) {
+                this.btnTrocarLogo.addEventListener('click', () => this.logoInput.click());
+            }
+
+            if(this.logoInput) {
+                this.logoInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            this.logoPreview.src = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
         },
 
         async loadData() {
             try {
-                // Tenta puxar de current
                 const data = await window.api.get('/api/tenants/current');
+                
                 document.getElementById('settings-name').value = data.name || '';
                 document.getElementById('settings-cnpj').value = data.cnpj || '';
+                document.getElementById('settings-telefone').value = data.telefone || '';
                 document.getElementById('settings-address').value = data.address || '';
                 
                 if (data.config && data.config.theme) {
-                    document.getElementById('settings-primaryColor').value = data.config.theme.primaryColor || '#3498db';
-                    document.getElementById('settings-secondaryColor').value = data.config.theme.secondaryColor || '#2c3e50';
+                    const pColor = data.config.theme.primaryColor || '#001f5d';
+                    const sColor = data.config.theme.secondaryColor || '#0033a0';
+                    
+                    document.getElementById('settings-primaryColor').value = pColor;
+                    document.getElementById('settings-primaryColor-text').value = pColor;
+                    
+                    document.getElementById('settings-secondaryColor').value = sColor;
+                    document.getElementById('settings-secondaryColor-text').value = sColor;
                 }
-                if (data.config) {
-                    document.getElementById('settings-logoUrl').value = data.config.logoUrl || '';
+
+                if (data.config && data.config.logoUrl) {
+                    this.logoPreview.src = data.config.logoUrl;
                 }
             } catch (error) {
-                this.errorMessage.textContent = 'Erro ao carregar as configurações.';
+                console.error('Erro ao carregar as configurações.', error);
             }
         },
 
         async handleFormSubmit(e) {
             e.preventDefault();
-            this.errorMessage.textContent = '';
-            this.successMessage.textContent = '';
-
-            const data = {
-                name: document.getElementById('settings-name').value,
-                cnpj: document.getElementById('settings-cnpj').value,
-                address: document.getElementById('settings-address').value,
-                theme: {
-                    primaryColor: document.getElementById('settings-primaryColor').value,
-                    secondaryColor: document.getElementById('settings-secondaryColor').value,
-                },
-                logoUrl: document.getElementById('settings-logoUrl').value
-            };
+            this.btnSalvar.disabled = true;
+            this.btnSalvar.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Salvando...`;
 
             try {
-                await window.api.patch('/api/tenants/onboarding', data);
-                this.successMessage.textContent = 'Configurações salvas com sucesso!';
-                tenantNamePlaceholder.textContent = data.name;
+                // Monta o FormData para enviar arquivos + textos
+                const formData = new FormData();
+                formData.append('name', document.getElementById('settings-name').value);
+                formData.append('cnpj', document.getElementById('settings-cnpj').value);
+                formData.append('telefone', document.getElementById('settings-telefone').value);
+                formData.append('address', document.getElementById('settings-address').value);
+                formData.append('primaryColor', document.getElementById('settings-primaryColor').value);
+                formData.append('secondaryColor', document.getElementById('settings-secondaryColor').value);
+                
+                if (this.logoInput && this.logoInput.files[0]) {
+                    formData.append('logo', this.logoInput.files[0]);
+                }
+
+                await window.api.patch('/api/tenants/onboarding', formData);
+                
+                alert('Configurações da Sede salvas com sucesso!');
+                
+                // Dispara evento para o header do sistema atualizar as cores
+                const nomeAtualizado = document.getElementById('settings-name').value;
+                tenantNamePlaceholder.textContent = nomeAtualizado;
+                
+                // Força reload suave para recarregar logo no header central
+                setTimeout(() => { window.location.reload(); }, 1000);
+
             } catch (error) {
-                this.errorMessage.textContent = error.message || 'Ocorreu um erro ao salvar.';
+                alert(error.message || 'Ocorreu um erro ao salvar configurações.');
+            } finally {
+                this.btnSalvar.disabled = false;
+                this.btnSalvar.innerHTML = `<i class='bx bx-save'></i> Salvar Todas as Alterações`;
             }
         }
     };
 
-    // --- FUNÇÕES GLOBAIS DO PAINEL ---
+    // --- NAVEGAÇÃO E CONTROLE DE EXIBIÇÃO ---
     const showSection = (targetId) => {
         sections.forEach(section => section.classList.remove('active'));
         navLinks.forEach(link => link.classList.remove('active'));
 
-        document.getElementById(`${targetId}-section`).classList.add('active');
-        document.querySelector(`.nav-link[data-target="${targetId}"]`).classList.add('active');
+        const sectionToActivate = document.getElementById(`${targetId}-section`);
+        const linkToActivate = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+        
+        if (sectionToActivate) sectionToActivate.classList.add('active');
+        if (linkToActivate) linkToActivate.classList.add('active');
 
         if (targetId === 'filiais') {
             FilialManager.loadFiliais();
@@ -313,9 +415,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             showSection('dashboard'); 
 
         } catch (error) {
-            document.body.innerHTML = `<div style="text-align: center; padding: 50px;"><h2>Erro Crítico</h2><p>Não foi possível carregar as informações do seu painel.</p><p><i>${error.message || 'Sessão inválida'}</i></p><a href="/login.html">Voltar para o Login</a></div>`;
+            document.body.innerHTML = `<div style="text-align: center; padding: 50px; font-family: sans-serif;">
+                <i class='bx bx-error-circle' style="font-size: 4rem; color: #dc3545;"></i>
+                <h2 style="color: #333;">Sessão Expirada ou Acesso Negado</h2>
+                <p style="color: #666; margin-bottom: 20px;">Você precisa estar logado como Administrador da Sede para ver esta página.</p>
+                <a href="/login.html" style="background: #001f5d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Voltar para o Login</a>
+            </div>`;
         }
     };
+
+    // Fechar modal de filial ao clicar fora
+    const modalFilialOverlay = document.getElementById('filial-modal');
+    modalFilialOverlay.addEventListener('click', (e) => {
+        if (e.target === modalFilialOverlay) FilialManager.closeModal();
+    });
 
     mainContent.style.visibility = 'hidden';
     initializePanel();
