@@ -2,7 +2,26 @@ import express from 'express';
 import Tenant from '../models/tenant.model.js';
 import { protect } from '../middleware/auth.middleware.js';
 
+// Importações necessárias para o Onboarding
+import { completeOnboarding } from '../controllers/tenants.controller.js';
+import { s3Upload } from '../utils/s3-upload.js';
+
 const router = express.Router();
+
+// Configura o middleware de upload para salvar a logo no S3
+const upload = s3Upload('logos', false);
+
+// ==========================================
+// ROTAS DE ONBOARDING (NOVA IMPLEMENTAÇÃO)
+// ==========================================
+// Mapeamos os 3 métodos para garantir que a requisição do frontend nunca retorne 404
+router.patch('/onboarding', protect, upload.single('logo'), completeOnboarding);
+router.put('/onboarding', protect, upload.single('logo'), completeOnboarding);
+router.post('/onboarding', protect, upload.single('logo'), completeOnboarding);
+
+// ==========================================
+// ROTAS ORIGINAIS MANTIDAS INTEGRALMENTE
+// ==========================================
 
 // 1. Rota de Status (Usada no Login)
 router.get('/status', protect, async (req, res) => {
@@ -40,6 +59,7 @@ router.patch('/current', protect, async (req, res) => {
         const allowedUpdates = {};
         if (updates.name !== undefined) allowedUpdates.name = updates.name;
         if (updates.cnpj !== undefined) allowedUpdates.cnpj = updates.cnpj;
+        if (updates.tipoDocumento !== undefined) allowedUpdates.tipoDocumento = updates.tipoDocumento; // Adicionado para suportar CPF/CNPJ dinâmico
         if (updates.telefone !== undefined) allowedUpdates.telefone = updates.telefone;
         if (updates.address !== undefined) allowedUpdates.address = updates.address;
         if (updates.email !== undefined) allowedUpdates.email = updates.email;
