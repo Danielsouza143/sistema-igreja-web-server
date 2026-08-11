@@ -5,11 +5,6 @@ import User from '../models/user.model.js';
 import Membro from '../models/membro.model.js';
 import Lancamento from '../models/lancamento.model.js';
 
-/**
- * @desc    Listar todas as filiais de uma Sede
- * @route   GET /api/sedes/filiais
- * @access  Private (Admin de Sede)
- */
 export const getFiliais = async (req, res, next) => {
     try {
         const sedeId = req.tenant.id;
@@ -20,11 +15,6 @@ export const getFiliais = async (req, res, next) => {
     }
 };
 
-/**
- * @desc    Criar uma nova Filial e seu primeiro admin
- * @route   POST /api/sedes/filiais
- * @access  Private (Admin de Sede)
- */
 export const createFilial = async (req, res, next) => {
     const { name, adminUsername, adminName, adminPassword } = req.body;
     const sedeId = req.tenant.id;
@@ -72,11 +62,6 @@ export const createFilial = async (req, res, next) => {
     }
 };
 
-/**
- * @desc    Atualizar os dados de uma Filial
- * @route   PUT /api/sedes/filiais/:id
- * @access  Private (Admin de Sede)
- */
 export const updateFilial = async (req, res, next) => {
     const { id: filialId } = req.params;
     const sedeId = req.tenant.id;
@@ -106,34 +91,31 @@ export const updateFilial = async (req, res, next) => {
     }
 };
 
-/**
- * @desc    Obter dados consolidados para o dashboard da Sede
- * @route   GET /api/sedes/dashboard
- * @access  Private (Admin de Sede)
- */
 export const getDashboardData = async (req, res, next) => {
     try {
         const sedeId = req.tenant.id;
 
+        // Pega as filiais E a própria sede para consolidar TUDO da rede
         const filiais = await Tenant.find({ parentTenant: sedeId }).select('_id name');
-        const filialIds = filiais.map(f => f._id);
+        const tenantIds = filiais.map(f => f._id);
+        tenantIds.push(new mongoose.Types.ObjectId(sedeId));
 
         const [
             totalMembros,
             totalFinanceiro,
-            membrosPorFilial
+            membrosPorTenant
         ] = await Promise.all([
-            Membro.countDocuments({ tenantId: { $in: filialIds } }),
+            Membro.countDocuments({ tenantId: { $in: tenantIds } }),
             Lancamento.aggregate([
-                { $match: { tenantId: { $in: filialIds } } },
+                { $match: { tenantId: { $in: tenantIds } } },
                 { $group: { _id: '$tipo', total: { $sum: '$valor' } } }
             ]),
             Membro.aggregate([
-                { $match: { tenantId: { $in: filialIds } } },
+                { $match: { tenantId: { $in: tenantIds } } },
                 { $group: { _id: '$tenantId', count: { $sum: 1 } } },
-                { $lookup: { from: 'tenants', localField: '_id', foreignField: '_id', as: 'filialInfo' } },
-                { $unwind: '$filialInfo' },
-                { $project: { filialId: '$_id', nome: '$filialInfo.name', membros: '$count' } }
+                { $lookup: { from: 'tenants', localField: '_id', foreignField: '_id', as: 'tenantInfo' } },
+                { $unwind: '$tenantInfo' },
+                { $project: { tenantId: '$_id', nome: '$tenantInfo.name', membros: '$count' } }
             ])
         ]);
 
@@ -149,7 +131,7 @@ export const getDashboardData = async (req, res, next) => {
                 totalEntradas: financeiro.entrada,
                 totalSaidas: financeiro.saida
             },
-            comparativoFiliais: membrosPorFilial.sort((a, b) => b.membros - a.membros)
+            comparativoFiliais: membrosPorTenant.sort((a, b) => b.membros - a.membros)
         };
 
         res.status(200).json(dashboardData);
@@ -159,11 +141,6 @@ export const getDashboardData = async (req, res, next) => {
     }
 };
 
-/**
- * @desc    Gerar um token de impersonação para acessar uma filial
- * @route   POST /api/sedes/filiais/:id/impersonate
- * @access  Private (Admin de Sede)
- */
 export const impersonateFilial = async (req, res, next) => {
     const { id: filialId } = req.params;
     const sedeId = req.tenant.id;
@@ -190,7 +167,7 @@ export const impersonateFilial = async (req, res, next) => {
             role: filialAdmin.role,
             tenantId: filial.id,
             tenantType: filial.tenantType,
-            impersonatorId: sedeAdminId,
+            impersonatorId: sedeAdminId, // Marca que é um acesso de auditoria
         };
 
         const impersonationToken = jwt.sign(impersonationPayload, process.env.JWT_SECRET, {
