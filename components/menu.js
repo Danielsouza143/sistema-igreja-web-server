@@ -100,9 +100,47 @@ var iniciarMenu = () => {
         }
     };
 
-    if (userInfo && userInfo.role !== 'admin') {
-        const configLink = document.querySelector('a[href*="configuracoes.html"]');
-        if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
+    // --- NOVA LÓGICA: Injetar botão "Painel da Sede" e "Sair do Modo Auditoria" ---
+    if (userInfo) {
+        // Se for operador comum, esconde o menu de configs
+        if (userInfo.role !== 'admin') {
+            const configLink = document.querySelector('a[href*="configuracoes.html"]');
+            if (configLink && configLink.closest('li')) configLink.closest('li').style.display = 'none';
+        }
+
+        // Se for Sede (e não estiver em modo de auditoria), mostra o botão
+        const sidebarLinks = document.querySelector('.sidebar-links');
+        if (userInfo.tenantType === 'sede' && !userInfo.impersonatorId && sidebarLinks) {
+            const sedeLinkExists = document.getElementById('nav-link-sede');
+            if (!sedeLinkExists) {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="/pages/sede-panel/sede.html" id="nav-link-sede" style="color: #ff9800; font-weight: bold;"><i class='bx bxs-institution'></i> Painel da Sede</a>`;
+                // Insere logo no topo do menu
+                sidebarLinks.insertBefore(li, sidebarLinks.firstChild);
+            }
+        }
+
+        // Se estiver em modo de Auditoria (Impersonate), mostra botão de "Voltar à Sede"
+        if (userInfo.impersonatorId && sidebarLinks) {
+            const exitImpersonateExists = document.getElementById('nav-exit-impersonate');
+            if (!exitImpersonateExists) {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="#" id="nav-exit-impersonate" style="background-color: #dc3545; color: white; border-radius: 4px; text-align: center; justify-content: center; margin-top: 15px;"><i class='bx bx-exit'></i> Voltar ao Painel da Sede</a>`;
+                sidebarLinks.appendChild(li);
+
+                document.getElementById('nav-exit-impersonate').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Restaura o token original do LocalStorage
+                    const originalToken = localStorage.getItem('originalUserToken');
+                    if (originalToken) {
+                        localStorage.setItem('userToken', originalToken);
+                        localStorage.removeItem('originalUserToken');
+                        // Força a redecodificação no frontend recarregando para o painel
+                        window.location.href = '/pages/sede-panel/sede.html';
+                    }
+                });
+            }
+        }
     }
 
     ChurchIdentity.init();
@@ -116,9 +154,6 @@ var iniciarMenu = () => {
         }
     });
 
-    // ========================================================
-    // --- LÓGICA DE NOTIFICAÇÕES INTEGRADA ---
-    // ========================================================
     window.fetchNotifications = async () => {
         const badge = document.querySelector('.notification-badge');
         const notificationList = document.querySelector('.notifications-list');
@@ -128,7 +163,6 @@ var iniciarMenu = () => {
         try {
             const data = await window.api.get('/api/notifications');
 
-            // Renderiza Badge
             if (data.unreadCount > 0) {
                 badge.style.display = 'flex';
                 badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
@@ -136,7 +170,6 @@ var iniciarMenu = () => {
                 badge.style.display = 'none';
             }
 
-            // Renderiza Lista
             notificationList.innerHTML = '';
             if (!data.notifications || data.notifications.length === 0) {
                 notificationList.innerHTML = '<li class="no-notifications">Nenhuma notificação recente.</li>';
@@ -181,22 +214,17 @@ var iniciarMenu = () => {
                 `;
                 notificationList.appendChild(li);
             });
-        } catch (error) {
-            console.error('Erro ao buscar notificações:', error);
-        }
+        } catch (error) {}
     };
 
-    // Dispara a busca 1 segundo após o menu iniciar e depois a cada minuto
     setTimeout(() => { if(window.api) window.fetchNotifications(); }, 1000);
     if (window.notifInterval) clearInterval(window.notifInterval);
     window.notifInterval = setInterval(() => { if(window.api) window.fetchNotifications(); }, 60000);
 }
 
-// DELEGAÇÃO DE EVENTOS GLOBAL (CONTROLADOR ÚNICO DA TELA)
 document.removeEventListener('click', window.menuClickHandler);
 window.menuClickHandler = async (e) => {
     
-    // 1. Sidebar
     if (e.target.closest('#hamburger-btn-desktop') || e.target.closest('#hamburger-btn-mobile')) {
         const sidebar = document.getElementById('sidebar-menu');
         const overlay = document.getElementById('sidebar-overlay');
@@ -214,7 +242,6 @@ window.menuClickHandler = async (e) => {
         }
     }
 
-    // 2. Conta do Usuário
     let userInfo = JSON.parse(localStorage.getItem('userInfo'));
     if (e.target.closest('#conta-area-trigger')) {
         e.stopPropagation();
@@ -237,13 +264,11 @@ window.menuClickHandler = async (e) => {
         if (modalConta) modalConta.style.display = 'none';
     }
 
-    // 3. Logout
     if (e.target.closest('#btn-modal-logout')) {
         e.preventDefault();
         handleLogout();
     }
 
-    // 4. Lógica de Notificações
     const dropdown = document.querySelector('.notifications-dropdown');
     const sino = e.target.closest('.menu-notifications');
 
