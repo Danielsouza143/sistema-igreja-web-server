@@ -9,6 +9,7 @@
     <script src="/js/global-loader.js" defer></script> 
     <script src="/js/api.js"></script>
     
+    <!-- Importações base do Conékta -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -222,7 +223,7 @@
         </main>
     </div>
 
-    <!-- Modal para Adicionar/Editar Filial -->
+    <!-- Modal para Adicionar/Editar Filial (Design Conékta) -->
     <div id="filial-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -256,12 +257,12 @@
 
                 <div id="admin-fields-container">
                     <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
-                    <h3 style="color: var(--cor-primaria); font-size: 1.1rem; margin-bottom: 15px;"><i class='bx bxs-user-badge'></i> Credenciais do Pastor Local</h3>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Este será o usuário administrador que gerenciará a filial de forma independente.</p>
+                    <h3 style="color: var(--cor-primaria); font-size: 1.1rem; margin-bottom: 15px;"><i class='bx bxs-user-badge'></i> Credenciais do Administrador Local</h3>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Este será o usuário principal que gerenciará o sistema nesta filial de forma independente.</p>
                     
                     <div id="admin-fields">
                         <div class="form-group">
-                            <label for="admin-name">Nome Completo do Pastor / Dirigente</label>
+                            <label for="admin-name">Nome Completo do Dirigente</label>
                             <input type="text" id="admin-name" placeholder="Ex: Pr. João Silva">
                         </div>
                         <div class="form-group-grid">
@@ -286,64 +287,93 @@
         </div>
     </div>
 
-    <!-- MEGA MODAL: Raio-X da Filial -->
+    <!-- MEGA MODAL ERP: Raio-X da Filial -->
     <div id="filial-details-modal" class="modal-overlay">
-        <div class="modal-content modal-xl">
-            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <img id="fd-logo" src="/assets/placeholder-image.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--cor-borda);">
-                    <div>
-                        <h2 id="fd-name" style="margin: 0; font-size: 1.8rem;">Nome da Congregação</h2>
-                        <p style="margin: 5px 0 0 0; color: #666; font-size: 1.1rem;"><i class='bx bxs-user-badge'></i> <span id="fd-pastor">Pastor Responsável</span></p>
-                    </div>
-                </div>
-                <button type="button" id="close-fd-modal-btn" class="btn-close">&times;</button>
-            </div>
-            
-            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
-
-            <div class="modal-body layout-horizontal">
-                <!-- Coluna Esquerda: Informações e Ações -->
-                <div class="coluna-esquerda" style="flex: 1;">
-                    <h3 style="color: var(--cor-primaria); margin-top: 0; margin-bottom: 20px;">Informações de Cadastro</h3>
+        <div class="modal-content mega-modal">
+            <button type="button" id="close-fd-modal-btn" class="btn-close-mega">&times;</button>
+            <div class="mega-modal-layout">
+                
+                <!-- Coluna Esquerda: Identidade e Status -->
+                <div class="mega-sidebar">
+                    <div class="mega-status-badge">Ativa</div>
+                    <img id="fd-logo" src="/assets/placeholder-image.png" alt="Logo da Congregação">
+                    <h2 id="fd-name">Nome da Congregação</h2>
+                    <p class="fd-pastor-title"><i class='bx bxs-user-badge'></i> Pr. <span id="fd-pastor">Nome do Pastor</span></p>
                     
-                    <p style="margin-bottom: 10px; color: #444;"><i class='bx bx-id-card' style="color: #888;"></i> <strong>Documento:</strong> <span id="fd-cnpj"></span></p>
-                    <p style="margin-bottom: 10px; color: #444;"><i class='bx bx-map' style="color: #888;"></i> <strong>Endereço:</strong> <span id="fd-address"></span></p>
-                    <p style="margin-bottom: 25px; color: #444;"><i class='bx bx-calendar' style="color: #888;"></i> <strong>Membro da Rede desde:</strong> <span id="fd-date"></span></p>
-
-                    <h3 style="color: var(--cor-primaria); margin-bottom: 15px;">Ações da Sede</h3>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button id="fd-btn-auditar" class="btn-principal" style="background-color: #28a745; border: none; justify-content: center;"><i class='bx bx-log-in-circle'></i> Entrar no Sistema Desta Filial</button>
-                        <button id="fd-btn-editar" class="btn-secundario" style="justify-content: center;"><i class='bx bxs-edit'></i> Editar Dados Cadastrais</button>
-                    </div>
-                </div>
-
-                <!-- Coluna Direita: Dashboards Rápidos -->
-                <div class="coluna-direita" style="flex: 1.5;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                        <div class="card-mini" style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
-                            <i class='bx bxs-group' style="font-size: 2rem; color: #007bff; margin-bottom: 10px;"></i>
-                            <h3 id="fd-membros" style="margin: 0; font-size: 1.8rem; color: #333;">0</h3>
-                            <span style="font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: bold;">Membros Ativos</span>
+                    <div class="fd-info-list">
+                        <div class="fd-info-item">
+                            <i class='bx bx-id-card'></i>
+                            <div>
+                                <small>Documento Oficial</small>
+                                <span id="fd-cnpj">Não informado</span>
+                            </div>
                         </div>
-                        <div class="card-mini" style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
-                            <i class='bx bx-wallet' style="font-size: 2rem; color: #28a745; margin-bottom: 10px;"></i>
-                            <h3 id="fd-saldo" style="margin: 0; font-size: 1.8rem; color: #333;">R$ 0,00</h3>
-                            <span style="font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: bold;">Saldo Financeiro (Geral)</span>
+                        <div class="fd-info-item">
+                            <i class='bx bx-map'></i>
+                            <div>
+                                <small>Localização</small>
+                                <span id="fd-address">Não informado</span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div style="background: rgba(40, 167, 69, 0.1); padding: 15px; border-radius: 8px;">
-                            <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #28a745; font-weight: bold;">Total de Receitas</p>
-                            <h4 id="fd-receitas" style="margin: 0; font-size: 1.3rem; color: #1e7e34;">R$ 0,00</h4>
-                        </div>
-                        <div style="background: rgba(220, 53, 69, 0.1); padding: 15px; border-radius: 8px;">
-                            <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #dc3545; font-weight: bold;">Total de Despesas</p>
-                            <h4 id="fd-despesas" style="margin: 0; font-size: 1.3rem; color: #c82333;">R$ 0,00</h4>
+                        <div class="fd-info-item">
+                            <i class='bx bx-calendar'></i>
+                            <div>
+                                <small>No Conékta Desde</small>
+                                <span id="fd-date">--/--/----</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Coluna Direita: Dashboard da Filial e Ações -->
+                <div class="mega-main">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+                        <h2 style="margin:0; color: var(--cor-primaria);">Visão Geral (Raio-X)</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="fd-btn-editar" class="btn-secundario"><i class='bx bxs-edit'></i> Editar</button>
+                            <button id="fd-btn-auditar" class="btn-principal" style="background-color: #28a745; border: none;"><i class='bx bx-log-in-circle'></i> Auditar Sistema</button>
+                        </div>
+                    </div>
+
+                    <div class="mega-stats-grid">
+                        <div class="mega-card-stat">
+                            <div class="mega-icon-wrapper" style="background: rgba(0, 123, 255, 0.1); color: #007bff;">
+                                <i class='bx bxs-group'></i>
+                            </div>
+                            <div class="mega-stat-content">
+                                <h3 id="fd-membros">0</h3>
+                                <p>Membros Ativos</p>
+                            </div>
+                        </div>
+                        <div class="mega-card-stat">
+                            <div class="mega-icon-wrapper" style="background: rgba(40, 167, 69, 0.1); color: #28a745;">
+                                <i class='bx bx-wallet'></i>
+                            </div>
+                            <div class="mega-stat-content">
+                                <h3 id="fd-saldo">R$ 0,00</h3>
+                                <p>Saldo Atual em Caixa</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mega-financial-breakdown">
+                        <div class="fd-finance-box entradas">
+                            <i class='bx bx-trending-up'></i>
+                            <div>
+                                <p>Total de Entradas</p>
+                                <h4 id="fd-receitas">R$ 0,00</h4>
+                            </div>
+                        </div>
+                        <div class="fd-finance-box saidas">
+                            <i class='bx bx-trending-down'></i>
+                            <div>
+                                <p>Total de Saídas</p>
+                                <h4 id="fd-despesas">R$ 0,00</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
