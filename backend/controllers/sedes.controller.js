@@ -10,7 +10,6 @@ export const getFiliais = async (req, res, next) => {
         const sedeId = req.tenant.id;
         const filiais = await Tenant.find({ parentTenant: sedeId }).lean();
         
-        // Pega todos os tenants da rede para cálculos globais
         const tenantIds = filiais.map(f => f._id);
         tenantIds.push(new mongoose.Types.ObjectId(sedeId));
         
@@ -32,7 +31,6 @@ export const getFiliais = async (req, res, next) => {
                 if(tipoLimpo === 'saida') financeiro.saida = curr.total;
             });
 
-            // Calcula o impacto % da filial na rede
             const percentualMembros = totalMembrosRede > 0 ? ((membrosCount / totalMembrosRede) * 100).toFixed(1) : 0;
 
             return {
@@ -193,6 +191,43 @@ export const getDashboardData = async (req, res, next) => {
             if (tipoLimpo === 'saida') evolucaoMensal[mesIdx].saidas = item.total;
         });
 
+        // Enriquece o comparativo com dados completos da congregação
+        const comparativoEnriquecido = await Promise.all(membrosPorTenant.map(async (item) => {
+            const tId = item.tenantId;
+            const tenantDoc = await Tenant.findById(tId).lean();
+            const adminUser = await User.findOne({ tenantId: tId, role: 'admin' }).select('name').lean();
+            
+            const lancs = await Lancamento.aggregate([
+                { $match: { tenantId: tId } },
+                { $group: { _id: '$tipo', total: { $sum: '$valor' } } }
+            ]);
+            const fin = { entrada: 0, saida: 0 };
+            lancs.forEach(c => {
+                const tipoL = String(c._id).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if(tipoL === 'entrada') fin.entrada = c.total;
+                if(tipoL === 'saida') fin.saida = c.total;
+            });
+
+            const percentual = totalMembros > 0 ? ((item.membros / totalMembros) * 100).toFixed(1) : 0;
+
+            return {
+                _id: tId,
+                tenantId: tId,
+                nome: tenantDoc ? tenantDoc.name : item.nome,
+                membros: item.membros,
+                pastor: adminUser ? adminUser.name : 'Não Designado',
+                address: tenantDoc ? tenantDoc.address : '',
+                telefone: tenantDoc ? tenantDoc.telefone : '',
+                cnpj: tenantDoc ? tenantDoc.cnpj : '',
+                createdAt: tenantDoc ? tenantDoc.createdAt : new Date(),
+                logoUrl: tenantDoc && tenantDoc.config ? tenantDoc.config.logoUrl : null,
+                receitas: fin.entrada,
+                despesas: fin.saida,
+                saldo: fin.entrada - fin.saida,
+                percentualMembros: percentual
+            };
+        }));
+
         const dashboardData = {
             resumo: {
                 totalFiliais: filiais.length,
@@ -201,7 +236,7 @@ export const getDashboardData = async (req, res, next) => {
                 totalSaidas: financeiro.saida,
                 saldoGlobal: financeiro.entrada - financeiro.saida
             },
-            comparativoFiliais: membrosPorTenant.sort((a, b) => b.membros - a.membros),
+            comparativoFiliais: comparativoEnriquecido.sort((a, b) => b.membros - a.membros),
             graficos: {
                 evolucaoFinanceira: evolucaoMensal
             }
