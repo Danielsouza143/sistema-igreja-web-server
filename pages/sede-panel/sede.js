@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // --- FUNÇÕES DE DECODIFICAÇÃO E FORMATAÇÃO ---
     const decodeJwt = (token) => {
         try {
             const base64Url = token.split('.')[1];
@@ -34,26 +33,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnSim.parentNode.replaceChild(newBtnSim, btnSim);
             btnNao.parentNode.replaceChild(newBtnNao, btnNao);
 
-            newBtnSim.onclick = () => { 
-                modal.style.display = 'none'; 
-                resolve(true); 
-            };
-            newBtnNao.onclick = () => { 
-                modal.style.display = 'none'; 
-                resolve(false); 
-            };
+            newBtnSim.onclick = () => { modal.style.display = 'none'; resolve(true); };
+            newBtnNao.onclick = () => { modal.style.display = 'none'; resolve(false); };
         });
     };
 
-    // --- ELEMENTOS GLOBAIS DO PAINEL ---
     const tenantNamePlaceholder = document.getElementById('tenant-name-placeholder');
     const mainContent = document.querySelector('.main-content');
     const navContainer = document.querySelector('.sidebar-nav ul');
     const logoutButton = document.getElementById('logout-button');
     const sections = document.querySelectorAll('.panel-section');
     const navLinks = document.querySelectorAll('.nav-link');
+    let globalChartInstance = null;
+    let cacheFiliais = []; // Armazena os dados para o modal de detalhes
 
-    // --- MÓDULO DO DASHBOARD ---
     const DashboardManager = {
         formatCurrency(value) {
             return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -61,13 +54,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         async loadData() {
             try {
                 const data = await window.api.get('/api/sedes/dashboard');
-                const { resumo, comparativoFiliais } = data;
+                const { resumo, comparativoFiliais, graficos } = data;
 
                 document.getElementById('total-filiais').textContent = resumo.totalFiliais;
                 document.getElementById('total-membros').textContent = resumo.totalMembros;
                 document.getElementById('total-entradas').textContent = this.formatCurrency(resumo.totalEntradas);
                 document.getElementById('total-saidas').textContent = this.formatCurrency(resumo.totalSaidas);
+                
+                const saldoGlobal = document.getElementById('saldo-global');
+                if(saldoGlobal) {
+                    saldoGlobal.textContent = this.formatCurrency(resumo.saldoGlobal);
+                    saldoGlobal.style.color = resumo.saldoGlobal >= 0 ? '#28a745' : '#dc3545';
+                }
 
+                // Tabela Comparativa
                 const comparativoBody = document.getElementById('comparativo-tbody');
                 comparativoBody.innerHTML = '';
                 
@@ -85,15 +85,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     comparativoBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: #888;">Nenhum dado para comparar.</td></tr>';
                 }
+
+                // Gráfico Global
+                this.renderChart(graficos.evolucaoFinanceira);
+
             } catch (error) {
                 console.error("Erro ao carregar dados do dashboard:", error);
             }
+        },
+        renderChart(evolucaoMensal) {
+            const canvas = document.getElementById('grafico-evolucao-global');
+            if(!canvas || !evolucaoMensal) return;
+
+            if(globalChartInstance) globalChartInstance.destroy();
+
+            const labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            
+            globalChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Entradas Globais',
+                            data: evolucaoMensal.map(d => d.entradas),
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Saídas Globais',
+                            data: evolucaoMensal.map(d => d.saidas),
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
         }
     };
 
     // --- MÓDULO DE GESTÃO DE FILIAIS ---
     const FilialManager = {
         modal: document.getElementById('filial-modal'),
+        detailsModal: document.getElementById('filial-details-modal'),
         closeModalBtn: document.getElementById('close-modal-btn'),
         cancelBtn: document.getElementById('cancel-filial-btn'),
         addFilialBtn: document.getElementById('add-filial-btn'),
@@ -111,11 +163,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             this.filialForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
             this.filialTableBody.addEventListener('click', (e) => this.handleTableClick(e));
+
+            document.getElementById('close-fd-modal-btn').addEventListener('click', () => {
+                this.detailsModal.style.display = 'none';
+            });
+            
+            // Botões de Ação dentro do Modal de Detalhes
+            document.getElementById('fd-btn-auditar').addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                if(id) this.impersonate(id);
+            });
+            document.getElementById('fd-btn-editar').addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                this.detailsModal.style.display = 'none';
+                if(id) this.openModalForEdit(id);
+            });
         },
 
         async loadFiliais() {
             try {
                 const filiais = await window.api.get('/api/sedes/filiais');
+                cacheFiliais = filiais; // Salva para uso no modal de detalhes
                 this.filialTableBody.innerHTML = ''; 
                 
                 if (filiais.length === 0) {
@@ -124,14 +192,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 filiais.forEach(f => {
+                    const imgUrl = f.logoUrl || '/assets/placeholder-image.png';
+                    const telefone = f.telefone ? `Tel: ${f.telefone}` : '';
+                    const endereco = f.address ? f.address : '<span style="color:#aaa;">Endereço não informado</span>';
+                    
                     const row = `
-                        <tr>
-                            <td style="font-weight: 600;">${f.name}</td>
-                            <td>${f.address || '<span style="color:#aaa;">Não informado</span>'}</td>
-                            <td>${f.cnpj || '<span style="color:#aaa;">Não informado</span>'}</td>
+                        <tr class="filial-row" data-id="${f._id}" style="cursor:pointer;">
+                            <td>
+                                <div class="filial-info-td">
+                                    <img src="${imgUrl}" alt="Logo">
+                                    <div class="filial-info-text">
+                                        <strong>${f.name}</strong>
+                                        <small><i class='bx bxs-user'></i> Pr. ${f.pastor}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${telefone}<br>${endereco}</td>
+                            <td>${f.cnpj || '<span style="color:#aaa;">S/N</span>'}</td>
                             <td class="actions">
-                                <a href="#" class="edit-btn" data-id="${f._id}"><i class='bx bxs-edit'></i> Editar</a>
-                                <a href="#" class="impersonate-btn" data-id="${f._id}"><i class='bx bx-log-in-circle'></i> Entrar (Auditoria)</a>
+                                <a href="#" class="impersonate-btn" data-id="${f._id}"><i class='bx bx-log-in-circle'></i> Auditar</a>
                             </td>
                         </tr>
                     `;
@@ -148,7 +227,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.filialForm.reset();
             this.filialIdField.value = '';
             
-            // Exige campos de Admin na criação
             this.adminFields.style.display = 'block';
             document.getElementById('admin-username').required = true;
             document.getElementById('admin-name').required = true;
@@ -157,10 +235,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.modal.classList.add('active');
         },
 
-        async openModalForEdit(id) {
-            const filiais = await window.api.get('/api/sedes/filiais');
-            const filial = filiais.find(f => f._id === id);
-
+        openModalForEdit(id) {
+            const filial = cacheFiliais.find(f => f._id === id);
             if (!filial) return;
             
             this.modalTitle.textContent = 'Editar Congregação';
@@ -168,15 +244,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.filialIdField.value = id;
             document.getElementById('filial-name').value = filial.name;
             document.getElementById('filial-cnpj').value = filial.cnpj || '';
+            document.getElementById('filial-telefone').value = filial.telefone || '';
             document.getElementById('filial-address').value = filial.address || '';
             
-            // Oculta os campos de Admin na edição
             this.adminFields.style.display = 'none';
             document.getElementById('admin-username').required = false;
             document.getElementById('admin-name').required = false;
             document.getElementById('admin-password').required = false;
 
             this.modal.classList.add('active');
+        },
+        
+        openFilialDetails(id) {
+            const f = cacheFiliais.find(f => f._id === id);
+            if(!f) return;
+
+            document.getElementById('fd-logo').src = f.logoUrl || '/assets/placeholder-image.png';
+            document.getElementById('fd-name').textContent = f.name;
+            document.getElementById('fd-pastor').textContent = `Dirigente: Pr. ${f.pastor}`;
+            
+            document.getElementById('fd-cnpj').textContent = f.cnpj || 'Não cadastrado';
+            document.getElementById('fd-address').textContent = f.address || 'Não cadastrado';
+            document.getElementById('fd-date').textContent = new Date(f.createdAt).toLocaleDateString('pt-BR');
+
+            document.getElementById('fd-membros').textContent = f.membros;
+            document.getElementById('fd-saldo').textContent = DashboardManager.formatCurrency(f.saldo);
+            document.getElementById('fd-receitas').textContent = DashboardManager.formatCurrency(f.receitas);
+            document.getElementById('fd-despesas').textContent = DashboardManager.formatCurrency(f.despesas);
+
+            // Passa o ID para os botões de ação do modal
+            document.getElementById('fd-btn-auditar').dataset.id = id;
+            document.getElementById('fd-btn-editar').dataset.id = id;
+
+            this.detailsModal.style.display = 'flex';
         },
 
         closeModal() {
@@ -185,15 +285,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         handleTableClick(e) {
-            const target = e.target.closest('a');
-            if (!target) return;
+            const targetAction = e.target.closest('a');
             
-            if (target.classList.contains('edit-btn')) {
+            if (targetAction && targetAction.classList.contains('impersonate-btn')) {
                 e.preventDefault();
-                this.openModalForEdit(target.dataset.id);
-            } else if (target.classList.contains('impersonate-btn')) {
-                e.preventDefault();
-                this.impersonate(target.dataset.id);
+                e.stopPropagation();
+                this.impersonate(targetAction.dataset.id);
+                return;
+            } 
+            
+            // Se clicou na linha mas não no botão, abre os detalhes
+            const row = e.target.closest('.filial-row');
+            if(row) {
+                this.openFilialDetails(row.dataset.id);
             }
         },
 
@@ -229,6 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = {
                 name: document.getElementById('filial-name').value,
                 cnpj: document.getElementById('filial-cnpj').value,
+                telefone: document.getElementById('filial-telefone').value,
                 address: document.getElementById('filial-address').value,
             };
 
@@ -248,6 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 this.closeModal();
                 this.loadFiliais();
+                DashboardManager.loadData(); // Recarrega gráficos
                 
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'Concluir Cadastro';
@@ -272,7 +378,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         init() {
             this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
             
-            // Interação com o input de cores
             const pColor = document.getElementById('settings-primaryColor');
             const pText = document.getElementById('settings-primaryColor-text');
             pColor.addEventListener('input', (e) => { pText.value = e.target.value; });
@@ -281,7 +386,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sText = document.getElementById('settings-secondaryColor-text');
             sColor.addEventListener('input', (e) => { sText.value = e.target.value; });
 
-            // Upload de Logo Preview
             if(this.btnTrocarLogo) {
                 this.btnTrocarLogo.addEventListener('click', () => this.logoInput.click());
             }
@@ -322,6 +426,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (data.config && data.config.logoUrl) {
                     this.logoPreview.src = data.config.logoUrl;
+                    const headerLogo = document.getElementById('sidebar-sede-logo');
+                    const headerIcon = document.getElementById('sidebar-sede-icon');
+                    headerLogo.src = data.config.logoUrl;
+                    headerLogo.style.display = 'block';
+                    headerIcon.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Erro ao carregar as configurações.', error);
@@ -334,7 +443,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.btnSalvar.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Salvando...`;
 
             try {
-                // Monta o FormData para enviar arquivos + textos
                 const formData = new FormData();
                 formData.append('name', document.getElementById('settings-name').value);
                 formData.append('cnpj', document.getElementById('settings-cnpj').value);
@@ -351,11 +459,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 alert('Configurações da Sede salvas com sucesso!');
                 
-                // Dispara evento para o header do sistema atualizar as cores
                 const nomeAtualizado = document.getElementById('settings-name').value;
                 tenantNamePlaceholder.textContent = nomeAtualizado;
                 
-                // Força reload suave para recarregar logo no header central
                 setTimeout(() => { window.location.reload(); }, 1000);
 
             } catch (error) {
@@ -424,10 +530,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Fechar modal de filial ao clicar fora
     const modalFilialOverlay = document.getElementById('filial-modal');
-    modalFilialOverlay.addEventListener('click', (e) => {
+    const modalDetailsOverlay = document.getElementById('filial-details-modal');
+    window.addEventListener('click', (e) => {
         if (e.target === modalFilialOverlay) FilialManager.closeModal();
+        if (e.target === modalDetailsOverlay) modalDetailsOverlay.style.display = 'none';
     });
 
     mainContent.style.visibility = 'hidden';
