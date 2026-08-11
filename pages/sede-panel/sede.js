@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    
+    // Função local para decodificar JWT sem bibliotecas extras
+    const decodeJwt = (token) => {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    };
+
     // --- ELEMENTOS GLOBAIS DO PAINEL ---
     const tenantNamePlaceholder = document.getElementById('tenant-name-placeholder');
     const mainContent = document.querySelector('.main-content');
@@ -10,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- MÓDULO DO DASHBOARD ---
     const DashboardManager = {
         formatCurrency(value) {
-            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         },
         async loadData() {
             try {
@@ -24,19 +39,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const comparativoBody = document.getElementById('comparativo-tbody');
                 comparativoBody.innerHTML = '';
-                if (comparativoFiliais.length > 0) {
+                if (comparativoFiliais && comparativoFiliais.length > 0) {
                     comparativoFiliais.forEach((item, index) => {
                         const row = `
                             <tr>
                                 <td>${index + 1}º</td>
-                                <td>${item.nome}</td>
+                                <td>${item.nome || 'Sede Principal'}</td>
                                 <td>${item.membros}</td>
                             </tr>
                         `;
                         comparativoBody.insertAdjacentHTML('beforeend', row);
                     });
                 } else {
-                    comparativoBody.innerHTML = '<tr><td colspan="3">Nenhum dado de filial para comparar.</td></tr>';
+                    comparativoBody.innerHTML = '<tr><td colspan="3">Nenhum dado para comparar.</td></tr>';
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados do dashboard:", error);
@@ -46,7 +61,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- MÓDULO DE GESTÃO DE FILIAIS ---
     const FilialManager = {
-        //... (código existente do FilialManager)
         modal: document.getElementById('filial-modal'),
         closeModalBtn: document.getElementById('close-modal-btn'),
         addFilialBtn: document.getElementById('add-filial-btn'),
@@ -67,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         async loadFiliais() {
             try {
                 const filiais = await window.api.get('/api/sedes/filiais');
-                this.filialTableBody.innerHTML = ''; // Limpa a tabela
+                this.filialTableBody.innerHTML = ''; 
                 if (filiais.length === 0) {
                     this.filialTableBody.innerHTML = '<tr><td colspan="4">Nenhuma filial cadastrada.</td></tr>';
                     return;
@@ -80,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <td>${f.cnpj || 'Não informado'}</td>
                             <td class="actions">
                                 <a href="#" class="edit-btn" data-id="${f._id}">Editar</a>
-                                <a href="#" class="impersonate-btn" data-id="${f._id}">Entrar</a>
+                                <a href="#" class="impersonate-btn" data-id="${f._id}">Entrar (Auditar)</a>
                             </td>
                         </tr>
                     `;
@@ -135,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         async impersonate(id) {
-            if (!confirm('Você tem certeza que deseja entrar no painel desta filial? Você será redirecionado.')) {
+            if (!confirm('Você tem certeza que deseja entrar no painel desta filial? Você verá os dados como se fosse um administrador de lá.')) {
                 return;
             }
 
@@ -144,11 +158,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const { impersonationToken } = response;
 
                 if (impersonationToken) {
-                    // Guarda o token original da Sede
-                    localStorage.setItem('originalUserToken', localStorage.getItem('userToken'));
-                    // Define o novo token da filial como o token ativo
+                    const currentToken = localStorage.getItem('userToken');
+                    localStorage.setItem('originalUserToken', currentToken);
                     localStorage.setItem('userToken', impersonationToken);
-                    // Redireciona para o dashboard da filial
+                    
+                    const newPayload = decodeJwt(impersonationToken);
+                    localStorage.setItem('userInfo', JSON.stringify(newPayload));
+                    
+                    // Redireciona para o dashboard geral (onde o menu novo de Auditoria vai aparecer)
                     window.location.href = '/pages/dashboard/dashboard.html';
                 }
             } catch (error) {
@@ -169,6 +186,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             try {
+                const saveBtn = document.getElementById('save-filial-btn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Salvando...';
+
                 if (isEditing) {
                     await window.api.put(`/api/sedes/filiais/${id}`, data);
                 } else {
@@ -179,13 +200,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 this.closeModal();
                 this.loadFiliais();
+                
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Salvar';
             } catch (error) {
                 this.modalError.textContent = error.message || 'Ocorreu um erro.';
+                const saveBtn = document.getElementById('save-filial-btn');
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Salvar';
             }
         }
     };
     
-    // --- MÓDULO DE CONFIGURAÇÕES ---
+    // --- MÓDULO DE CONFIGURAÇÕES (SEDE) ---
     const SettingsManager = {
         form: document.getElementById('settings-form'),
         successMessage: document.getElementById('settings-success-message'),
@@ -197,13 +224,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async loadData() {
             try {
-                const data = await window.api.get('/api/tenants/me');
+                // Tenta puxar de current
+                const data = await window.api.get('/api/tenants/current');
                 document.getElementById('settings-name').value = data.name || '';
                 document.getElementById('settings-cnpj').value = data.cnpj || '';
                 document.getElementById('settings-address').value = data.address || '';
-                document.getElementById('settings-primaryColor').value = data.config.theme.primaryColor || '#3498db';
-                document.getElementById('settings-secondaryColor').value = data.config.theme.secondaryColor || '#2c3e50';
-                document.getElementById('settings-logoUrl').value = data.config.logoUrl || '';
+                
+                if (data.config && data.config.theme) {
+                    document.getElementById('settings-primaryColor').value = data.config.theme.primaryColor || '#3498db';
+                    document.getElementById('settings-secondaryColor').value = data.config.theme.secondaryColor || '#2c3e50';
+                }
+                if (data.config) {
+                    document.getElementById('settings-logoUrl').value = data.config.logoUrl || '';
+                }
             } catch (error) {
                 this.errorMessage.textContent = 'Erro ao carregar as configurações.';
             }
@@ -228,7 +261,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await window.api.patch('/api/tenants/onboarding', data);
                 this.successMessage.textContent = 'Configurações salvas com sucesso!';
-                // Atualiza o nome do tenant no header da sidebar
                 tenantNamePlaceholder.textContent = data.name;
             } catch (error) {
                 this.errorMessage.textContent = error.message || 'Ocorreu um erro ao salvar.';
@@ -244,7 +276,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById(`${targetId}-section`).classList.add('active');
         document.querySelector(`.nav-link[data-target="${targetId}"]`).classList.add('active');
 
-        // Carrega os dados da seção apropriada
         if (targetId === 'filiais') {
             FilialManager.loadFiliais();
         } else if (targetId === 'dashboard') {
@@ -279,15 +310,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             FilialManager.init();
             SettingsManager.init();
-            showSection('dashboard'); // Mostra e carrega o dashboard ao iniciar
+            showSection('dashboard'); 
 
         } catch (error) {
-            document.body.innerHTML = `<div style="text-align: center; padding: 50px;"><h2>Erro Crítico</h2><p>Não foi possível carregar as informações do seu painel.</p><p><i>${error.message || 'Erro desconhecido'}</i></p><a href="/login.html">Voltar para o Login</a></div>`;
+            document.body.innerHTML = `<div style="text-align: center; padding: 50px;"><h2>Erro Crítico</h2><p>Não foi possível carregar as informações do seu painel.</p><p><i>${error.message || 'Sessão inválida'}</i></p><a href="/login.html">Voltar para o Login</a></div>`;
         }
     };
 
     mainContent.style.visibility = 'hidden';
     initializePanel();
 });
-
-
