@@ -9,7 +9,6 @@
     <script src="/js/global-loader.js" defer></script> 
     <script src="/js/api.js"></script>
     
-    <!-- Importações base do Conékta -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -53,7 +52,7 @@
                 <div class="header-dashboard">
                     <div>
                         <h1 class="title-page" style="text-align: left; margin-bottom: 5px;">Visão Geral do Ministério</h1>
-                        <p class="subtitulo-pagina">Acompanhe os números consolidados de todas as congregações.</p>
+                        <p class="subtitulo-pagina">Acompanhe os números consolidados de todas as congregações da sua rede.</p>
                     </div>
                 </div>
 
@@ -79,22 +78,40 @@
                             <h2 id="total-entradas" style="color: #007bff;">R$ --</h2>
                         </div>
                     </div>
+                    <!-- CORREÇÃO: Adicionado o card de Saídas que faltava -->
                     <div class="card-dashboard card-sede">
-                        <div class="card-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;"><i class='bx bx-wallet'></i></div>
+                        <div class="card-icon" style="background: rgba(253, 126, 20, 0.1); color: #fd7e14;"><i class='bx bx-trending-down'></i></div>
                         <div>
-                            <p>Saldo Global (Rede)</p>
-                            <h2 id="saldo-global" style="color: #dc3545;">R$ --</h2>
+                            <p>Saídas Totais</p>
+                            <h2 id="total-saidas" style="color: #fd7e14;">R$ --</h2>
+                        </div>
+                    </div>
+                    <div class="card-dashboard card-sede" style="border-left: 5px solid #6f42c1;">
+                        <div class="card-icon" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;"><i class='bx bx-wallet'></i></div>
+                        <div>
+                            <p>Saldo Global</p>
+                            <h2 id="saldo-global" style="color: #6f42c1;">R$ --</h2>
                         </div>
                     </div>
                 </div>
 
-                <div class="analises-container" style="margin-top: 30px;">
-                    <section class="grafico-container" style="grid-column: 1 / -1;">
+                <!-- GRÁFICOS LADO A LADO -->
+                <div class="analises-container" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 30px;">
+                    <section class="grafico-container">
                         <div class="grafico-header">
                             <h3>Evolução Financeira Global (Ano Atual)</h3>
                         </div>
-                        <div class="grafico-body" style="height: 350px;">
+                        <div class="grafico-body" style="height: 300px;">
                             <canvas id="grafico-evolucao-global"></canvas>
+                        </div>
+                    </section>
+                    
+                    <section class="grafico-container">
+                        <div class="grafico-header">
+                            <h3>Distribuição de Membros</h3>
+                        </div>
+                        <div class="grafico-body" style="height: 300px;">
+                            <canvas id="grafico-distribuicao-membros"></canvas>
                         </div>
                     </section>
                 </div>
@@ -125,7 +142,8 @@
                         <h1 class="title-page" style="text-align: left; margin-bottom: 5px;">Rede de Filiais</h1>
                         <p class="subtitulo-pagina">Gerencie e audite as congregações ligadas a esta Sede.</p>
                     </div>
-                    <button id="add-filial-btn" class="btn-principal"><i class='bx bx-plus'></i> Cadastrar Filial</button>
+                    <!-- PADRÃO CONÉKTA -->
+                    <button id="add-filial-btn" class="btn btn-principal"><i class='bx bx-plus'></i> Cadastrar Filial</button>
                 </div>
                 
                 <div class="tabela-container" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
@@ -206,7 +224,8 @@
                                 <div class="logo-upload-wrapper">
                                     <img id="settings-logo-preview" src="/assets/placeholder-image.png" alt="Logo">
                                     <div class="logo-actions">
-                                        <button type="button" id="btn-trocar-logo-sede" class="btn-secundario"><i class='bx bx-upload'></i> Alterar Arquivo</button>
+                                        <!-- PADRÃO CONÉKTA -->
+                                        <button type="button" id="btn-trocar-logo-sede" class="btn btn-secundario"><i class='bx bx-upload'></i> Alterar Arquivo</button>
                                         <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Formatos aceitos: JPG, PNG (Max 2MB)</p>
                                     </div>
                                 </div>
@@ -214,7 +233,7 @@
                             </div>
                             
                             <div class="modal-actions" style="margin-top: 30px;">
-                                <button type="submit" id="save-settings-btn" class="btn-principal"><i class='bx bx-save'></i> Salvar Todas as Alterações</button>
+                                <button type="submit" id="save-settings-btn" class="btn btn-principal"><i class='bx bx-save'></i> Salvar Todas as Alterações</button>
                             </div>
                         </form>
                     </div>
@@ -280,8 +299,9 @@
 
                 <div class="modal-actions" style="margin-top: 25px;">
                     <span id="modal-error-message" style="color: var(--cor-perigo); font-size: 0.9rem; margin-right: auto; align-self: center;"></span>
-                    <button type="button" class="btn-secundario" id="cancel-filial-btn">Cancelar</button>
-                    <button type="submit" id="save-filial-btn" class="btn-principal">Concluir Cadastro</button>
+                    <!-- PADRÃO CONÉKTA -->
+                    <button type="button" class="btn btn-secundario" id="cancel-filial-btn">Cancelar</button>
+                    <button type="submit" id="save-filial-btn" class="btn btn-principal">Concluir Cadastro</button>
                 </div>
             </form>
         </div>
@@ -330,8 +350,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
                         <h2 style="margin:0; color: var(--cor-primaria);">Visão Geral (Raio-X)</h2>
                         <div style="display: flex; gap: 10px;">
-                            <button id="fd-btn-editar" class="btn-secundario"><i class='bx bxs-edit'></i> Editar</button>
-                            <button id="fd-btn-auditar" class="btn-principal" style="background-color: #28a745; border: none;"><i class='bx bx-log-in-circle'></i> Auditar Sistema</button>
+                            <button id="fd-btn-editar" class="btn btn-secundario"><i class='bx bxs-edit'></i> Editar Dados</button>
+                            <button id="fd-btn-auditar" class="btn btn-principal" style="background-color: #28a745; border-color: #28a745;"><i class='bx bx-log-in-circle'></i> Auditar Sistema</button>
                         </div>
                     </div>
 
@@ -346,7 +366,7 @@
                             </div>
                         </div>
                         <div class="mega-card-stat">
-                            <div class="mega-icon-wrapper" style="background: rgba(40, 167, 69, 0.1); color: #28a745;">
+                            <div class="mega-icon-wrapper" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
                                 <i class='bx bx-wallet'></i>
                             </div>
                             <div class="mega-stat-content">
@@ -372,6 +392,21 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- NOVO: Impacto na Rede -->
+                    <div class="mega-impact-section" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                        <h3 style="color: var(--cor-texto); font-size: 1.1rem; margin-bottom: 15px;"><i class='bx bx-pie-chart-alt-2'></i> Impacto na Rede</h3>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 0.9rem; font-weight: 600; color: #475569;">Representatividade de Membros</span>
+                                <span style="font-size: 0.9rem; font-weight: bold; color: var(--cor-primaria);"><span id="fd-perc-membros">0</span>% da Sede</span>
+                            </div>
+                            <div style="background-color: #e2e8f0; border-radius: 10px; height: 10px; width: 100%; overflow: hidden;">
+                                <div id="fd-bar-membros" style="height: 100%; background: var(--cor-acao); border-radius: 10px; transition: width 1s ease-in-out; width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -384,8 +419,8 @@
             <h3 style="margin-top: 0; color: var(--cor-primaria);">Acesso de Auditoria</h3>
             <p id="msg-confirmacao" style="color: #555; font-size: 1.05rem; margin-bottom: 25px; line-height: 1.5;"></p>
             <div style="display: flex; gap: 15px; justify-content: center;">
-                <button type="button" id="btn-confirm-sim" class="btn-principal" style="min-width: 100px;">Sim, Entrar</button>
-                <button type="button" id="btn-confirm-nao" class="btn-secundario" style="min-width: 100px;">Cancelar</button>
+                <button type="button" id="btn-confirm-sim" class="btn btn-principal" style="min-width: 100px;">Sim, Entrar</button>
+                <button type="button" id="btn-confirm-nao" class="btn btn-secundario" style="min-width: 100px;">Cancelar</button>
             </div>
         </div>
     </div>
